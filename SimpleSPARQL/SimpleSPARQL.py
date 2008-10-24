@@ -3,7 +3,7 @@ SimpleSPARQL provides some high level access to some basic SPARQL queries
 TODO: clean up parts of code left from axpress (update_uri)
 """
 
-import time, re, copy, datetime
+import time, re, copy, datetime, pprint
 from SPARQLWrapper import *
 from rdflib import *
 from urllib import urlopen, urlencode
@@ -23,6 +23,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		else :
 			self.setSPARUL(baseURI.replace('sparql', 'sparul'))
 		self.n = Namespaces.Namespaces()
+		self.lang = 'en'
 	
 	def setSPARUL(self, baseURI, returnFormat=None, defaultGraph=None):
 		self.sparul = SPARQLWrapper(baseURI, returnFormat, defaultGraph)
@@ -150,13 +151,13 @@ class SimpleSPARQL (SPARQLWrapper) :
 				return data
 			else :
 				if '"' not in data :
-					return u'"'+data+u'"'
+					return u'"'+data+u'"@'+self.lang
 				if "'" not in data :
-					return u"'"+data+u"'"
+					return u"'"+data+u"'@"+self.lang
 				if '"""' not in data :
-					return u'"""'+data+u'"""'
+					return u'"""'+data+u'"""@'+self.lang
 				if "'''" not in data :
-					return u"'''"+data+u"'''"
+					return u"'''"+data+u"'''@"+self.lang
 				raise Exception("can't figure out how to put this in quotes...")
 		elif type(data) == dict :
 			key_value_pairs = [(self.python_to_n3_helper(key, long_format, path, bound_vars), self.python_to_n3_helper(value, long_format, self.flatten([path, key]), bound_vars)) for (key, value) in data.iteritems()]
@@ -224,7 +225,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 	
 	def read(self, data) :
 		bound_vars = {}
-		results = self.doQuery("SELECT * WHERE { %s }" % self.python_to_SPARQL(data, Variable("uri"), bound_vars))
+		results = self.doQuery("SELECT DISTINCT * WHERE { %s }" % self.python_to_SPARQL(data, Variable("uri"), bound_vars))
 		# print bound_vars
 		# print results
 		objs = []
@@ -240,13 +241,15 @@ class SimpleSPARQL (SPARQLWrapper) :
 		return objs
 	
 	def quickread(self, data) :
-		results = self.doQuery("SELECT * WHERE { %s }" % self.python_to_SPARQL(data, Variable("uri")))
+		results = self.doQuery("SELECT DISTINCT * WHERE { %s }" % self.python_to_SPARQL(data, Variable("uri")))
+		values = []
 		for rawbindings in results['results']['bindings'] :
 			for key, value in rawbindings.iteritems() :
 				if key != u'uri' :
 					if value['type'] == 'bnode' :
 						raise Exception("can not bind a bnode to a variable")
-					yield value['value']
+					values.append(value['value'])
+		return values
 
 	def ask(self, query) :
 		if type(query) == dict :

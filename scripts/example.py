@@ -1,9 +1,57 @@
 from SimpleSPARQL import SimpleSPARQL
 
-sparql = SimpleSPARQL("http://localhost:2020/sparql")
-sparql.n.bind('feed', '<http://dwiel.net/RSSAggregatorBackend/feed/0.1/>')
-sparql.n.bind('entry', '<http://dwiel.net/RSSAggregatorBackend/entry/0.1/>')
+sparql = SimpleSPARQL("http://dbpedia.org/sparql")
+
 n = sparql.n
+n.bind('rdf', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#')
+n.bind('rdfs', 'http://www.w3.org/2000/01/rdf-schema#')
+n.bind('dbpedia2', 'http://dbpedia.org/property/')
+
+# the area in Km^2 of things labeled England
+print sparql.quickread({
+	n.rdfs.label : u"England",
+	n.dbpedia2.areaKm : None
+})[0]
+
+# the types which the Prime Minister of places things labeled England
+q = {
+	n.rdfs.label : u"England",
+	n.dbpedia2.primeMinister : {
+		n.rdf.type : None
+	}
+}
+for type in sparql.quickread(q) :
+	print type
+
+print 'objs'
+for obj in sparql.read(q) :
+	print obj
+	
+print sparql.ask({ n.rdfs.label : u"England", 
+                   n.dbpedia2.primeMinister : {
+									   n.rdfs.label : u"Tony Blair"
+									 }
+								 })
+print sparql.ask({ n.rdfs.label : "England", 
+                   n.dbpedia2.primeMinister : {
+									   n.rdfs.label : "Gordon Brown"
+									 }
+								 })
+
+# and if you could do writes to dbpedia:
+obj = {
+	n.rdfs.label : "Hello World",
+	n.sparql.create : n.sparql.unless_exists
+}
+#sparql.write(obj)
+
+#    SELECT ?label
+#    WHERE { <http://dbpedia.org/resource/Asturias> rdfs:label ?label }
+
+#sparql = SimpleSPARQL("http://localhost:2020/sparql")
+#sparql.n.bind('feed', '<http://dwiel.net/RSSAggregatorBackend/feed/0.1/>')
+#sparql.n.bind('entry', '<http://dwiel.net/RSSAggregatorBackend/entry/0.1/>')
+#n = sparql.n
 
 #print sparql.ask({n.feed.url : None})
 #print sparql.ask({n.feed.url : 'www.google.com'})
@@ -20,13 +68,13 @@ n = sparql.n
 #	print obj
 
 
-for obj in sparql.read({
-		n.feed.url : None,
-		n.feed.entry : {
-			n.entry['title'] : None
-		}
-	}) :
-	print obj[n.feed.url], obj[n.feed.entry][n.entry['title']]
+#for obj in sparql.read({
+		#n.feed.url : None,
+		#n.feed.entry : {
+			#n.entry['title'] : None
+		#}
+	#}) :
+	#print obj[n.feed.url], obj[n.feed.entry][n.entry['title']]
 
 # or
 
