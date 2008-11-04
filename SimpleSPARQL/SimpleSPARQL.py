@@ -1,17 +1,20 @@
 """
 SimpleSPARQL provides some high level access to some basic SPARQL queries
 TODO: clean up parts of code left from axpress (update_uri)
+TODO: factor out redundant code
+TODO: return errors inside the return dictionary rather than with an exception
+TODO: connect queries
 """
 
 import time, re, copy, datetime, pprint
 from SPARQLWrapper import *
 from rdflib import *
-from urllib import urlopen, urlencode
+#from urllib import urlopen, urlencode
 
-import rdflib
 import rdflib.sparql.parser
 
 import Namespaces
+from RDFObject import RDFObject
 
 # from parseMatchOutput import construct
 
@@ -48,6 +51,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		except:
 			pass
 		query = query.replace("\\n",' ')
+		query = query.replace("\n",' ')
 		# print "QUERY x ",query
 		query_type = self._parseQueryType(query)
 		if query_type == "DELETE" or query_type == "INSERT" :
@@ -59,7 +63,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 			
 		if type(query) == unicode :
 			query = query.encode('utf-8')
-		query = query.replace('\n', '\\n')
+		query = query.replace('\n', ' ')
 		sparql.setQuery(query)
 		sparql.setReturnFormat(JSON)
 		# print "query", query
@@ -85,7 +89,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 				bindings = {}
 				for key,value in rawbindings.iteritems() :
 					bindings['?'+key] = Literal(value['value'])
-				print bindings
+				# print bindings
 				pattern.construct(c, bindings)
 				yield RDFObject(c, self.n.e['uri'], self)
 
@@ -142,6 +146,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		return res
 	
 	def python_to_n3_helper(self, data, long_format = False, path = [], bound_vars = {}) :
+		# constants
 		if type(data) == int or type(data) == float :
 			return unicode(data)
 		elif type(data) == str or type(data) == unicode:
@@ -159,28 +164,33 @@ class SimpleSPARQL (SPARQLWrapper) :
 				if "'''" not in data :
 					return u"'''"+data+u"'''@"+self.lang
 				raise Exception("can't figure out how to put this in quotes...")
-		elif type(data) == dict :
-			key_value_pairs = [(self.python_to_n3_helper(key, long_format, path, bound_vars), self.python_to_n3_helper(value, long_format, self.flatten([path, key]), bound_vars)) for (key, value) in data.iteritems()]
-			key_value_pairs_str = map(lambda (p):p[0]+u' '+p[1], key_value_pairs)
-			return u'[ ' + u' ; '.join(key_value_pairs_str) + u' ]'
-		elif data == [] :
-			self.variable += 1
-			varname = u'?var' + unicode(self.variable)
-			bound_vars[varname[1:]] = self.flatten([path, list])
-			return varname			
-		elif type(data) == list :
-			return u', '.join(map(lambda x:self.python_to_n3_helper(x, long_format, self.flatten([path, list]), bound_vars), data))
 		elif type(data) == datetime.datetime :
 			return u'"%d-%d-%dT%d:%d:%dT"^^xsd:dateTime' % (data.year, data.month, data.day, data.hour, data.minute, data.second)
 		elif type(data) == time.struct_time :
 			return u'"%d-%d-%dT%d:%d:%dT"^^xsd:dateTime' % data[0:6]
 		elif type(data) == rdflib.URIRef :
 			return data.n3()
+		# resulting in vars:
+		elif data == [] :
+			self.variable += 1
+			varname = u'?var' + unicode(self.variable)
+			bound_vars[varname[1:]] = self.flatten([path, list])
+			return varname
 		elif data == None :
 			self.variable += 1
 			varname = u'?var' + unicode(self.variable)
 			bound_vars[varname[1:]] = path
 			return varname
+		# complex queries
+		elif type(data) == dict :
+			key_value_pairs = [(self.python_to_n3_helper(key, long_format, path, bound_vars), self.python_to_n3_helper(value, long_format, self.flatten([path, key]), bound_vars)) for (key, value) in data.iteritems()]
+			key_value_pairs_str = map(lambda (p):p[0]+u' '+p[1], key_value_pairs)
+			return u'[ ' + u' ; '.join(key_value_pairs_str) + u' ]'
+		elif type(data) == list and len(data) == 1 and type(data[0]) == dict :
+			# TODO
+			pass
+		elif type(data) == list :
+			return u', '.join(map(lambda x:self.python_to_n3_helper(x, long_format, self.flatten([path, list]), bound_vars), data))
 		else :
 			print type(data),'not supported as n3'
 	
@@ -223,6 +233,243 @@ class SimpleSPARQL (SPARQLWrapper) :
 			obj = obj[key]
 		obj[ls[-1]] = value
 	
+	def _reset_var(self) :
+		self.variable = 0
+	
+	def _new_var(self, bound_vars, path) :
+		self.variable += 1
+		varname = u'?var' + unicode(self.variable)
+		bound_vars[varname[1:]] = path
+		return varname
+	
+
+	
+	def read_parse_helper(self, query, path, triples, explicit_vars, implicit_vars) :
+		"""
+		@arg path is a list (like xpath) of where in the query we are
+		@arg triples is a list of triples which is altered to include all triples
+		@arg explicit_vars is a dict which is altered to include paths to exp vars
+		@arg implicit_vars is a dict which is altered to include paths to imp vars
+		@return SPARQL Literal or variable to refer to this part of the query.
+			triples, explicit_vars and implicit_vars are filled.
+		"""
+		# constants
+		if type(query) == int or type(query) == float :
+			return unicode(query)
+		elif type(query) == str or type(query) == unicode:
+			if type(query) == str :
+				query = unicode(query)
+			if self.n.matches(query) :
+				return query
+			else :
+				if '"' not in query :
+					return u'"'+query+u'"@'+self.lang
+				if "'" not in query :
+					return u"'"+query+u"'@"+self.lang
+				if '"""' not in query :
+					return u'"""'+query+u'"""@'+self.lang
+				if "'''" not in query :
+					return u"'''"+query+u"'''@"+self.lang
+				raise Exception("can't figure out how to put this in quotes...")
+		elif type(query) == datetime.datetime :
+			return u'"%d-%d-%dT%d:%d:%dT"^^xsd:dateTime' % (query.year, query.month, query.day, query.hour, query.minute, query.second)
+		elif type(query) == time.struct_time :
+			return u'"%d-%d-%dT%d:%d:%dT"^^xsd:dateTime' % query[0:6]
+		elif type(query) == rdflib.URIRef :
+			return query.n3()
+		
+		# cases resulting in explicit variables
+		elif query == None :
+			return self._new_var(explicit_vars, path)
+		elif query == [] :
+			path = copy.copy(path)
+			path.append(list)
+			return self._new_var(explicit_vars, path)
+		
+		elif type(query) == list and len(query) == 1 and type(query[0]) == dict :
+			path = copy.copy(path)
+			path.append(list)
+			return self.read_parse_helper(query[0], path, triples, explicit_vars, implicit_vars)
+		
+		# complex queries
+		elif type(query) == dict :
+			if self.n.sparql.subject in query :
+				subject = query[self.n.sparql.subject]
+				del query[self.n.sparql.subject]
+				if subject == None :
+					subject = self._new_var(explicit_vars, path)
+			else :
+				subject = self._new_var(implicit_vars, path)
+			for key, value in query.iteritems() :
+				path2 = copy.copy(path)
+				nk = self.read_parse_helper(key, path, triples, explicit_vars, implicit_vars)
+				path2.append(key)
+				nv = self.read_parse_helper(value, path2, triples, explicit_vars, implicit_vars)
+				pair = (nk, nv)
+				print 'dict', pair
+				triples.append((subject, nk, nv))
+			return subject
+	
+	def verify_restrictions_helper(self, bindings, vars, path, var, explicit_vars) :
+		# is path2 one deeper than path1?
+		def one_deeper(p1, p2) :
+			if len(p2) <= len(p1) :
+				return False
+			if p2[:len(p1)] != p1 :
+				return False
+			if len(p2[len(p1):]) == 1 :
+				return True
+			if len(p2[len(p1):]) == 2 and p2[-1] == list :
+				return True
+			return False
+		
+		def value_from_path(path) :
+			if len(path) == 0 :
+				return
+			if path[-1] == list :
+				if len(path) == 1 :
+					return
+				return path[-2]
+			else :
+				return path[-1]
+		
+		# this is used where a binding needs to be the key of a hash.  Convert it to
+		#   a tuple which is hashable
+		def tuple_binding(binding) :
+			return (binding['type'], binding['value'])
+		
+		# see tuple_binding
+		def untuple_binding(binding_tuple) :
+			return {'type' : binding_tuple[0], 'value' : binding_tuple[1]}
+		
+		var_path = vars[var]
+		#print 'bindings:',bindings
+		#print 'vars'
+		#for v,p in vars.iteritems() :
+			#print '  ',v,p
+		#print 'var:',var
+		#print 'var_path:', var_path
+		#print ','.join(vars.keys())
+		#for binding_set in bindings :
+			#print ','.join(map(lambda x:binding_set[x]['value'], vars.keys()))
+		
+		# var_values is a set of values which this variable takes in the bindings
+		var_values = set()
+		for binding_set in bindings :
+			binding = binding_set[var]
+			var_values.add(tuple_binding(binding))
+		
+		# TODO: these exceptions need to be put into the query and result in a differen
+		#   status code
+		# if this is not a list of values, and there are too many values, throw an error
+		if var_path[-1] != list :
+			if len(var_values) == 0 :
+				raise Exception('missing value')
+				# return 'missing value'
+			elif len(var_values) > 1 :
+				raise Exception('too many values')
+				# return 'too many values'
+		
+		# recur ...
+		
+		# now move to the new path
+		path = var_path
+		
+		# look for vars which are one level deeper than the one we are at ...
+		next_vars = []
+		for v, p in vars.iteritems() :
+			# if this path is one node deeper the current path
+			if one_deeper(path, p) :
+				next_vars.append(v)
+				# print 'v,p:',v, p
+			
+		result_queries = {}
+		# find the new subset of bindings we are looking at
+		# for each value of this variable, generate a subset of bindings to check 
+		for binding_tuple in var_values :
+			# print 'binding',binding
+			binding = untuple_binding(binding_tuple)
+			new_bindings = []
+			for binding_set in bindings :
+				if binding_set[var] == binding :
+					# print '  bs', ','.join(map(lambda x:binding_set[x]['value'], vars.keys()))
+					new_bindings.append(binding_set)
+			
+			result_query = {}
+			
+			# result_query['subject'] = binding
+			
+			# for each next_var
+			for next_var in next_vars :
+				# print '=> recur', next_var
+				result_query[value_from_path(vars[next_var])] = self.verify_restrictions_helper(new_bindings, vars, path, next_var, explicit_vars)
+				# print 'ret',ret
+			
+			if var in explicit_vars :
+				if binding['type'] == 'bnode' :
+					raise Exception('can not bind a bnode to a variable, sorry')
+				result_query[self.n.sparql.subject] = binding
+			
+			result_queries[tuple_binding(binding)] = result_query
+		
+		# print 'result_query', result_queries
+		
+		results = []
+		for result in var_values :
+			type = result[0]
+			value = result[1]
+			if type == 'literal' :
+				results.append(Literal(value))
+			else :
+				results.append(result_queries[result])
+		
+		if path[-1] != list :
+			results = results[0]
+		
+		# print results
+		return results
+	
+	def verify_restrictions(self, results, explicit_vars, implicit_vars, root_subject) :
+		bindings = results['results']['bindings']
+		root_var = root_subject[1:]
+		
+		vars = {}
+		vars.update(explicit_vars)
+		vars.update(implicit_vars)
+		path = vars[root_var]
+		
+		return self.verify_restrictions_helper(bindings, vars, [], root_var, explicit_vars.keys())
+		# given the variables which have been bound so far, check that values which
+		# should be unique are
+	
+	def read_parse(self, query) :
+		# parse out SPARQL
+		# explicit_vars
+		# implicit_vars
+		self._reset_var()
+		triples = []
+		explicit_vars = {}
+		implicit_vars = {}
+		root_subject = self.read_parse_helper(query, [], triples, explicit_vars, implicit_vars)
+		triples_str = ""
+		for triple in triples :
+			triples_str += "%s %s %s . " % triple
+		SPARQL = "SELECT DISTINCT * WHERE { %s }" % triples_str
+		results = self.doQuery(SPARQL)
+		# print results
+		# need to enforce restrictions on number of results implied by the query (
+		# None vs. [] vs. {})
+		# in the order that the implicit and explicit vars occur in the query tree
+		# count how many results there are.
+		
+		# start with vars whose path is [] or [list]
+		verification = self.verify_restrictions(results, explicit_vars, implicit_vars, root_subject)
+		# print 'verification:',verification
+		
+		return verification
+		# return SPARQL, triples, explicit_vars, implicit_vars
+		# return SPARQL, explicit_vars, implicit_vars
+
 	def read(self, data) :
 		bound_vars = {}
 		results = self.doQuery("SELECT DISTINCT * WHERE { %s }" % self.python_to_SPARQL(data, Variable("uri"), bound_vars))
@@ -259,15 +506,17 @@ class SimpleSPARQL (SPARQLWrapper) :
 	# remove dicts with pairs like n.sparql.create : n.sparql.unless_exists with a
 	# n.sparql.var : 1
 	# bound_vars is an integer of where the variables should start being bound to
-	def _preprocess_query_helper(self, query, bound_vars, inserts) :
+	def _preprocess_query_helper(self, query, bound_vars, inserts, deletes) :
 		sparql = self.n.sparql
 		if type(query) == dict :
 			newquery = {}
 			for k, v in query.iteritems() :
 				if k == sparql.create :
-					return None, copy.copy(query)
+					return None, copy.copy(query), None
+				if k == sparql.delete :
+					return None, None, copy.copy(query)
 				if type(v) == dict :
-					v2, insert = self._preprocess_query_helper(v, bound_vars, inserts)
+					v2, insert, delete = self._preprocess_query_helper(v, bound_vars, inserts, deletes)
 					# if the value of this pair was a write (create/connect)
 					if insert :
 						if sparql.var not in newquery :
@@ -280,11 +529,22 @@ class SimpleSPARQL (SPARQLWrapper) :
 						insert[sparql.subject] = var
 						insert[sparql.predicate] = k
 						inserts.append(insert)
+					if delete :
+						if sparql.var not in newquery :
+							var = bound_vars[0]
+							bound_vars[0] += 1
+						else :
+							var = newquery[sparql.var]
+						
+						newquery[sparql.var] = var
+						delete[sparql.subject] = var
+						delete[sparql.predicate] = k
+						deletes.append(delete)
 					if v2 is not None :
 						newquery[k] = v2
 				elif type(v) == list :
 					for vi in v :
-						vi2, insert = self._preprocess_query_helper(vi, bound_vars, inserts)
+						vi2, insert, delete = self._preprocess_query_helper(vi, bound_vars, inserts, deletes)
 						# if the value of this pair was a write (create/connect)
 						if insert :
 							if sparql.var not in newquery :
@@ -297,15 +557,26 @@ class SimpleSPARQL (SPARQLWrapper) :
 							insert[sparql.subject] = var
 							insert[sparql.predicate] = k
 							inserts.append(insert)
+						if delete :
+							if sparql.var not in newquery :
+								var = bound_vars[0]
+								bound_vars[0] += 1
+							else :
+								var = newquery[sparql.var]
+							
+							newquery[sparql.var] = var
+							delete[sparql.subject] = var
+							delete[sparql.predicate] = k
+							deletes.append(delete)
 						if vi2 is not None :
 							if k not in newquery :
 								newquery[k] = []
 							newquery[k].append(vi2)
 				else :
 					newquery[k] = v
-			return newquery, None
+			return newquery, None, None
 		elif type(query) == list :
-			return [self._preprocess_query_helper(queryi, bound_vars, inserts) for queryi in query]
+			return [self._preprocess_query_helper(queryi, bound_vars, inserts, deletes) for queryi in query]
 	
 	def _preprocess_query(self, query) :
 		"""put n.sparql.var : # pairs in all dicts whose root need to have a 
@@ -320,8 +591,9 @@ class SimpleSPARQL (SPARQLWrapper) :
 			raise Exception('query must be a dictionary')
 		
 		inserts = []
+		deletes = []
 		bound_vars = [1]
-		query, insert = self._preprocess_query_helper(query, bound_vars, inserts)
+		query, insert, delete = self._preprocess_query_helper(query, bound_vars, inserts, deletes)
 		if insert :
 			query = {}
 			var = bound_vars[0]
@@ -331,14 +603,37 @@ class SimpleSPARQL (SPARQLWrapper) :
 			insert[sparql.subject] = None
 			insert[sparql.predicate] = None
 			inserts.append(insert)
+		if delete :
+			query = {}
+			var = bound_vars[0]
+			bound_vars[0] += 1
 			
+			query[sparql.var] = var
+			delete[sparql.subject] = None
+			delete[sparql.predicate] = None
+			deletes.append(delete)
+		
+		print 'deletes:',deletes
+		
 		# this happens when the root object is a create
 		#if query is None and _ is not None :
 			#query = _
 		
 		query[sparql.insert] = inserts
+		query[sparql.delete] = deletes
 		
 		return query
+	
+	def _bnodeVar(self) :
+		var = 0
+		while True :
+			var += 1
+			yield URIRef('_:b'+str(var))
+			
+	def _uriVar(self) :
+		while True :
+			postfix = str(time.time()).replace('.','')
+			yield self.n.sparql['bnode'+postfix].n3()
 	
 	def python_to_SPARQL_long_helper(self, query, var) :
 		def append_pair(root, k, v) :
@@ -355,12 +650,15 @@ class SimpleSPARQL (SPARQLWrapper) :
 			if self.n.sparql.var in query :
 				root = '?var'+str(query[self.n.sparql.var])
 			else :
-				root = '_:b'+str(var[0])
-				var[0] += 1
+				root = var.next()
 			
 			for k, v in query.iteritems() :
 				if k == self.n.sparql.var :
 					continue
+				if k == self.n.sparql.any :
+					k = var.next()
+				if v == self.n.sparql.any :
+					v = var.next()
 				if type(k) == list :
 					if type(v) == list :
 						for ki in k :
@@ -378,14 +676,17 @@ class SimpleSPARQL (SPARQLWrapper) :
 			
 			return root, ret
 		else :
+			print 'recur',type(query),query,self.python_to_n3(query)
 			return self.python_to_n3(query), ""
 	
-	def python_to_SPARQL_long(self, query) :
+	def python_to_SPARQL_long(self, query, var = None) :
 		"""convert a python object into SPARQL format.  (this version doesn't use
 		blank nodes, which is useful if you want to be able to append to or refer
 		to the dictionaries converted
 		"""
-		return self.python_to_SPARQL_long_helper(query, [1])[1]
+		if var == None :
+			var = self._bnodeVar()
+		return self.python_to_SPARQL_long_helper(query, var)[1]
 	
 	def _extract_where(self, query) :
 		"""given a query in the form described in _preprocess_query, return a WHERE
@@ -395,6 +696,10 @@ class SimpleSPARQL (SPARQLWrapper) :
 		# discard the insert information
 		if self.n.sparql.insert in query :
 			del query[self.n.sparql.insert]
+		
+		# discard the delete information
+		if self.n.sparql.delete in query :
+			del query[self.n.sparql.delete]
 		
 		# build the where clause with outlined variables
 		return self.python_to_SPARQL_long(query)
@@ -428,12 +733,45 @@ class SimpleSPARQL (SPARQLWrapper) :
 					})
 		return new_inserts
 	
+	def _extract_deletes(self, query) :
+		"""given a query in the form describes in _preprocess_query, return a set of
+		insert clauses to be used in the final SPARQL queries"""
+		sparql = self.n.sparql
+		
+		# because the loop below alter's the contents of each insert
+		query = copy.copy(query)
+		
+		# grab the insert list
+		deletes = query[sparql.delete]
+		
+		new_deletes = []
+		for delete in deletes :
+			if sparql.delete in delete :
+				var = delete[sparql.subject]
+				predicate = delete[sparql.predicate]
+				
+				del delete[sparql.subject]
+				del delete[sparql.predicate]
+				
+				if predicate is None :
+					new_deletes.append(delete)
+				else :
+					new_deletes.append({
+						sparql.var : var,
+						predicate : delete,
+					})
+		return new_deletes
+		
 	def write(self, query) :
 		sparql = self.n.sparql
 		
 		query = self._preprocess_query(query)
 		where = self._extract_where(query)
 		inserts = self._extract_inserts(query)
+		deletes = self._extract_deletes(query)
+		
+		print 'deletes'
+		pprint.pprint(deletes)
 		
 		#print 'where', where
 		#print 'inserts', inserts
@@ -459,6 +797,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		"""
 		
 		for insert in inserts :
+			# create: the type of insert.  Either unless_exists, only_once or both
 			# special case where create in root node
 			if sparql.create in insert :
 				create = insert[sparql.create]
@@ -487,15 +826,28 @@ class SimpleSPARQL (SPARQLWrapper) :
 					create.remove(sparql.only_once)
 					create = create[0]
 			
-			insert_str = self.python_to_SPARQL_long(insert)
-			# print 'insert_str',insert_str
+			insert_str_uri = self.python_to_SPARQL_long(insert, self._uriVar())
+			print 'insert_str_uri',insert_str_uri
 			if create == sparql.unless_exists :
-				if not self.ask("%s %s" % (where, insert_str)) :
-					print 'do',self.doQuery("INSERT { %s } WHERE { %s }" % (insert_str, where))
+				insert_str_bnode = self.python_to_SPARQL_long(insert, self._bnodeVar())
+				if not self.ask("%s %s" % (where, insert_str_bnode)) :
+					print 'do',self.doQuery("INSERT { %s } WHERE { %s }" % (insert_str_uri, where))
 			elif create == sparql.unconditional :
-				print 'do',self.doQuery("INSERT { %s } WHERE { %s }" % (insert_str, where))
+				print 'do',self.doQuery("INSERT { %s } WHERE { %s }" % (insert_str_uri, where))
 			else :
 				raise Exception("unkown create clause: " + create)
+		
+		for delete in deletes :
+			pprint.pprint(delete)
+			
+			del delete[sparql.delete]
+			
+			delete_str_uri = self.python_to_SPARQL_long(delete, self._bnodeVar())
+			
+			print 'delete_str_uri',delete_str_uri
+			q = "DELETE { %s } WHERE { %s %s }" % (delete_str_uri, delete_str_uri, where)
+			print q
+			
 		
 		return {'result' : 'ok', 'query' : query}
 	
@@ -509,7 +861,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 				language = 'N3'
 		#print 'data',data
 		f = urlopen(self.sparul.baseURI, urlencode({'insert' : data, 'lang' : language}))
-		self.update_new_uri()
+		# self.update_new_uri()
 	
 	def n3(self, data) :
 		t = type(data)
@@ -531,176 +883,6 @@ class SimpleSPARQL (SPARQLWrapper) :
 		pred = self.n3(pred)
 		object = self.n3(object)
 		self.doQuery("INSERT { %s %s %s }" % (subject, pred, object))
-
-### TODO: assess viability of changing this to inherit from rdflib.Graph
-class RDFObject :
-	# g - graph with uri described in it
-	# uri - cna be a uri or a bnode
-	def __init__(self, g = None, uri = None, sparql = None) :
-		self.sparql = sparql
-		# newg keeps track of new triples so they can be saved later
-		self.newg = ConjunctiveGraph()
-		self.delkey = []
-		if g == None :
-			self.d = {}
-			return
-		elif type(g) == dict :
-			self.g = ConjunctiveGraph()
-			self.d = g
-			if uri is not None :
-				if type(uri) == unicode :
-					uri = URIRef(uri)
-				self.root = uri
-			return
-		else :
-			self.d = {}
-		# self.g = g
-		self.g = ConjunctiveGraph()
-		self.g += g
-		if type(uri) == unicode :
-			uri = URIRef(uri)
-		self.root = uri
-		for (p, o) in g.predicate_objects(uri) :
-			if type(o) == BNode :
-				o_dict = RDFObject(g, o)
-			else :
-				o_dict = o
-			if not p in self.d :
-				self.d[p] = [o_dict]
-			else :
-				self.d[p].append(o_dict)
-	
-	def __getitem__(self, key) :
-		if key not in self.d :
-			return []
-		else :
-			return self.d[key]
-	
-	"""
-	type(key) == str
-	type(value) == str, number, rdfo
-	rdfo[key] = value =>
-		self.__dict__[key] = [value]
-	"""
-	def __setitem__(self, key, value) :
-		if type(value) == str or \
-		   type(value) == int or \
-			 type(value) == unicode or \
-			 type(value) == float :
-			self.newg.add((self.root, key, Literal(value)))
-			self.g.add((self.root, key, Literal(value)))
-			self.d[key] = [value]
-		elif type(value) == list :
-			for v in value :
-				self.newg.add((self.root, key, Literal(v)))
-				self.g.add((self.root, key, Literal(v)))
-			self.d[key] = value
-		elif type(value) == dict :
-			bnode = BNode()
-			for k,v in value.iteritems() :
-				self.newg.add((bnode, k, Literal(v)))
-				self.g.add((bnode, k, Literal(v)))
-			self.newg.add((self.root, key, bnode))
-			self.g.add((self.root, key, bnode))
-			self.d[key] = [RDFObject(self.g, bnode)]
-	
-	def __delitem__(self, key) :
-		self.delkey.append(key)
-		del self.d[key]
-	
-	# TODO:
-	# call transforms.attr(self) and return the result (assuming attr isn't a real
-	# attribute like save, to_dict or g
-	#def __getattr__(self, attr) :
-		#print '__getattr__',attr
-		#return RDFObject.__class__.__getattr__(self,attr)
-	
-	def save(self) :
-		if self.sparql :
-			for (s,p,o) in self.newg :
-				self.sparql.insert_triple(s,p,o)
-			self.newg = Graph()
-		# TODO: write deletes out of self.delkey
-	
-	"""
-	like [key], but if there are multiple values, will only return the first
-	"""
-	def __call__(self, key) :
-		if key not in self.d :
-			return None
-		else :
-			return self.d[key][0]
-	
-	def __iter__(self) :
-		return self.d.__iter__()
-	
-	def iteritems(self) :
-		return self.d.iteritems()
-	
-	def __str__(self) :
-		return str(self.d)
-	
-	def to_dict(self) :
-		d = {}
-		for _k,_v in self.iteritems() :
-			if type(_k) == URIRef :
-				k = str(_k)
-			else :
-				k = _k
-			
-			if type(_v) == RDFObject :
-				v = _v.to_dict()
-			else :
-				v = _v
-				
-			d[k] = v
-		return d
-	
-	def ConnectedGraphURI(self, uri) :
-		newg = ConjunctiveGraph()
-		print type(uri), uri
-		for p, o in self.g.predicate_objects(uri):
-			print type(p), p
-			print type(o), o
-			newg.add((uri, p, o))
-		return newg
-	
-	# returns a graph which only contains triples which are part of the object
-	# defined by self.root 
-	def ConnectedGraphRoot(self):
-		return self.ConnectedGraphURI(self.root)
-
-	def ConnectedGraphRootRDFObject(self):
-		return RDFObject(self.ConnectedGraphRoot(), self.root, self.sparql)
-	
-	def ConnectedGraphURIRDFObject(self, uri):
-		return RDFObject(self.ConnectedGraphURI(uri), uri, self.sparql)
-	
-
-class RDFObject2(ConjunctiveGraph):
-	def __init__(self, g = None, uri = None, sparql = None):
-		ConjunctiveGraph.__init__(self)
-		self += g
-		self.root = uri
-		self.sparql = sparql
-	
-	def setRoot(uri):
-		self.root = uri
-	
-	def __call__(self, key) :
-		return self.objects(self.root, key)[0]
-
-	def __getitem__(self, key) :
-		return self.objects(self.root, key)
-	
-	def __setitem__(self, key, value) :
-		self.add(self.root, key, value)
-	
-	def __delitem__(self, key) :
-		self.remove(self.root, key, None)
-	
-	def iteritems(self) :
-		return self.predicate_objects(self.root)
 
 
 

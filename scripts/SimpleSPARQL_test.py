@@ -20,7 +20,7 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 		self.sparql.setNamespaces(n)
 		
 	def testn3String(self):
-		assert self.sparql.python_to_n3("a string") == '"a string"', 'incorrect handling of strings'
+		assert self.sparql.python_to_n3("a string") == '"a string"@en', 'incorrect handling of strings'
 	
 	def testn3Uri(self):
 		assert self.sparql.python_to_n3("e:tag") == 'e:tag', 'incorrect handling of uris'
@@ -41,7 +41,7 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 @prefix schema_property: <http://dwiel.net/express/schema_property/0.1/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix schema: <http://dwiel.net/express/schema/0.1/> .
- :new "x" "y" ; 1 2 .""", 'failed dictionary test 1: ' + self.sparql.python_to_n3({"x" : "y", 1 : 2})
+ :new "x"@en "y"@en ; 1 2 .""", 'failed dictionary test 1: ' + self.sparql.python_to_n3({"x" : "y", 1 : 2})
 
 	def testn3Dictionary2(self):
 		assert self.sparql.python_to_n3({":x" : "y", 1 : 2}) == """@prefix : <http://dwiel.net/express/rule/0.1/> .
@@ -50,7 +50,7 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 @prefix schema_property: <http://dwiel.net/express/schema_property/0.1/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix schema: <http://dwiel.net/express/schema/0.1/> .
- :new 1 2 ; :x "y" .""", 'failed dictionary test 2: ' + self.sparql.python_to_n3({":x" : "y", 1 : 2})
+ :new 1 2 ; :x "y"@en .""", 'failed dictionary test 2: ' + self.sparql.python_to_n3({":x" : "y", 1 : 2})
  
 	def testn3Dictionary3(self):
 		assert self.sparql.python_to_n3({":x" : "y", "e:b" : [1, 2, 3]}) == """@prefix : <http://dwiel.net/express/rule/0.1/> .
@@ -59,7 +59,7 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 @prefix schema_property: <http://dwiel.net/express/schema_property/0.1/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix schema: <http://dwiel.net/express/schema/0.1/> .
- :new :x "y" ; e:b 1, 2, 3 .""", 'failed dictionary test 3'
+ :new :x "y"@en ; e:b 1, 2, 3 .""", 'failed dictionary test 3'
 
 	def testn3Dictionary4(self):
 		assert self.sparql.python_to_n3({"e:b" : [{"e:tag" : ["abc", 'd"ef']}]}) == """@prefix : <http://dwiel.net/express/rule/0.1/> .
@@ -68,7 +68,7 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 @prefix schema_property: <http://dwiel.net/express/schema_property/0.1/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix schema: <http://dwiel.net/express/schema/0.1/> .
- :new e:b [ e:tag "abc", 'd"ef' ] .""", 'failed dictionary test 4'
+ :new e:b [ e:tag "abc"@en, 'd"ef'@en ] .""", 'failed dictionary test 4'
 
 	def testn3Dictionary5(self):
 		assert self.sparql.python_to_n3({"e:a" : {"e:b" : "b", "e:c" : "c"}}) == """@prefix : <http://dwiel.net/express/rule/0.1/> .
@@ -77,7 +77,7 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 @prefix schema_property: <http://dwiel.net/express/schema_property/0.1/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix schema: <http://dwiel.net/express/schema/0.1/> .
- :new e:a [ e:b "b" ; e:c "c" ] .""", 'failed dictionary test 4'
+ :new e:a [ e:b "b"@en ; e:c "c"@en ] .""", 'failed dictionary test 4'
 
 	#def testSPARQLDictionary1(self):
 		#print '---'
@@ -180,7 +180,7 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 			},
 			n.sparql.var : 2
 		}
-		assert self.sparql.python_to_SPARQL_long(query) == '?var2 <http://dwiel.net/express/rule/0.1/friend> ?var1 . ?var2 <http://dwiel.net/express/rule/0.1/url> "url" . ', 'test_python_to_SPARQL_long'
+		assert self.sparql.python_to_SPARQL_long(query) == '?var2 <http://dwiel.net/express/rule/0.1/friend> ?var1 . ?var2 <http://dwiel.net/express/rule/0.1/url> "url"@en . ', 'test_python_to_SPARQL_long'
 	
 	def testWrite(self):
 		query = {
