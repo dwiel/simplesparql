@@ -145,7 +145,8 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 				n.e['title'] : 'title',
 				n.e.date : 'date',
 				n.e.content : 'content'
-			}]
+			}],
+			n.sparql.delete : []
 		}, 'bad transformation'
 		
 	def test_preprocess_query2(self):
@@ -169,7 +170,8 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 				n.e['title'] : 'title',
 				n.e.date : 'date',
 				n.e.content : 'content'
-			}]
+			}],
+			n.sparql.delete : []
 		}, 'bad transformation'
 	
 	def test_python_to_SPARQL_long(self):
@@ -201,6 +203,19 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 			}
 		}
 		self.sparql.write(query)
+	
+	def testWrite1(self):
+		query = {
+			n.e.url : 'url',
+			n.e.similar : {
+				n.sparql.create : n.sparql.unless_exists,
+				n.e.similarity : 1.0,
+				n.e.similar_to : {
+					n.e.url : 'url'
+				}
+			}
+		}
+		ret = self.sparq.write(query)
 
 
 

@@ -4,17 +4,21 @@ TODO: clean up parts of code left from axpress (update_uri)
 TODO: factor out redundant code
 TODO: return errors inside the return dictionary rather than with an exception
 TODO: connect queries
+TODO: make standards compliant or warn (insert n3 is implementation-specific)
 """
 
-import time, re, copy, datetime, pprint
+import time, re, copy, datetime
 from SPARQLWrapper import *
 from rdflib import *
-#from urllib import urlopen, urlencode
+from urllib import urlopen, urlencode
+from pprint import pprint
 
 import rdflib.sparql.parser
 
 import Namespaces
 from RDFObject import RDFObject
+from QueryException import QueryException
+from PrettyQuery import prettyquery
 
 # from parseMatchOutput import construct
 
@@ -27,12 +31,30 @@ class SimpleSPARQL (SPARQLWrapper) :
 			self.setSPARUL(baseURI.replace('sparql', 'sparul'))
 		self.n = Namespaces.Namespaces()
 		self.lang = 'en'
+		self.debug = False
+		self.graph = None
 	
 	def setSPARUL(self, baseURI, returnFormat=None, defaultGraph=None):
 		self.sparul = SPARQLWrapper(baseURI, returnFormat, defaultGraph)
 	
 	def setNamespaces(self, n):
 		self.n = n
+	
+	def setDebug(self, _debug):
+		self.debug = _debug
+	
+	def setGraph(self, graph) :
+		self.graph = graph
+	
+	def wrapGraph(self, query) :
+		"""
+		if self.graph has a value, wrap the query in a GRAPH clause to specify where
+		the data should come from
+		"""
+		if self.graph :
+			return " GRAPH <%s> { %s } " % (self.graph, query)
+		else :
+			return query
 	
 	# from parseMatchOutput
 	# returns a GraphPattern
@@ -50,8 +72,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 			query = self.n.SPARQL_PREFIX() + query
 		except:
 			pass
-		query = query.replace("\\n",' ')
-		query = query.replace("\n",' ')
+		#query = query.replace("\\n",' ')
+		#query = query.replace("\n",' ')
 		# print "QUERY x ",query
 		query_type = self._parseQueryType(query)
 		if query_type == "DELETE" or query_type == "INSERT" :
@@ -63,14 +85,18 @@ class SimpleSPARQL (SPARQLWrapper) :
 			
 		if type(query) == unicode :
 			query = query.encode('utf-8')
-		query = query.replace('\n', ' ')
+		#query = query.replace('\n', ' ')
 		sparql.setQuery(query)
 		sparql.setReturnFormat(JSON)
 		# print "query", query
 		if query_type == "SELECT" :
 			return sparql.query().convert()
 		elif query_type == "ASK" :
-			return sparql.query().convert()['boolean']
+			try :
+				return sparql.query().convert()['boolean']
+			except Exception, e:
+				print query
+				raise e
 		else :
 			return sparql.query()
 	
@@ -94,7 +120,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 				yield RDFObject(c, self.n.e['uri'], self)
 
 	def doShortQueryURI(self, query) :
-		return self.doQueryURI("""SELECT DISTINCT ?uri WHERE { %s . }""" % query)
+		return self.doQueryURI("""SELECT DISTINCT ?uri WHERE { %s . }""" % self.wrapGraph(query))
 	
 	def doQueryNumber(self, query) :
 		qr = self.doQuery(query)
@@ -123,12 +149,14 @@ class SimpleSPARQL (SPARQLWrapper) :
 	
 	# replace all occurances of :new with a new unique uri
 	def replace_uri(self, src, dest):
+		src_pattern = self.wrapGraph("%s ?s ?o" % src.n3())
+		dest_pattern = self.wrapGraph("%s ?s ?o" % dest.n3())
 		ret = self.doQuery("""
-		INSERT { %s ?s ?o }
-		WHERE { %s ?s ?o }
-		DELETE { %s ?s ?o }
-		WHERE { %s ?s ?o }
-		""" % (dest.n3(), src.n3(), src.n3(), src.n3()))
+		INSERT { %s }
+		WHERE { %s }
+		DELETE { %s }
+		WHERE { %s }
+		""" % (dest_pattern, src_pattern, src_pattern, src_pattern))
 
 	def SPARQL_PREFIX(self) :
 		str = ''
@@ -155,6 +183,10 @@ class SimpleSPARQL (SPARQLWrapper) :
 			if self.n.matches(data) :
 				return data
 			else :
+				data = data.replace('\\', '\\\\')
+				data = data.replace('\n', '\\n')
+				data = data.replace('"', '\\"')
+				data = data.replace("'", "\\'")
 				if '"' not in data :
 					return u'"'+data+u'"@'+self.lang
 				if "'" not in data :
@@ -244,12 +276,15 @@ class SimpleSPARQL (SPARQLWrapper) :
 	
 
 	
-	def read_parse_helper(self, query, path, triples, explicit_vars, implicit_vars) :
+	def read_parse_helper(self, query, path, triples, explicit_vars, implicit_vars, given_vars) :
 		"""
 		@arg path is a list (like xpath) of where in the query we are
 		@arg triples is a list of triples which is altered to include all triples
 		@arg explicit_vars is a dict which is altered to include paths to exp vars
 		@arg implicit_vars is a dict which is altered to include paths to imp vars
+		@arg given_vars is a list which is altered to include paths to all 
+			variables, includes the parameters with constant values which are 
+			being used to describe the data.
 		@return SPARQL Literal or variable to refer to this part of the query.
 			triples, explicit_vars and implicit_vars are filled.
 		"""
@@ -262,6 +297,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 			if self.n.matches(query) :
 				return query
 			else :
+				query = query.replace('\\', '\\\\')
+				query = query.replace('\n', '\\n')
 				if '"' not in query :
 					return u'"'+query+u'"@'+self.lang
 				if "'" not in query :
@@ -277,6 +314,12 @@ class SimpleSPARQL (SPARQLWrapper) :
 			return u'"%d-%d-%dT%d:%d:%dT"^^xsd:dateTime' % query[0:6]
 		elif type(query) == rdflib.URIRef :
 			return query.n3()
+		elif type(query) == rdflib.Literal :
+			if query.datatype == None :
+				# this is a string
+				return query.n3()+'@'+self.lang
+			else :
+				return query.n3()
 		
 		# cases resulting in explicit variables
 		elif query == None :
@@ -289,26 +332,44 @@ class SimpleSPARQL (SPARQLWrapper) :
 		elif type(query) == list and len(query) == 1 and type(query[0]) == dict :
 			path = copy.copy(path)
 			path.append(list)
-			return self.read_parse_helper(query[0], path, triples, explicit_vars, implicit_vars)
+			return self.read_parse_helper(query[0], path, triples, explicit_vars, implicit_vars, given_vars)
+		
+		# a list of only dicts length > 1 (length > 1 known because not the above case)
+		elif type(query) == list and all([type(i) == dict for i in query]) :
+			# should this match any of these object or all of these?
+			# should maybe not require that the type of all objects in the list are 
+			# dicts.
+			# An any clause requires optional subqueries to be implemented
 		
 		# complex queries
 		elif type(query) == dict :
 			if self.n.sparql.subject in query :
 				subject = query[self.n.sparql.subject]
+				if isinstance(subject, URIRef) :
+					subject = subject.n3()
 				del query[self.n.sparql.subject]
 				if subject == None :
 					subject = self._new_var(explicit_vars, path)
 			else :
 				subject = self._new_var(implicit_vars, path)
 			for key, value in query.iteritems() :
+				# print 'k',key,'v',value
 				path2 = copy.copy(path)
-				nk = self.read_parse_helper(key, path, triples, explicit_vars, implicit_vars)
+				nk = self.read_parse_helper(key, path, triples, explicit_vars, implicit_vars, given_vars)
 				path2.append(key)
-				nv = self.read_parse_helper(value, path2, triples, explicit_vars, implicit_vars)
+				nv = self.read_parse_helper(value, path2, triples, explicit_vars, implicit_vars, given_vars)
+				# print '---', nk, nv, type(nk), type(nv)
+				# if the new value is not a uri or a variable, then its a given value
+				if len(nv) != 0 and nv[0] != '<' and nv[0] != '?' :
+					given_vars.append(copy.copy(path2))
 				pair = (nk, nv)
-				print 'dict', pair
+				#print 'dict', pair
 				triples.append((subject, nk, nv))
 			return subject
+		
+		# else ...
+		else :
+			raise Exception("unkown data type: %s" % str(type(query)))
 	
 	def verify_restrictions_helper(self, bindings, vars, path, var, explicit_vars) :
 		# is path2 one deeper than path1?
@@ -359,15 +420,13 @@ class SimpleSPARQL (SPARQLWrapper) :
 			binding = binding_set[var]
 			var_values.add(tuple_binding(binding))
 		
-		# TODO: these exceptions need to be put into the query and result in a differen
-		#   status code
 		# if this is not a list of values, and there are too many values, throw an error
-		if var_path[-1] != list :
+		if len(var_path) == 0 or var_path[-1] != list :
 			if len(var_values) == 0 :
-				raise Exception('missing value')
+				raise QueryException(var_path, 'no match found')
 				# return 'missing value'
 			elif len(var_values) > 1 :
-				raise Exception('too many values')
+				raise QueryException(var_path, 'too many values')
 				# return 'too many values'
 		
 		# recur ...
@@ -408,7 +467,10 @@ class SimpleSPARQL (SPARQLWrapper) :
 			if var in explicit_vars :
 				if binding['type'] == 'bnode' :
 					raise Exception('can not bind a bnode to a variable, sorry')
-				result_query[self.n.sparql.subject] = binding
+				elif binding['type'] == 'uri' :
+					result_query[self.n.sparql.subject] = URIRef(binding['value'])
+				else :
+					result_query[self.n.sparql.subject] = binding
 			
 			result_queries[tuple_binding(binding)] = result_query
 		
@@ -423,7 +485,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 			else :
 				results.append(result_queries[result])
 		
-		if path[-1] != list :
+		if len(var_path) == 0 or path[-1] != list :
 			results = results[0]
 		
 		# print results
@@ -438,29 +500,132 @@ class SimpleSPARQL (SPARQLWrapper) :
 		vars.update(implicit_vars)
 		path = vars[root_var]
 		
+		if bindings == [{}] :
+			print path
+			if path == [list] :
+				return []
+			else :
+				return None
+		
 		return self.verify_restrictions_helper(bindings, vars, [], root_var, explicit_vars.keys())
 		# given the variables which have been bound so far, check that values which
-		# should be unique are
+		# should be unique aredict
 	
-	def read_parse(self, query) :
+	def read(self, query) :
+		n = self.n
+		try :
+			return {
+				n.sparql.status : n.sparql.ok,
+				n.sparql.result : self.read_raw(query)
+			}
+		except QueryException, qe :
+			q = query
+			for ele in qe.path :
+				q = q[ele]
+			q[n.sparql.error_inside] = '.'
+			return {
+				n.sparql.status : n.sparql.error,
+				n.sparql.query : query,
+				n.sparql.error_path : qe.path,
+				n.sparql.error_message : qe.message,
+			}
+	
+	def read_raw(self, query) :
 		# parse out SPARQL
 		# explicit_vars
 		# implicit_vars
+		n = self.n
+
+		modifiers = []
+		# extract basic keywords if the are present
+		if type(query) == list :
+			rootquery = query[0]
+		else :
+			rootquery = query
+		if n.sparql.limit in rootquery :
+			modifiers.append("LIMIT %d" % rootquery[n.sparql.limit])
+			del rootquery[n.sparql.limit]
+		if n.sparql.offset in rootquery :
+			modifiers.append("OFFSET %d" % rootquery[n.sparql.offset])
+			del rootquery[n.sparql.offset]
+		if n.sparql.sort in rootquery :
+			sort_path = rootquery[n.sparql.sort]
+			if type(sort_path) != list :
+				sort_path = [sort_path]
+			if type(query) == list :
+				sort_path.insert(0, list)
+			del rootquery[n.sparql.sort]
+		else :
+			sort_path = None
+		
 		self._reset_var()
 		triples = []
 		explicit_vars = {}
 		implicit_vars = {}
-		root_subject = self.read_parse_helper(query, [], triples, explicit_vars, implicit_vars)
+		given_vars = []
+		root_subject = self.read_parse_helper(query, [], triples, explicit_vars, implicit_vars, given_vars)
 		triples_str = ""
+		#print 'triples'
 		for triple in triples :
+			#print triple
 			triples_str += "%s %s %s . " % triple
-		SPARQL = "SELECT DISTINCT * WHERE { %s }" % triples_str
+		#print
+		
+		def find_var_from_path(explicit_vars, sort_path) :
+			for var, path in explicit_vars.iteritems() :
+				if sort_path == path :
+					return var
+			return None
+		
+		if sort_path :
+			sort_var = find_var_from_path(explicit_vars, sort_path)
+			if sort_var :
+				modifiers.insert(0, 'ORDER BY ?%s' % sort_var)
+			else :
+				print sort_path
+				print explicit_vars
+				raise Exception('sort path not valid')
+		
+		SPARQL = "SELECT DISTINCT * WHERE { %s } %s" % (self.wrapGraph(triples_str), ' '.join(modifiers))
 		results = self.doQuery(SPARQL)
 		# print results
 		# need to enforce restrictions on number of results implied by the query (
 		# None vs. [] vs. {})
 		# in the order that the implicit and explicit vars occur in the query tree
 		# count how many results there are.
+		
+		#print 'given_vars', given_vars
+		#print 'explicit_vars', explicit_vars
+		
+		# n.bind('test', '<http://example/test>')
+		
+		sumplugin = {}
+		sumplugin['inputs'] = [[n.test.x], [n.test.y]]
+		sumplugin['outputs'] = [[n.test.sum]]
+		sumplugin['function'] = lambda q: {n.test.sum : q[n.test.x] + q[n.test.y]}
+		
+		def testplugin(plugin, given_vars, explicit_vars) :
+			# all plugin inputs must have given values in the query
+			# TODO: is there a special case with lists being ok in some cases?
+			for input in plugin['inputs'] :
+				if input not in given_vars :
+					return False
+			# all missing values in the query must have output values by the plugin
+			# this could be only some of the values, which are filled in and then 
+			#   passed on to the database to check
+			# This code shouldn't get too in depth as it will probably be replaced
+			#   when converted to find combinations of plugins to complete a query
+			for missing in explicit_vars.values() :
+				if missing[-1] == list :
+					if missing not in plugin['outputs'] and missing[0:-1] not in plugin['outputs'] :
+						return False
+				else :
+					if missing not in plugin['outputs'] :
+						return False
+			return True
+		
+		if testplugin(sumplugin, given_vars, explicit_vars) :
+			return sumplugin['function'](query)
 		
 		# start with vars whose path is [] or [list]
 		verification = self.verify_restrictions(results, explicit_vars, implicit_vars, root_subject)
@@ -470,9 +635,9 @@ class SimpleSPARQL (SPARQLWrapper) :
 		# return SPARQL, triples, explicit_vars, implicit_vars
 		# return SPARQL, explicit_vars, implicit_vars
 
-	def read(self, data) :
+	def read_old(self, data) :
 		bound_vars = {}
-		results = self.doQuery("SELECT DISTINCT * WHERE { %s }" % self.python_to_SPARQL(data, Variable("uri"), bound_vars))
+		results = self.doQuery("SELECT DISTINCT * WHERE { %s }" % self.wrapGraph(self.python_to_SPARQL(data, Variable("uri"), bound_vars)))
 		# print bound_vars
 		# print results
 		objs = []
@@ -488,7 +653,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		return objs
 	
 	def quickread(self, data) :
-		results = self.doQuery("SELECT DISTINCT * WHERE { %s }" % self.python_to_SPARQL(data, Variable("uri")))
+		results = self.doQuery("SELECT DISTINCT * WHERE { %s }" % self.wrapGraph(self.python_to_SPARQL(data, Variable("uri"))))
 		values = []
 		for rawbindings in results['results']['bindings'] :
 			for key, value in rawbindings.iteritems() :
@@ -500,8 +665,13 @@ class SimpleSPARQL (SPARQLWrapper) :
 
 	def ask(self, query) :
 		if type(query) == dict :
-			query = self.python_to_SPARQL(query)
-		return self.doQuery("ASK { %s }" % query)
+			# query = self.python_to_SPARQL(query)
+			triples = []
+			self.read_parse_helper(query, [], triples, {}, {}, [])
+			query = ""
+			for triple in triples :
+				query += "%s %s %s . " % triple
+		return self.doQuery("ASK { %s }" % self.wrapGraph(query))
 	
 	# remove dicts with pairs like n.sparql.create : n.sparql.unless_exists with a
 	# n.sparql.var : 1
@@ -587,8 +757,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 		rest of the dictionary describes the object of the triple
 		"""
 		sparql = self.n.sparql
-		if type(query) is not dict :
-			raise Exception('query must be a dictionary')
+		if type(query) is not dict and type(query) is not list:
+			raise Exception('query must be a dictionary or a list')
 		
 		inserts = []
 		deletes = []
@@ -613,7 +783,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 			delete[sparql.predicate] = None
 			deletes.append(delete)
 		
-		print 'deletes:',deletes
+		# print 'deletes:',deletes
 		
 		# this happens when the root object is a create
 		#if query is None and _ is not None :
@@ -676,7 +846,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 			
 			return root, ret
 		else :
-			print 'recur',type(query),query,self.python_to_n3(query)
+			# print 'recur',type(query),query,self.python_to_n3(query)
 			return self.python_to_n3(query), ""
 	
 	def python_to_SPARQL_long(self, query, var = None) :
@@ -734,7 +904,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		return new_inserts
 	
 	def _extract_deletes(self, query) :
-		"""given a query in the form describes in _preprocess_query, return a set of
+		"""given a query in the form described in _preprocess_query, return a set of
 		insert clauses to be used in the final SPARQL queries"""
 		sparql = self.n.sparql
 		
@@ -770,11 +940,17 @@ class SimpleSPARQL (SPARQLWrapper) :
 		inserts = self._extract_inserts(query)
 		deletes = self._extract_deletes(query)
 		
-		print 'deletes'
-		pprint.pprint(deletes)
+		# print 'deletes'
+		# pprint(deletes)
 		
-		#print 'where', where
-		#print 'inserts', inserts
+		print 'query'
+		pprint(query)
+		print 'where'
+		pprint(where)
+		print 'inserts'
+		pprint(inserts)
+		print 'deletes'
+		pprint(deletes)
 		
 		if where is not "" and not self.ask(where) :
 			ret = { 'error' : 'where clause not found', 'where' : where, 'query' : query}
@@ -818,7 +994,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 					count = self.doQueryNumber("""
 						SELECT COUNT(DISTINCT %s)
 						WHERE { %s }
-					""" % ('?var'+insert[sparql.var], where))
+					""" % ('?var'+insert[sparql.var], self.wrapGraph(where)))
 					if count != 1 :
 						#print 'count not 1:', count
 						# TODO: somehow pass this on to the return structure
@@ -827,27 +1003,36 @@ class SimpleSPARQL (SPARQLWrapper) :
 					create = create[0]
 			
 			insert_str_uri = self.python_to_SPARQL_long(insert, self._uriVar())
-			print 'insert_str_uri',insert_str_uri
+			insert_str_uri = self.wrapGraph(insert_str_uri)
+			where = self.wrapGraph(where)
+			# print 'insert_str_uri',insert_str_uri
 			if create == sparql.unless_exists :
 				insert_str_bnode = self.python_to_SPARQL_long(insert, self._bnodeVar())
 				if not self.ask("%s %s" % (where, insert_str_bnode)) :
-					print 'do',self.doQuery("INSERT { %s } WHERE { %s }" % (insert_str_uri, where))
+					if self.debug :
+						print "INSERT { %s } WHERE { %s }" % (insert_str_uri, where)
+					else :
+						self.doQuery("INSERT { %s } WHERE { %s }" % (insert_str_uri, where))
 			elif create == sparql.unconditional :
-				print 'do',self.doQuery("INSERT { %s } WHERE { %s }" % (insert_str_uri, where))
+				if self.debug :
+					print "INSERT { %s } WHERE { %s }" % (insert_str_uri, where)
+				else :
+					self.doQuery("INSERT { %s } WHERE { %s }" % (insert_str_uri, where))
 			else :
 				raise Exception("unkown create clause: " + create)
 		
 		for delete in deletes :
-			pprint.pprint(delete)
+			# pprint(delete)
 			
 			del delete[sparql.delete]
 			
 			delete_str_uri = self.python_to_SPARQL_long(delete, self._bnodeVar())
 			
 			print 'delete_str_uri',delete_str_uri
-			q = "DELETE { %s } WHERE { %s %s }" % (delete_str_uri, delete_str_uri, where)
-			print q
-			
+			# delete_str_uri = self.wrapGraph(delete_str_uri)
+			# where = delete_str_uri + ' ' + where
+			# where = self.wrapGraph(where)
+			# self.doQuery("DELETE { %s } WHERE { %s }" % (delete_str_uri, where))
 		
 		return {'result' : 'ok', 'query' : query}
 	
@@ -882,7 +1067,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 		subject = self.n3(subject)
 		pred = self.n3(pred)
 		object = self.n3(object)
-		self.doQuery("INSERT { %s %s %s }" % (subject, pred, object))
+		triple = " %s %s %s " % (subject, pred, object)
+		self.doQuery("INSERT { %s }" % self.wrapGraph(triple))
 
 
 
@@ -1147,5 +1333,87 @@ class SimpleSPARQL (SPARQLWrapper) :
 
 		
 		print self.sparql.write(fragment)
+
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+
+the provides data structure could be quite complex or quite simple.  Extra 
+complexity can be added with extra details and requirements about the input and
+output types.  For now, simply define them as inputs or outputs.  Later these
+could get more interesting.
+
+last.fm plugin provides :
+	{
+		n.lastfm.artist : n.transform.input,
+		n.lastfm.number_of_listeners : n.transform.output,
+		n.lastfm.number_of_listens : n.transform.output,
+		n.lastfm.similar_artist : [{
+			n.lastfm.artist : n.transform.output,
+			n.lastfm.similarity_measure : n.transform.output
+		}]
+		...
+		n.transform.guarenteed_output : False
+	}
+	
+	inputs:
+		[n.lastm.artist]
+	outputs:
+		[n.lastfm.number_of_listeners]
+		[n.lastfm.number_of_listens]
+		[n.lastfm.similar_artist, list, n.lastfm.artist]
+		[n.lastfm.similar_artist, list, n.lastfm.similarity_measure]
+	
+query:
+	{
+		n.lastfm.artist : 'The New Pornographers',
+		n.lastfm.similar_artist : [{
+			n.lastfm.artist : None
+		}],
+		n.x.prop : []
+	}
+	
+	inputs (provided) : (given_vars)
+		[n.lastfm.artist]
+	outputs (missing) : (explicit_vars)
+		[n.lastfm.similar_artist, list, n.lastfm.artist]
+		[n.x.prop, list]
+		
+
+
+to determine if a query matches the plugin :
+	for all input variables required by the plugin, the query must provide a value
+	for all missing values in the query, the plguin must provide an output (of the
+		correct type.  Possible types :
+			literal, list of literals, object, list of objects
+		if the query expects a list, just one is fine
+		if the plugin expects a list, just one is fine
+	
+NOTE: extra speed might be possible by using a heuristic which keeps track of 
+	which values are most descriminatory.  If a plugin requires multiple inputs
+	to be provided, some might provide more descriminatory power than the others.
+NOTE: extra speed might also be possible through some kind of hashing of the 
+	variables.  The basic algorithm is an attempt to match two sets of lists from
+	both the query and the output.  Could build a decision tree where each branch
+	is a test about the query having a specific input or output.  The decision 
+	tree could be organized in such a way that more often query/plugin matches
+	require the fewest number of branches.
+
+NOTE: social: keep track of which plugin inputs and outputs are commonly paired
+	(given life)
+
 
 """

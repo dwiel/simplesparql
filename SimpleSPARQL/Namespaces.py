@@ -1,6 +1,11 @@
 from rdflib import Namespace
 import re
 
+def uri_could_be_from_namespace(self, uri, namespace) :
+	if re.match(namespace+"([^ .\}]+)", uri) :
+		return True
+	return False
+	
 class Namespaces() :
 	namespaces = {}
 
@@ -31,6 +36,13 @@ class Namespaces() :
 			if re.match(prefix+":([^ .\}]+)", uri) :
 				return True
 		return False
+	
+	def shorten(self, uri) :
+		for prefix, namespace in self.namespaces.iteritems() :
+			g = re.match(namespace+"([^ .\}]+)", uri)
+			if g :
+				return prefix+':'+g.group(1)
+		return '<'+uri+'>'
 	
 	def __getitem__(self, key) :
 		return self.namespaces[key]

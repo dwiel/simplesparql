@@ -1,3 +1,13 @@
 from SimpleSPARQL import SimpleSPARQL
-from Namespaces import Namespaces, globalNamespaces
+from Namespaces import Namespaces, globalNamespaces, uri_could_be_from_namespace
 from RDFObject import RDFObject
+
+from PrettyQuery import prettyquery
+
+from PassWrapInList import PassWrapInList
+from PassAssignVariableNumber import PassAssignVariableNumber
+from PassExtractWriteQueries import PassExtractWriteQueries
+from PassCompleteReads import PassCompleteReads
+from PassCheckCreateUnlessExists import PassCheckCreateUnlessExists
+
+from QueryException import QueryException
