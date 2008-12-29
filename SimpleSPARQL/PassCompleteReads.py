@@ -25,19 +25,20 @@ class PassCompleteReads(CompilationPass) :
 		read each read query from the database and replace the query with the result
 		"""
 		newreads = []
-		for q in query[n.sparql.reads] :
+		for i, q in enumerate(query[n.sparql.reads]) :
 			try :
 				# find all n.sparql.vars and temporarily remove them.  store them in a 
 				# path -> varname mapping while inlimbo
 				path = q[n.sparql.path]
 				del q[n.sparql.path]
 				path_to_varname = self.path_to_varname_from_query(q)
-				dictrecursiveupdate(q, self.sparql.read_raw(q))
+				rawret = self.sparql.read_raw(q)
+				dictrecursiveupdate(q, rawret)
 				self.replace_vars_in_query(q, path_to_varname)
 				q[n.sparql.path] = path
 				newreads.append(q)
 			except QueryException, qe:
-				raise QueryException(path + qe.path, qe.message)
+				raise QueryException(path + qe.path, qe.message, (n.sparql.reads, i) + qe.path)
 		query[n.sparql.reads] = newreads
 		
 		return query

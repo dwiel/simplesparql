@@ -21,6 +21,19 @@ def querypath(query, path) :
 	for ele in path :
 		query = query[ele]
 	return query
+	
+#def dictsubset(x, y) :
+	#"""
+	#returns True if x is a subset of y
+	#"""
+	#for k in x :
+		#if type(x[k]) == dict :
+			#if not dictsubset(x[k], y[k]) :
+				#return False
+		#else :
+			#if x[k] != y[k] :
+				#return False
+	#return True	
 
 def dictrecursiveupdate(x, new) :
 	"""
@@ -33,7 +46,15 @@ def dictrecursiveupdate(x, new) :
 			if type(x[k]) == dict and type(v) == dict :
 				dictrecursiveupdate(x[k], v)
 			elif type(x[k]) == list and type(v) == list :
-				x[k].extend(v)
+				if len(x[k]) == 0 :
+					x[k].extend(v)
+				else :
+					# print "WARNING: this dictrecursiveupdate may not be valid.  please double check it"
+					for i, vi in enumerate(v) :
+						if type(x[k][i]) == dict and type(vi) == dict :
+							dictrecursiveupdate(x[k][i], vi)
+						else :
+							x[k][i] = vi
 			else :
 				x[k] = v
 		else :

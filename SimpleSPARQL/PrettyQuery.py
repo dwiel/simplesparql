@@ -2,6 +2,7 @@ from SimpleSPARQL import *
 
 n = Namespaces.globalNamespaces()
 n.bind('sparql', '<http://dwiel.net/express/sparql/0.1/>')
+n.bind('test', '<http://dwiel.net/express/test/0.1/>')
 
 def prettyquery(query, tabs = '', indent = '  ', namespaces = n) :
 	s = prettyquery_helper(query, tabs, indent, namespaces)
@@ -30,14 +31,28 @@ def prettyquery_helper(query, tabs = '', indent = '  ', namespaces = n) :
 	elif type(query) == list :
 		if len(query) == 0 :
 			s += '[]\n'
+		elif len(query) <= 3 :
+			s += '['
+			prettylist = [prettyquery_helper(i, tabs+indent, indent) for i in query]
+			#for item in sorted(prettylist) :
+			for item in prettylist :
+				s += ' ' + item + ','
+			s += ' ]\n'
 		else :
 			s += '[\n'
 			prettylist = [prettyquery_helper(i, tabs+indent, indent) for i in query]
-			for i in sorted(prettylist) :
-				s += tabs + indent + i + ',\n'
+			#for item in sorted(prettylist) :
+			for item in prettylist :
+				s += tabs + indent + item + ',\n'
 			s += tabs + ']\n'
 	elif isinstance(query, URIRef) :
-		return unicode(namespaces.shorten(query))
+		return unicode(namespaces.shortenForN(query))
+	elif isinstance(query, Literal) :
+		if query.datatype == rdflib.URIRef('http://www.w3.org/2001/XMLSchema#float') or \
+		   query.datatype == rdflib.URIRef('http://www.w3.org/2001/XMLSchema#int') :
+			return unicode(query.toPython())
+		else :
+			return repr(unicode(query))
 	else :
 		s += repr(query)
 	

@@ -44,6 +44,13 @@ class Namespaces() :
 				return prefix+':'+g.group(1)
 		return '<'+uri+'>'
 	
+	def shortenForN(self, uri) :
+		for prefix, namespace in self.namespaces.iteritems() :
+			g = re.match(namespace+"([^ .\}]+)", uri)
+			if g :
+				return 'n.'+prefix+'.'+g.group(1)
+		return '<'+uri+'>'
+	
 	def __getitem__(self, key) :
 		return self.namespaces[key]
 	

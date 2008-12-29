@@ -16,11 +16,12 @@ class PassCheckCreateUnlessExists(CompilationPass) :
 		self.sparql = sparql
 		
 	def __call__(self, query) :
-		for q in query[n.sparql.writes] :
+		for i, q in enumerate(query[n.sparql.writes]) :
 			# if this is a create unless_exists query
 			if n.sparql.create in q and q[n.sparql.create] == n.sparql.unless_exists :
 				diff = dictmask(q, [n.sparql.create, n.sparql.var, n.sparql.path])
-				q[n.sparql.subject] = None
+				if n.sparql.subject not in q :
+					q[n.sparql.subject] = None
 				res = self.sparql.read(q)
 				if res[n.sparql.status] == n.sparql.ok :
 					# it already exists, connect to the existing instead
@@ -28,19 +29,18 @@ class PassCheckCreateUnlessExists(CompilationPass) :
 					q.update(res[n.sparql.result])
 					diff[n.sparql.create] = n.sparql.existed
 				elif res[n.sparql.error_message] == 'no match found' :
-					del q[n.sparql.error_inside]
+					# del q[n.sparql.error_inside]
 					diff[n.sparql.create] = n.sparql.create
-					# print "it doesn't yet exist, create it, then connect to it"
 					# it doesn't yet exist, create it, then connect to it
 				elif res[n.sparql.error_message] == 'too many values' :
-					del q[n.sparql.error_inside]
+					# del q[n.sparql.error_inside]
 					# diff[n.sparql.create] = n.sparql.many_exist
-					raise QueryException(res[n.sparql.error_path], 'many exist')
+					raise QueryException(diff[n.sparql.path] + res[n.sparql.error_path], 'many exist', (n.sparql.writes, i) + res[n.sparql.error_path])
 				else :
 					raise QueryException(res[n.sparql.error_path], res[n.sparql.error_message])
 				q.update(diff)
 			# if this is a create unless_connected query
-			if n.sparql.create in q and q[n.sparql.create] == n.sparql.unless_connected :
+			elif n.sparql.create in q and q[n.sparql.create] == n.sparql.unless_connected :
 				# TODO: harder for many ... do later
 				# TODO: assuming not many, get URI of parent object and predicate
 				#       connecting it to this new object.
@@ -64,15 +64,20 @@ class PassCheckCreateUnlessExists(CompilationPass) :
 				
 				diff = dictmask(q, [n.sparql.create, n.sparql.var, n.sparql.path])
 				q = {n.sparql.subject : parent, predicate : q}
-				if self.sparql.ask(q) :
-					print 'it already exists, connect to the existing instead'
+				if n.sparql.subject not in q[predicate] :
+					q[predicate][n.sparql.subject] = None
+				res = self.sparql.read(q)
+				if res[n.sparql.status] == n.sparql.ok :
+					diff[n.sparql.create] = n.sparql.connect
+					diff[n.sparql.subject] = res[n.sparql.result][predicate][n.sparql.subject]
 					# it already exists, connect to the existing instead
 				else :
-					print "it doesn't yet exist, create it, then connect to it"
+					diff[n.sparql.create] = n.sparql.create
 					# it doesn't yet exist, create it, then connect to it
 				q = q[predicate]
 				q.update(diff)
-				
+			elif n.sparql.create in q and q[n.sparql.create] == n.sparql.force :
+				q[n.sparql.create] = n.sparql.create
 		
 		return query
 				
