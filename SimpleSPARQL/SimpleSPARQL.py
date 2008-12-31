@@ -40,7 +40,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		self.debug = False
 		self.graph = None
 		self.translations = []
-		self.cache = Cache
+		self.cache = Cache(self)
 	
 	def setSPARUL(self, baseURI, returnFormat=None, defaultGraph=None):
 		self.sparul = SPARQLWrapper(baseURI, returnFormat, defaultGraph)
@@ -1354,8 +1354,12 @@ class SimpleSPARQL (SPARQLWrapper) :
 						self.register_executed(new_history, translation, binding)
 						self.vars = binding
 						
-						# output_bindings = self.cache.call(translation, self.vars)
-						output_bindings = translation[n.meta.function](self.vars)
+						# if this translation expects to be cached, use a cache
+						if n.cache.expiration_length in translation :
+							output_bindings = self.cache.call(translation, self.vars)
+						else : 
+							output_bindings = translation[n.meta.function](self.vars)
+						
 						if output_bindings == None :
 							output_bindings = self.vars
 						if type(output_bindings) == dict :
@@ -1365,7 +1369,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 						print 'output_bindingss', prettyquery(output_bindingss),
 						output = self.sub_var_bindings(translation[n.meta.output], output_bindingss)
 						output = [x for x in output]
-						output = output[0] # if there are multiple sets of bindings for a given 
+						output = output[0] # if there are multiple sets of bindings for a given just use the first one for now
 						print 'output',prettyquery(output),
 						output = self.sub_var_bindings(output, [self.vars])
 						print 'name',translation[n.meta.name]

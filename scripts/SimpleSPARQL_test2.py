@@ -148,7 +148,7 @@ sparql.register_translation({
 	n.meta.function : lastfmsimilar,
 	n.meta.scale : 100,
 	n.meta.expected_time : 1,
-	#n.cache.expiration_length : 2629743 # 1 month in seconds
+	n.cache.expiration_length : 2629743 # 1 month in seconds
 })
 
 #input : [
