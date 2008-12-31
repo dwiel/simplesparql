@@ -23,7 +23,7 @@ a = n.rdfs.type
 
 #def foo(vars) :
 	#vars[n.var.sum] = vars[n.var.x] + vars[n.var.y]
-#sparql.register_plugin({
+#sparql.register_translation({
 	#n.meta.name : 'sum',
 	#n.meta.input : [
 		#[n.var.uri, n.test.x, n.var.x],
@@ -37,7 +37,7 @@ a = n.rdfs.type
 
 #def foo2(vars) :
 	#vars[n.var.prod] = vars[n.var.sum] * vars[n.var.z]
-#sparql.register_plugin({
+#sparql.register_translation({
 	#n.meta.name : 'product',
 	#n.meta.input : [
 		#[n.var.uri, n.test.sum, n.var.sum],
@@ -51,7 +51,7 @@ a = n.rdfs.type
 
 #def div(vars) :
 	#vars[n.var.div] = float(vars[n.var.sum]) / vars[n.var.z]
-#sparql.register_plugin({
+#sparql.register_translation({
 	#n.meta.name : 'division',
 	#n.meta.input : [
 		#[n.var.uri, n.test.sum, n.var.sum],
@@ -63,7 +63,7 @@ a = n.rdfs.type
 	#n.meta.function : div
 #})
 
-#ret = sparql.read_plugins([
+#ret = sparql.read_translations([
 	#[n.test.u, n.test.x, 1],
 	#[n.test.u, n.test.y, 2],
 	#[n.test.u, n.test.z, 100],
@@ -93,7 +93,7 @@ a = n.rdfs.type
 
 
 
-sparql.register_plugin({
+sparql.register_translation({
 	n.meta.name : 'rdfs.label => music.artist_name',
 	n.meta.input : [
 		[n.var.artist, n.rdfs.label, n.var.artist_name],
@@ -136,7 +136,7 @@ def lastfmsimilar(vars) :
 		}
 	]
 
-sparql.register_plugin({
+sparql.register_translation({
 	n.meta.name : 'last.fm similar artists',
 	n.meta.input : [
 		[n.var.artist, n.music.artist_name, n.var.artist_name],
@@ -171,7 +171,7 @@ sparql.register_plugin({
 
 
 
-ret = sparql.read_plugins([
+ret = sparql.read_translations([
 #	[n.var.album, n.music.playable, True],
 	[n.var.album, n.music.artist, n.var.similar_artist],
 	[n.var.artist, n.lastfm.similar_to, n.var.similar_artist],
@@ -231,7 +231,7 @@ def foo(vars) :
 	print 'vars',vars
 	vars[n.var.album] = n.music_album[vars['album_name']]
 
-sparql.register_plugin({
+sparql.register_translation({
 	n.meta.input : [
 		[n.meta_var.album, n.music.album_name, n.var.album_name],
 	],
@@ -241,7 +241,7 @@ sparql.register_plugin({
 	n.meta.function : foo
 })
 
-ret = sparql.eval_plugins([
+ret = sparql.eval_translations([
 	[n.test.x, n.music.album_name, "Beat Romantic"]
 ])
 
@@ -249,14 +249,14 @@ ret = [x for x in ret]
 print SimpleSPARQL.prettyquery(ret)
 exit()
 
-ret = sparql.eval_plugins([
+ret = sparql.eval_translations([
 	[n.test.x, n.music.album_name, "Beat Romantic"]
 ])
 
 ret = [x for x in ret]
 print SimpleSPARQL.prettyquery(ret)
 
-#ret = sparql.read_plugins([
+#ret = sparql.read_translations([
 	#[n.test.x, n.music.album_name, "Beat Romantic"],
 	#[n.var.album, n.music.album_name, n.var.album_name],
 #])

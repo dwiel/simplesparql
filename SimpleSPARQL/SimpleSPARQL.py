@@ -39,7 +39,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		self.lang = 'en'
 		self.debug = False
 		self.graph = None
-		self.plugins = []
+		self.translations = []
 		self.cache = Cache
 	
 	def setSPARUL(self, baseURI, returnFormat=None, defaultGraph=None):
@@ -80,9 +80,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 			query = self.n.SPARQL_PREFIX() + query
 		except:
 			pass
-		#query = query.replace("\\n",' ')
-		#query = query.replace("\n",' ')
-		# print "QUERY x ",query
+		
 		query_type = self._parseQueryType(query)
 		if query_type == "DELETE" or query_type == "INSERT" :
 			sparql = self.sparul
@@ -93,10 +91,10 @@ class SimpleSPARQL (SPARQLWrapper) :
 			
 		if type(query) == unicode :
 			query = query.encode('utf-8')
-		#query = query.replace('\n', ' ')
+		
 		sparql.setQuery(query)
 		sparql.setReturnFormat(JSON)
-		# print "query", query
+		
 		if query_type == "SELECT" :
 			return sparql.query().convert()
 		elif query_type == "ASK" :
@@ -109,6 +107,10 @@ class SimpleSPARQL (SPARQLWrapper) :
 			return sparql.query()
 	
 	def doQueryURI(self, query, construct_str = None) :
+		"""
+		depricated
+		given a query with 
+		"""
 		g = self.doQuery(query)
 		for rawbindings in g['results']['bindings'] :
 			if construct_str == None :
@@ -123,7 +125,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 				bindings = {}
 				for key,value in rawbindings.iteritems() :
 					bindings['?'+key] = Literal(value['value'])
-				# print bindings
+				
 				pattern.construct(c, bindings)
 				yield RDFObject(c, self.n.e['uri'], self)
 
@@ -131,6 +133,10 @@ class SimpleSPARQL (SPARQLWrapper) :
 		return self.doQueryURI("""SELECT DISTINCT ?uri WHERE { %s . }""" % self.wrapGraph(query))
 	
 	def doQueryNumber(self, query) :
+		"""
+		@arg query - SPARQL query with a single number expected to be returned
+		@return the single number returned from the query
+		"""
 		qr = self.doQuery(query)
 		datatype = qr['results']['bindings'][0]['.1']['datatype']
 		value = qr['results']['bindings'][0]['.1']['value']
@@ -440,15 +446,6 @@ class SimpleSPARQL (SPARQLWrapper) :
 				return None
 	
 		var_path = vars[var]
-		#print 'bindings:',bindings
-		#print 'vars'
-		#for v,p in vars.iteritems() :
-			#print '  ',v,p
-		#print 'var:',var
-		#print 'var_path:', var_path
-		#print ','.join(vars.keys())
-		#for binding_set in bindings :
-			#print ','.join(map(lambda x:binding_set[x]['value'], vars.keys()))
 		
 		# var_values is the set of all values this variable takes in the bindings
 		var_values = set()
@@ -597,15 +594,6 @@ class SimpleSPARQL (SPARQLWrapper) :
 				this_root[end_ele] = ret
 			
 			return result
-			# some ideas ...
-			#ret = {}
-			#fake_root = []
-			#for i, ele in enumerate(path[:-1]) :
-				#if ele == list :
-					#fake_root[0] = []
-				#else :
-					#fake_root[0] = {}
-			#fake_root[path[-1]] = call
 		else :
 			root_var = root_subject[1:]
 			path = vars[root_var]
@@ -726,7 +714,6 @@ class SimpleSPARQL (SPARQLWrapper) :
 
 	def ask(self, query) :
 		if type(query) == dict :
-			# query = self.python_to_SPARQL(query)
 			triples = []
 			self.read_parse_helper(query, [], triples, {}, {}, [])
 			query = ""
@@ -1133,8 +1120,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 		
 ######## this is where the recent stuff is
 
-	def register_plugin(self, plugin) :
-		self.plugins.append(plugin)
+	def register_translation(self, translation) :
+		self.translations.append(translation)
 		
 	def is_meta_var(self, data) :
 		if type(data) == URIRef :
@@ -1219,11 +1206,11 @@ class SimpleSPARQL (SPARQLWrapper) :
 				return True
 		return False
 	
-	def has_already_executed(self, history, sumplugin, binding) :
-		return [sumplugin, binding] in history
+	def has_already_executed(self, history, translation, binding) :
+		return [translation, binding] in history
 	
-	def register_executed(self, history, sumplugin, binding) :
-		history.append(copy.deepcopy([sumplugin, binding]))
+	def register_executed(self, history, translation, binding) :
+		history.append(copy.deepcopy([translation, binding]))
 		
 	def bind_meta_vars(self, translation, query, bindings = []) :
 		"""
@@ -1274,14 +1261,14 @@ class SimpleSPARQL (SPARQLWrapper) :
 		
 		return True, bindings
 	
-	def testplugin(self, plugin, query) :
-		# check that all of the plugin inputs match part of the query
-		for triple in plugin[self.n.meta.input] :
+	def testtranslation(self, translation, query) :
+		# check that all of the translation inputs match part of the query
+		for triple in translation[self.n.meta.input] :
 			if not self.find_triple_match(triple, query) :
 				return False, None
 		
 		# find all possible bindings for the meta_vars if any exist
-		matches, bindings = self.bind_meta_vars(plugin[self.n.meta.input], query)
+		matches, bindings = self.bind_meta_vars(translation[self.n.meta.input], query)
 		
 		#print '===>', matches, len(bindings), prettyquery(bindings)
 		
@@ -1339,7 +1326,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 	# or from the begining?
 	# for now, just start from the begining.  Evaluate all functions as they come
 	# rather than defering it.
-#	def eval_plugins(self, query, history = []) :
+#	def eval_translations(self, query, history = []) :
 	
 	def find_paths(self, query, find_vars) :
 		for possible_translation in possible_translations :
@@ -1353,35 +1340,35 @@ class SimpleSPARQL (SPARQLWrapper) :
 	def find_specific_var_triples(self, query, vars) :
 		return [triple for triple in query if any(map(lambda x:x in vars, triple))]
 	
-	def read_plugins_helper(self, query, var_triples, bound_var_triples = [], history = []) :
+	def read_translations_helper(self, query, var_triples, bound_var_triples = [], history = []) :
 		n = self.n
 		# try a bredth first search:
 		nexts = []
-		for sumplugin in self.plugins :
+		for translation in self.translations :
 			self.vars = {}
-			matches, bindings = self.testplugin(sumplugin, query)
+			matches, bindings = self.testtranslation(translation, query)
 			if matches :
 				for binding in bindings :
-					if not self.has_already_executed(history, sumplugin, binding) :
+					if not self.has_already_executed(history, translation, binding) :
 						new_history = copy.deepcopy(history)
-						self.register_executed(new_history, sumplugin, binding)
+						self.register_executed(new_history, translation, binding)
 						self.vars = binding
 						
-						# output_bindings = self.cache.call(sumplugin, self.vars)
-						output_bindings = sumplugin[n.meta.function](self.vars)
+						# output_bindings = self.cache.call(translation, self.vars)
+						output_bindings = translation[n.meta.function](self.vars)
 						if output_bindings == None :
 							output_bindings = self.vars
 						if type(output_bindings) == dict :
 							output_bindingss = [output_bindings]
 						
-						print 'sumplugin[n.meta.output]', prettyquery(sumplugin[n.meta.output]),
+						print 'translation[n.meta.output]', prettyquery(translation[n.meta.output]),
 						print 'output_bindingss', prettyquery(output_bindingss),
-						output = self.sub_var_bindings(sumplugin[n.meta.output], output_bindingss)
+						output = self.sub_var_bindings(translation[n.meta.output], output_bindingss)
 						output = [x for x in output]
 						output = output[0] # if there are multiple sets of bindings for a given 
 						print 'output',prettyquery(output),
 						output = self.sub_var_bindings(output, [self.vars])
-						print 'name',sumplugin[n.meta.name]
+						print 'name',translation[n.meta.name]
 						
 						outtriple_sets = output
 						
@@ -1396,21 +1383,21 @@ class SimpleSPARQL (SPARQLWrapper) :
 							else :
 								new_query = copy.deepcopy(query)
 								new_query.extend(outtriple_set)
-								nexts.append(self.read_plugins_helper(new_query, new_var_triples, new_bound_var_triples, new_history))
+								nexts.append(self.read_translations_helper(new_query, new_var_triples, new_bound_var_triples, new_history))
 		
 		for next in nexts :
 			for result in next :
 				yield result
 	
-	def read_plugins(self, query, find_vars = []) :
+	def read_translations(self, query, find_vars = []) :
 		if find_vars == [] :
 			var_triples = self.find_var_triples(query)
 		else :
 			var_triples = self.find_specific_var_triples(query, find_vars)
 		
-		return self.read_plugins_helper(query, var_triples, [], [])
+		return self.read_translations_helper(query, var_triples, [], [])
 		
-		# look for all possible routes through the plugins to see which paths
+		# look for all possible routes through the translations to see which paths
 		#   might provide an output
 		#		* how to deal with cycles?
 		#		* how to deal with translations which result in nearly anything (aka possible paths explode to be every possible translation permuted infinite times)
