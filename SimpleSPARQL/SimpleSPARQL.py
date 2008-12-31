@@ -287,14 +287,18 @@ class SimpleSPARQL (SPARQLWrapper) :
 	def read_parse_helper(self, query, path, triples, explicit_vars, implicit_vars, given_vars) :
 		"""
 		@arg path is a list (like xpath) of where in the query we are
-		@arg triples is a list of triples which is altered to include all triples
-		@arg explicit_vars is a dict which is altered to include paths to exp vars
-		@arg implicit_vars is a dict which is altered to include paths to imp vars
-		@arg given_vars is a list which is altered to include paths to all 
-			variables, includes the parameters with constant values which are 
+		@arg triples is a list of triples which is appended through the query walk
+		@arg explicit_vars is a dict which is appended to include paths to exp vars
+			an explicit variable is a variable in the query which is explicitly asked
+			for. (x : None)
+		@arg implicit_vars is a dict which is appended to include paths to imp vars
+			an implicit variable is a variable which is required to build the SPARQL
+			but which does not need to be returned back to the user
+		@arg given_vars is a list which is appended to include paths to all 
+			variables, including the parameters with constant values which are 
 			being used to describe the data.
 		@return SPARQL Literal or variable to refer to this part of the query.
-			triples, explicit_vars and implicit_vars are filled.
+		@side-effect triples, explicit_vars and implicit_vars are appended to.
 		"""
 		# constants
 		if type(query) == int or type(query) == float :
@@ -349,7 +353,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 			# should maybe not require that the type of all objects in the list are 
 			# dicts.
 			# An any clause requires optional subqueries to be implemented
-			pass
+			raise Exception('ambiguous case not yet implemented (dont have a list of more than one item)')
 		
 		# complex queries
 		elif type(query) == dict :
@@ -611,6 +615,9 @@ class SimpleSPARQL (SPARQLWrapper) :
 	def read(self, query) :
 		query = copy.deepcopy(query)
 		n = self.n
+		# try a raw_read which returns exceptions.  If it works, return a status ok;
+		# if it doesn't catch the exception and return the infromation associated 
+		# with that.
 		try :
 			return {
 				n.sparql.status : n.sparql.ok,
@@ -629,13 +636,11 @@ class SimpleSPARQL (SPARQLWrapper) :
 			}
 	
 	def read_raw(self, query) :
-		# parse out SPARQL
-		# explicit_vars
-		# implicit_vars
 		n = self.n
 
 		modifiers = []
-		# extract basic keywords if the are present
+		# interpret basic keywords modifiers if they are present and then remove 
+		# them from the query
 		if type(query) == list :
 			rootquery = query[0]
 		else :
@@ -662,12 +667,10 @@ class SimpleSPARQL (SPARQLWrapper) :
 		implicit_vars = {}
 		given_vars = []
 		root_subject = self.read_parse_helper(query, [], triples, explicit_vars, implicit_vars, given_vars)
+		
 		triples_str = ""
-		#print 'triples'
 		for triple in triples :
-			#print triple
 			triples_str += "%s %s %s . " % triple
-		#print
 		
 		def find_var_from_path(explicit_vars, sort_path) :
 			for var, path in explicit_vars.iteritems() :
@@ -686,52 +689,12 @@ class SimpleSPARQL (SPARQLWrapper) :
 		
 		SPARQL = "SELECT DISTINCT * WHERE { %s } %s" % (self.wrapGraph(triples_str), ' '.join(modifiers))
 		results = self.doQuery(SPARQL)
-		# print results
-		# need to enforce restrictions on number of results implied by the query (
-		# None vs. [] vs. {})
-		# in the order that the implicit and explicit vars occur in the query tree
-		# count how many results there are.
-		
-		#print 'given_vars', given_vars
-		#print 'explicit_vars', explicit_vars
-		
-		# n.bind('test', '<http://example/test>')
-		
-		#sumplugin = {}
-		#sumplugin['inputs'] = [[n.test.x], [n.test.y]]
-		#sumplugin['outputs'] = [[n.test.sum]]
-		#sumplugin['function'] = lambda q: {n.test.sum : q[n.test.x] + q[n.test.y]}
-		
-		#def testplugin(plugin, given_vars, explicit_vars) :
-			## all plugin inputs must have given values in the query
-			## TODO: is there a special case with lists being ok in some cases?
-			#for input in plugin['inputs'] :
-				#if input not in given_vars :
-					#return False
-			## all missing values in the query must have output values by the plugin
-			## this could be only some of the values, which are filled in and then 
-			##   passed on to the database to check
-			## This code shouldn't get too in depth as it will probably be replaced
-			##   when converted to find combinations of plugins to complete a query
-			#for missing in explicit_vars.values() :
-				#if missing[-1] == list :
-					#if missing not in plugin['outputs'] and missing[0:-1] not in plugin['outputs'] :
-						#return False
-				#else :
-					#if missing not in plugin['outputs'] :
-						#return False
-			#return True
-		
-		#if testplugin(sumplugin, given_vars, explicit_vars) :
-			#return sumplugin['function'](query)
 		
 		# start with vars whose path is [] or [list]
 		verification = self.verify_restrictions(results, explicit_vars, implicit_vars, root_subject)
 		# print 'verification:',verification
 		
 		return verification
-		# return SPARQL, triples, explicit_vars, implicit_vars
-		# return SPARQL, explicit_vars, implicit_vars
 
 	def read_old(self, data) :
 		bound_vars = {}
