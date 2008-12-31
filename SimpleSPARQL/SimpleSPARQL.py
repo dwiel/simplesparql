@@ -858,7 +858,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 			ret = ""
 			k_str, k_extra = self.python_to_SPARQL_long_helper(k, var)
 			v_str, v_extra = self.python_to_SPARQL_long_helper(v, var)
-			ret += '%s %s %s . ' % (root, k_str, v_str)
+			ret += '%s %s %s .\n' % (root, k_str, v_str)
 			ret += k_extra
 			ret += v_extra 
 			return ret
@@ -979,8 +979,21 @@ class SimpleSPARQL (SPARQLWrapper) :
 						predicate : delete,
 					})
 		return new_deletes
+	
+	def write(self, query, where = None) :
+		"""
+		writes query expressed in jsparql
+		@arg query is query expressed in jsparql.  Can either be in object or 
+			triplelist form.  If in triplelist form, query is the insert and the
+			second argument where is the where clause
+		@arg where is the where clause of a triplelist format query.  Not used if
+			query is an object format.
+		"""
 		
-	def write(self, query) :
+		# if this is a list of lists, then it is a jsparql query
+		if type(query) == list and type(query[0]) == list :
+			return self.write_tirpleslist(query, where)
+		
 		sparql = self.n.sparql
 		
 		query = self._preprocess_query(query)
@@ -1083,6 +1096,21 @@ class SimpleSPARQL (SPARQLWrapper) :
 			# self.doQuery("DELETE { %s } WHERE { %s }" % (delete_str_uri, where))
 		
 		return {'result' : 'ok', 'query' : query}
+	
+	def write_tirpleslist(self, query, where) :
+		self.reset_py_to_SPARQL_bnode()
+		query_str = self.triplelist_to_sparql(query)
+		if where :
+			where_str = self.triplelist_to_sparql(where)
+		else :
+			where_str = ''
+		
+		sparql_str = "INSERT { %s } WHERE { %s }" % (self.wrapGraph(query_str), self.wrapGraph(where_str))
+		print
+		print
+		print sparql_str
+		print
+		print
 	
 	def insert(self, data, language = 'N3') :
 		"""this isn't supported by all sparul endpoints.  converts data to N3 and 
@@ -1446,21 +1474,63 @@ class SimpleSPARQL (SPARQLWrapper) :
 			vars.update(self.find_vars(i))
 		return vars
 	
-	def py_to_SPARQL(self, object) :
+	def _uribnodeVar(self) :
+		var = 0
+		while True :
+			yield self.next_bnode().n3()
+	
+	def triplelist_value_to_sparql(self, object, extra_triple_strs) :
+		"""
+		@arg object is the python object to convert to sparql
+		@arg extra_triple_strs is a list which is appended to if the object is a
+			dict which needs to use more triples to express in sparql
+		"""
 		if type(object) == URIRef :
 			if object.find(self.n.var) != -1 :
 				return '?'+object[len(self.n.var):]
+			elif object.find(self.n.bnode) != -1 :
+				varname = object[len(self.n.var):]
+				if varname in self.py_to_SPARQL_bnode :
+					return self.py_to_SPARQL_bnode[varname].n3()
+				else :
+					bnode = self.next_bnode()
+					self.py_to_SPARQL_bnode[varname] = bnode
+					return bnode.n3()
+		elif type(object) == dict :
+			root, triples = self.python_to_SPARQL_long_helper(object, self._uribnodeVar())
+			extra_triple_strs.append(triples)
+			return root
+		
 		return self.python_to_n3(object)
+	
+	def reset_py_to_SPARQL_bnode(self) :
+		self.py_to_SPARQL_bnode = {}
+	
+	def triplelist_to_sparql(self, query) :
+		return self.jsparql_to_sparql(query)
+		#query_str = ""
+		#for triple in query :
+			#triple = [self.triplelist_value_to_sparql(x) for x in triple]
+			#triple_str = "%s %s %s .\n" % tuple(triple)
+			#query_str += triple_str
+		#return query_str
+		## not sure if this is faster:
+		#return ' .\n'.join(["%s %s %s" % tuple([self.triplelist_value_to_sparql(x) for x in triple]) for triple in query ])
+	
+	def jsparql_to_sparql(self, query) :
+		if type(query) == list and type(query[0]) == list :
+			query_str = ""
+			for triple in query :
+				extra_triple_strs = []
+				triple = [self.triplelist_value_to_sparql(x, extra_triple_strs) for x in triple]
+				triple_str = "%s %s %s .\n" % tuple(triple)
+				query_str += triple_str + ' .\n'.join(extra_triple_strs)
+			return query_str
+			
 
 	def new_read(self, query, expected_vars = []) :
-		vars = self.find_vars(query)
-		
-		query_str = ""
-		for triple in query :
-			triple = [self.py_to_SPARQL(x) for x in triple]
-			triple_str = "%s %s %s .\n" % tuple(triple)
-			query_str += triple_str
-		
+		self.reset_py_to_SPARQL_bnode()
+		query_str = self.triplelist_to_sparql(query)
 		ret = self.doQuery("SELECT * WHERE { %s }" % self.wrapGraph(query_str))
 		# TODO: extract out the result bindings
 		return ret

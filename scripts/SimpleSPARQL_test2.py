@@ -1,3 +1,4 @@
+import time
 from rdflib import *
 import SimpleSPARQL
 
@@ -192,6 +193,21 @@ ret = sparql.read_translations([
 ret = [[y for y in x] for x in ret]
 print ret
 print SimpleSPARQL.prettyquery(ret)
+
+#self.sparql.write({
+				#n.sparql.create : n.sparql.unless_exists,
+				#n.cache.value : ret,
+				#n.cache.date : time.time(),
+				#n.cache.plugin : plugin[n.meta.name],
+				#n.cache.vars : vars,
+			#})
+
+#sparql.write([
+	#[n.bnode.x, n.cache.value, 1],
+	#[n.bnode.x, n.cache.date, time.time()],
+	#[n.bnode.x, n.cache.plugin, 'plugin name'],
+	#[n.bnode.x, n.cache.vars, vars],
+#])
 
 exit()
 

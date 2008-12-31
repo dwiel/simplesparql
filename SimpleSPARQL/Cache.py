@@ -29,6 +29,13 @@ class Cache :
 			return ret[n.cache.value]
 		else :
 			ret = plugin[n.meta.function](vars)
+			# TODO: make this work
+			self.sparql.write([
+				[n.bnode.x, n.cache.value, ret],
+				[n.bnode.x, n.cache.date, time.time()],
+				[n.bnode.x, n.cache.plugin, plugin[n.meta.name]],
+				[n.bnode.x, n.cache.vars, vars]
+			])
 			#self.sparql.write({
 				#n.sparql.create : n.sparql.unless_exists,
 				#n.cache.value : ret,
