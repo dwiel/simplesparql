@@ -2,9 +2,8 @@
 SimpleSPARQL provides some high level access to some basic SPARQL queries
 TODO: clean up parts of code left from axpress (update_uri)
 TODO: factor out redundant code
-TODO: return errors inside the return dictionary rather than with an exception
 TODO: connect queries
-TODO: make standards compliant or warn (insert n3 is implementation-specific)
+TODO: make translation into SPARQL standards compliant or warn that it isn't(insert n3 is implementation-specific)
 """
 
 import time, re, copy, datetime, random

@@ -151,22 +151,22 @@ sparql.register_plugin({
 	#n.cache.expiration_length : 2629743 # 1 month in seconds
 })
 
-input : [
-	[var.x, is, '%person%s %relationship%']
-],
-output : [
-	[var.y, name, '%person%']
-	[var.y, freebase.%relationship%, var.x]
-	[var.x, name, var.name]
-],
+#input : [
+	#[var.x, is, '%person%s %relationship%']
+#],
+#output : [
+	#[var.y, name, '%person%']
+	#[var.y, freebase.%relationship%, var.x]
+	#[var.x, name, var.name]
+#],
 
 	
 
 
-read([
-	[var.x, is, 'george bushs daughter'],
-	[var.x, name, var.name]
-], [var.name])
+#read([
+	#[var.x, is, 'george bushs daughter'],
+	#[var.x, name, var.name]
+#], [var.name])
 
 
 
@@ -178,15 +178,15 @@ ret = sparql.read_plugins([
 	[n.var.artist, n.rdfs.label, 'Lavender Diamond']
 ], [n.var.album])
 
-{
-	n.rdfs.label : 'Lave',
-	n.lastfm.similar_to : [{
-		n.music.album : {
-			n.music.playable : True,
-			n.sparql.subject : None,
-		}
-	}]
-}
+#{
+	#n.rdfs.label : 'Lave',
+	#n.lastfm.similar_to : [{
+		#n.music.album : {
+			#n.music.playable : True,
+			#n.sparql.subject : None,
+		#}
+	#}]
+#}
 
 # make a list from the returned generator
 ret = [[y for y in x] for x in ret]
