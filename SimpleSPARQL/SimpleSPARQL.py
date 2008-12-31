@@ -7,7 +7,7 @@ TODO: connect queries
 TODO: make standards compliant or warn (insert n3 is implementation-specific)
 """
 
-import time, re, copy, datetime
+import time, re, copy, datetime, random
 from SPARQLWrapper import *
 from rdflib import *
 from urllib import urlopen, urlencode
@@ -21,6 +21,7 @@ import Namespaces
 from RDFObject import RDFObject
 from QueryException import QueryException
 from PrettyQuery import prettyquery
+from Cache import Cache
 
 # from parseMatchOutput import construct
 
@@ -33,12 +34,14 @@ class SimpleSPARQL (SPARQLWrapper) :
 			self.setSPARUL(baseURI.replace('sparql', 'sparul'))
 		self.n = Namespaces.Namespaces()
 		self.n.bind('var', '<http://dwiel.net/axpress/var/0.1/>')
+		self.n.bind('bnode', '<http://dwiel.net/axpress/bnode/0.1/>')
 		self.n.bind('meta', '<http://dwiel.net/axpress/meta/0.1/>')
 		#self.n.bind('meta_var', '<http://dwiel.net/axpress/meta_var/0.1/>')
 		self.lang = 'en'
 		self.debug = False
 		self.graph = None
 		self.plugins = []
+		self.cache = Cache
 	
 	def setSPARUL(self, baseURI, returnFormat=None, defaultGraph=None):
 		self.sparul = SPARQLWrapper(baseURI, returnFormat, defaultGraph)
@@ -1165,6 +1168,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 		object = self.n3(object)
 		triple = " %s %s %s " % (subject, pred, object)
 		self.doQuery("INSERT { %s }" % self.wrapGraph(triple))
+		
+######## this is where the recent stuff is
 
 	def register_plugin(self, plugin) :
 		self.plugins.append(plugin)
@@ -1325,50 +1330,54 @@ class SimpleSPARQL (SPARQLWrapper) :
 			return bindings[value]
 		return value
 	
+	def next_bnode(self) :
+		return self.n.bnode[str(time.time()).replace('.','') + '_' +  str(random.random()).replace('.','')]
+	
+	def explode_triple(self, triple) :
+		# convert each value to a list of values unless it is already a list
+		triple = [type(value) == list and value or [value] for value in triple]
+		
+		triples = [[i] for i in triple[0]]
+		
+		new_triples = []
+		
+		for t in triples :
+			for i in triple[1] :
+				new_triples.append(t + [i])
+		
+		triples = new_triples
+		new_triples = []
+		for t in triples :
+			for i in triple[2] :
+				new_triples.append(t + [i])
+		
+		# TODO: only one layer of bnodes for now ...
+		# TODO: should these bnodes or vars?
+		for t in range(len(new_triples)) :
+			for vi in range(3) :
+				if type(new_triples[t][vi]) == dict :
+					d = new_triples[t][vi]
+					b = self.next_bnode()
+					new_triples[t][vi] = b
+					for k, v in d.iteritems() :
+						new_triples.append([b, k, v])
+		
+		return new_triples
+	
 	def sub_bindings_triple(self, triple, bindings) :
-		return [self.sub_bindings_value(value, bindings) for value in triple]
+		triple = [self.sub_bindings_value(value, bindings) for value in triple]
+		return self.explode_triple(triple)
 	
 	def sub_var_bindings(self, output, output_bindings) :
 		for bindings in output_bindings :
-			yield [self.sub_bindings_triple(triple, bindings) for triple in output]
+			for triple in output :
+				yield [bound_triple for bound_triple in self.sub_bindings_triple(triple, bindings)]
 		
 	# the implementation of this depends on the search method.  Start from the end
 	# or from the begining?
 	# for now, just start from the begining.  Evaluate all functions as they come
 	# rather than defering it.
-	def eval_plugins(self, query, history = []) :
-		n = self.n
-		
-		for sumplugin in self.plugins :
-			self.vars = {}
-			matches, bindings = self.testplugin(sumplugin, query)
-			if matches :
-				for binding in bindings :
-					if not self.has_already_executed(history, sumplugin, binding) :
-						#print '(sumplugin, binding)',prettyquery([sumplugin, binding]),
-						self.register_executed(history, sumplugin, binding)
-						self.vars = binding
-						# print 'testplugin!', prettyquery(self.vars)
-						#self.vars = dict([(var[len(n.var):], v) for var, v in self.vars.iteritems()])
-						
-						output_bindings = sumplugin[n.meta.function](self.vars)
-						if output_bindings == None :
-							output_bindings = self.vars
-						if type(output_bindings) == dict :
-							output_bindings = [output_bindings]
-						
-						#print 'self.vars',prettyquery(self.vars)
-						#print 'output_bindings',prettyquery(output_bindings),
-						#print 'sumplugin[n.meta.output]',prettyquery(sumplugin[n.meta.output]),
-						output = self.sub_var_bindings(sumplugin[n.meta.output], output_bindings)
-						output = [x for x in output]
-						output = output[0]
-						#print 'output',prettyquery(output),
-						output = self.sub_var_bindings(output, [self.vars])
-						#print 'output',prettyquery(output),
-						#print
-						print 'name',sumplugin[n.meta.name]
-						yield output
+#	def eval_plugins(self, query, history = []) :
 	
 	def find_paths(self, query, find_vars) :
 		for possible_translation in possible_translations :
@@ -1378,55 +1387,66 @@ class SimpleSPARQL (SPARQLWrapper) :
 	def find_var_triples(self, query) :
 		return [triple for triple in query if any(map(lambda x:self.is_var(x), triple))]
 	
+	# return all triples which have at least one var
+	def find_specific_var_triples(self, query, vars) :
+		return [triple for triple in query if any(map(lambda x:x in vars, triple))]
+	
 	def read_plugins_helper(self, query, var_triples, bound_var_triples = [], history = []) :
+		n = self.n
 		# try a bredth first search:
 		nexts = []
-		for outtriple_sets in self.eval_plugins(query, history) :
-			for outtriple_set in outtriple_sets :
-				new_var_triples = [var_triple for var_triple in var_triples if not self.find_triple_match(var_triple, outtriple_set)]
-				
-				new_bound_var_triples = copy.deepcopy(bound_var_triples)
-				new_bound_var_triples.extend(outtriple_set)
-				
-				if len(new_var_triples) == 0 :
-					yield new_bound_var_triples
-				else :
-					new_query = copy.deepcopy(query)
-					new_query.extend(outtriple_set)
-					nexts.append(self.read_plugins_helper(new_query, new_var_triples, new_bound_var_triples))
+		for sumplugin in self.plugins :
+			self.vars = {}
+			matches, bindings = self.testplugin(sumplugin, query)
+			if matches :
+				for binding in bindings :
+					if not self.has_already_executed(history, sumplugin, binding) :
+						new_history = copy.deepcopy(history)
+						self.register_executed(new_history, sumplugin, binding)
+						self.vars = binding
+						
+						# output_bindings = self.cache.call(sumplugin, self.vars)
+						output_bindings = sumplugin[n.meta.function](self.vars)
+						if output_bindings == None :
+							output_bindings = self.vars
+						if type(output_bindings) == dict :
+							output_bindingss = [output_bindings]
+						
+						print 'sumplugin[n.meta.output]', prettyquery(sumplugin[n.meta.output]),
+						print 'output_bindingss', prettyquery(output_bindingss),
+						output = self.sub_var_bindings(sumplugin[n.meta.output], output_bindingss)
+						output = [x for x in output]
+						output = output[0] # if there are multiple sets of bindings for a given 
+						print 'output',prettyquery(output),
+						output = self.sub_var_bindings(output, [self.vars])
+						print 'name',sumplugin[n.meta.name]
+						
+						outtriple_sets = output
+						
+						for outtriple_set in outtriple_sets :
+							new_var_triples = [var_triple for var_triple in var_triples if not self.find_triple_match(var_triple, outtriple_set)]
+							
+							new_bound_var_triples = copy.deepcopy(bound_var_triples)
+							new_bound_var_triples.extend(outtriple_set)
+							
+							if len(new_var_triples) == 0 :
+								yield new_bound_var_triples
+							else :
+								new_query = copy.deepcopy(query)
+								new_query.extend(outtriple_set)
+								nexts.append(self.read_plugins_helper(new_query, new_var_triples, new_bound_var_triples, new_history))
 		
 		for next in nexts :
 			for result in next :
 				yield result
-		
-		## for now, just do a depth first search through all possible states (after
-		## evaluating them
-		#for outtriple_sets in self.eval_plugins(query) :
-			#for outtriple_set in outtriple_sets :
-				##print 'outtriple_set',prettyquery(outtriple_set),
-				##print 'var_triples',prettyquery(var_triples),
-				#new_var_triples = [var_triple for var_triple in var_triples if not self.find_triple_match(var_triple, outtriple_set)]
-				##print prettyquery(new_var_triples),
-				
-				#new_query = copy.deepcopy(query)
-				#new_query.extend(outtriple_set)
-				##print 'new_query',prettyquery(new_query)
-				##print 'len(new_var_triples)', len(new_var_triples)
-				
-				#if len(new_var_triples) == 0 :
-					#yield new_query
-				#else :
-					#for result in self.read_plugins_helper(new_query, new_var_triples) :
-						#yield result
 	
 	def read_plugins(self, query, find_vars = []) :
-		vars = self.find_vars(query)
 		if find_vars == [] :
-			find_vars = vars
+			var_triples = self.find_var_triples(query)
+		else :
+			var_triples = self.find_specific_var_triples(query, find_vars)
 		
-		var_triples = self.find_var_triples(query)
-		
-		return self.read_plugins_helper(query, var_triples)
+		return self.read_plugins_helper(query, var_triples, [], [])
 		
 		# look for all possible routes through the plugins to see which paths
 		#   might provide an output
