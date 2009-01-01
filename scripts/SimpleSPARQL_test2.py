@@ -90,7 +90,7 @@ a = n.rdfs.type
 
 
 
-cache_sparql = SimpleSPARQL.SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwiel.net/axpress/testing")
+cache_sparql = SimpleSPARQL.SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwiel.net/axpress/cache")
 cache = SimpleSPARQL.Cache(cache_sparql)
 translator = SimpleSPARQL.Translator(cache)
 

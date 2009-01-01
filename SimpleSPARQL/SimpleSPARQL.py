@@ -162,14 +162,14 @@ class SimpleSPARQL (SPARQLWrapper) :
 	
 	# replace all occurances of :new with a new unique uri
 	def replace_uri(self, src, dest):
-		src_pattern = self.wrapGraph("%s ?s ?o" % src.n3())
-		dest_pattern = self.wrapGraph("%s ?s ?o" % dest.n3())
+		src_pattern = "%s ?s ?o" % src.n3()
+		dest_pattern = "%s ?s ?o" % dest.n3()
 		ret = self.doQuery("""
-		INSERT { %s }
+		INSERT INTO <%s> { %s }
 		WHERE { %s }
-		DELETE { %s }
+		DELETE FROM <%s> { %s }
 		WHERE { %s }
-		""" % (dest_pattern, src_pattern, src_pattern, src_pattern))
+		""" % (self.graph, dest_pattern, src_pattern, self.graph, src_pattern, src_pattern))
 
 	def SPARQL_PREFIX(self) :
 		str = ''
@@ -1061,21 +1061,20 @@ class SimpleSPARQL (SPARQLWrapper) :
 					create = create[0]
 			
 			insert_str_uri = self.python_to_SPARQL_long(insert, self._uriVar())
-			insert_str_uri = self.wrapGraph(insert_str_uri)
+			#insert_str_uri = self.wrapGraph(insert_str_uri)
 			where = self.wrapGraph(where)
-			# print 'insert_str_uri',insert_str_uri
 			if create == sparql.unless_exists :
 				insert_str_bnode = self.python_to_SPARQL_long(insert, self._bnodeVar())
 				if not self.ask("%s %s" % (where, insert_str_bnode)) :
 					if self.debug :
-						print "INSERT { %s } WHERE { %s }" % (insert_str_uri, where)
+						print "INSERT INTO <%s> { %s } WHERE { %s }" % (self.graph, insert_str_uri, where)
 					else :
-						self.doQuery("INSERT { %s } WHERE { %s }" % (insert_str_uri, where))
+						self.doQuery("INSERT INTO <%s> { %s } WHERE { %s }" % (self.graph, insert_str_uri, where))
 			elif create == sparql.unconditional :
 				if self.debug :
-					print "INSERT { %s } WHERE { %s }" % (insert_str_uri, where)
+					print "INSERT INTO <%s> { %s } WHERE { %s }" % (self.graph, insert_str_uri, where)
 				else :
-					self.doQuery("INSERT { %s } WHERE { %s }" % (insert_str_uri, where))
+					self.doQuery("INSERT INTO <%s> { %s } WHERE { %s }" % (self.graph, insert_str_uri, where))
 			else :
 				raise Exception("unkown create clause: " + create)
 		
@@ -1103,12 +1102,14 @@ class SimpleSPARQL (SPARQLWrapper) :
 		else :
 			where_str = ''
 		
-		sparql_str = "INSERT { %s } WHERE { %s }" % (self.wrapGraph(query_str), self.wrapGraph(where_str))
+		sparql_str = "INSERT INTO <%s> { %s } WHERE { %s }" % (self.graph, query_str, where_str)
 		print
 		print
+		print 'write'
 		print sparql_str
 		print
 		print
+		return self.doQuery(sparql_str)
 	
 	def insert(self, data, language = 'N3') :
 		"""this isn't supported by all sparul endpoints.  converts data to N3 and 
@@ -1142,7 +1143,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		pred = self.n3(pred)
 		object = self.n3(object)
 		triple = " %s %s %s " % (subject, pred, object)
-		self.doQuery("INSERT { %s }" % self.wrapGraph(triple))
+		self.doQuery("INSERT INTO <%s> { %s }" % (self.graph, triple))
 		
 ######## this is where the recent stuff is
 
