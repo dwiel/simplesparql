@@ -19,17 +19,22 @@ class Cache :
 		if ret[n.sparql.status] == n.sparql.ok and \
 		   ret[n.sparql.result] and \
 			 ret[n.cache.date] + plguin[n.cache.expiration_length] < time.time() :
+			print 'cache read'
 			return ret[n.cache.value]
 		else :
 			ret = plugin[n.meta.function](vars)
+			print plugin[n.meta.name]
+			print 'ret', ret
 			# TODO: make this work
 			print 'cache write'
-			print self.sparql.write([
-				[n.bnode.x, n.cache.value, ret],
-				[n.bnode.x, n.cache.date, time.time()],
-				[n.bnode.x, n.cache.plugin, plugin[n.meta.name]],
-				[n.bnode.x, n.cache.vars, vars]
-			])
+			#print self.sparql.write([
+				#[n.bnode.x, n.cache.value, ret],
+				#[n.bnode.x, n.cache.date, time.time()],
+				#[n.bnode.x, n.cache.plugin, plugin[n.meta.name]],
+				#[n.bnode.x, n.cache.vars, vars]
+			#])
+			return ret
+			
 			#self.sparql.write({
 				#n.sparql.create : n.sparql.unless_exists,
 				#n.cache.value : ret,

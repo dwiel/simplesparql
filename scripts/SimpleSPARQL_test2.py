@@ -17,82 +17,85 @@ n.bind('bound_var', '<http://dwiel.net/axpress/bound_var/0.1/>')
 
 a = n.rdfs.type
 
-
-
-
-
-
-#def foo(vars) :
-	#vars[n.var.sum] = vars[n.var.x] + vars[n.var.y]
-#sparql.register_translation({
-	#n.meta.name : 'sum',
-	#n.meta.input : [
-		#[n.var.uri, n.test.x, n.var.x],
-		#[n.var.uri, n.test.y, n.var.y],
-	#],
-	#n.meta.output : [
-		#[n.var.uri, n.test.sum, n.var.sum],
-	#],
-	#n.meta.function : foo
-#})
-
-#def foo2(vars) :
-	#vars[n.var.prod] = vars[n.var.sum] * vars[n.var.z]
-#sparql.register_translation({
-	#n.meta.name : 'product',
-	#n.meta.input : [
-		#[n.var.uri, n.test.sum, n.var.sum],
-		#[n.var.uri, n.test.z, n.var.z],
-	#],
-	#n.meta.output : [
-		#[n.var.uri, n.test.prod, n.var.prod],
-	#],
-	#n.meta.function : foo2
-#})
-
-#def div(vars) :
-	#vars[n.var.div] = float(vars[n.var.sum]) / vars[n.var.z]
-#sparql.register_translation({
-	#n.meta.name : 'division',
-	#n.meta.input : [
-		#[n.var.uri, n.test.sum, n.var.sum],
-		#[n.var.uri, n.test.z, n.var.z],
-	#],
-	#n.meta.output : [
-		#[n.var.uri, n.test.div, n.var.div],
-	#],
-	#n.meta.function : div
-#})
-
-#ret = sparql.read_translations([
-	#[n.test.u, n.test.x, 1],
-	#[n.test.u, n.test.y, 2],
-	#[n.test.u, n.test.z, 100],
-	#[n.test.u, n.test.div, n.var.div],
-	#[n.test.u, n.test.prod, n.var.prod],
-#])
-
-## make a list from the returned generator
-#ret = [[y for y in x] for x in ret]
-#print ret
-#print SimpleSPARQL.prettyquery(ret)
-
-#exit()
-
-
-
-
-
-
-
-
-
-
-
-
 cache_sparql = SimpleSPARQL.SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwiel.net/axpress/cache")
 cache = SimpleSPARQL.Cache(cache_sparql)
 translator = SimpleSPARQL.Translator(cache)
+
+
+
+
+
+
+def foo(vars) :
+	vars[n.var.sum] = vars[n.var.x] + vars[n.var.y]
+translator.register_translation({
+	n.meta.name : 'sum',
+	n.meta.input : [
+		[n.var.uri, n.test.x, n.var.x],
+		[n.var.uri, n.test.y, n.var.y],
+	],
+	n.meta.output : [
+		[n.var.uri, n.test.sum, n.var.sum],
+	],
+	n.meta.function : foo
+})
+
+def foo2(vars) :
+	vars[n.var.prod] = vars[n.var.sum] * vars[n.var.z]
+translator.register_translation({
+	n.meta.name : 'product',
+	n.meta.input : [
+		[n.var.uri, n.test.sum, n.var.sum],
+		[n.var.uri, n.test.z, n.var.z],
+	],
+	n.meta.output : [
+		[n.var.uri, n.test.prod, n.var.prod],
+	],
+	n.meta.function : foo2
+})
+
+def div(vars) :
+	vars[n.var.div] = float(vars[n.var.sum]) / vars[n.var.z]
+translator.register_translation({
+	n.meta.name : 'division',
+	n.meta.input : [
+		[n.var.uri, n.test.sum, n.var.sum],
+		[n.var.uri, n.test.z, n.var.z],
+	],
+	n.meta.output : [
+		[n.var.uri, n.test.div, n.var.div],
+	],
+	n.meta.function : div
+})
+
+#TODO: make this query work as expected.  Right now its a mess.
+
+ret = translator.read_translations([
+	[n.test.u, n.test.x, 1],
+	[n.test.u, n.test.x, 10],	
+	[n.test.u, n.test.y, 2],
+#	[n.test.u, n.test.sum, n.var.sum],
+	[n.test.u, n.test.z, 100],
+	[n.test.u, n.test.div, n.var.div],
+#	[n.test.u, n.test.prod, n.var.prod],
+])
+
+# make a list from the returned generator
+ret = [[y for y in x] for x in ret]
+print ret
+print SimpleSPARQL.prettyquery(ret)
+
+exit()
+
+
+
+
+
+
+
+
+
+
 
 
 translator.register_translation({

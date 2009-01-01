@@ -195,6 +195,15 @@ class Translator :
 		return self.n.bnode[str(time.time()).replace('.','') + '_' +  str(random.random()).replace('.','')]
 	
 	def explode_triple(self, triple) :
+		"""
+		explode_triple([1, [2, 3], [1, 2]]) -->
+		[
+			[1, 2, 1],
+			[1, 3, 1],
+			[1, 2, 2],
+			[1, 3, 2]
+		]
+		"""
 		# convert each value to a list of values unless it is already a list
 		triple = [type(value) == list and value or [value] for value in triple]
 		
@@ -234,12 +243,6 @@ class Translator :
 			for triple in output :
 				yield [bound_triple for bound_triple in self.sub_bindings_triple(triple, bindings)]
 		
-	# the implementation of this depends on the search method.  Start from the end
-	# or from the begining?
-	# for now, just start from the begining.  Evaluate all functions as they come
-	# rather than defering it.
-#	def eval_translations(self, query, history = []) :
-	
 	def find_paths(self, query, find_vars) :
 		for possible_translation in possible_translations :
 			something = find_paths(possible_translation, find_vars)
@@ -283,7 +286,10 @@ class Translator :
 						output = [x for x in output]
 						output = output[0] # if there are multiple sets of bindings for a given just use the first one for now
 						print 'output',prettyquery(output),
+						# TODO: is this necessary in the case where output_bindings == self.vars?
 						output = self.sub_var_bindings(output, [self.vars])
+						#output = [[x] for x in output]
+						print 'output',prettyquery(output),
 						print 'name',translation[n.meta.name]
 						
 						outtriple_sets = output
