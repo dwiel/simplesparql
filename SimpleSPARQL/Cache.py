@@ -10,13 +10,6 @@ class Cache :
 		self.sparql = sparql
 	
 	def call(self, plugin, vars) :
-		#ret = self.sparql.read([
-			#[n.var.cache_entry, n.cache.value, n.var.value],
-			#[n.var.cache_entry, n.cache.date, n.var.date],
-			#[n.var.cache_entry, n.cache.plugin, plugin[n.meta.name]],
-			#[n.var.cache_entry, n.cache.vars, n.var.bindings],
-		#] + [[n.var.bindings, k, v] for k, v in var.iteritems()])
-		## or
 		ret = self.sparql.read([{
 			n.cache.plugin : plugin[n.meta.name],
 			n.cache.vars : vars,

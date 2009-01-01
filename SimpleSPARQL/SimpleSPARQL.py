@@ -1,8 +1,7 @@
 """
 SimpleSPARQL provides some high level access to some basic SPARQL queries
-TODO: clean up parts of code left from axpress (update_uri)
-TODO: factor out redundant code
-TODO: connect queries
+TODO: depricate RDFObject and everything associated with it
+TODO: connect queries - so we need them?
 TODO: make translation into SPARQL standards compliant or warn that it isn't(insert n3 is implementation-specific)
 """
 
@@ -109,8 +108,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 	
 	def doQueryURI(self, query, construct_str = None) :
 		"""
-		depricated
-		given a query with 
+		depricated ?
 		"""
 		g = self.doQuery(query)
 		for rawbindings in g['results']['bindings'] :
@@ -288,8 +286,6 @@ class SimpleSPARQL (SPARQLWrapper) :
 		varname = u'?var' + unicode(self.variable)
 		bound_vars[varname[1:]] = path
 		return varname
-	
-
 	
 	def read_parse_helper(self, query, path, triples, explicit_vars, implicit_vars, given_vars) :
 		"""
@@ -548,8 +544,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 		if root_subject[0] != '?' :
 			# if the root_subject is already known, look for the variable with the next_vars
 			#   next shortest path
-#			path
-#			for var, path in vars.iteritems() :
+			#			path
+			#			for var, path in vars.iteritems() :
 			# TODO: run the test case and notice that the result is just 1 rather than
 			#  building the full query out.  Need to somehow build it out.  It might
 			#  be better to coax the helper to do this for us, it might be better to
@@ -1201,15 +1197,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 		self.py_to_SPARQL_bnode = {}
 	
 	def triplelist_to_sparql(self, query) :
+		# todo: shouldn't have proxy functions like this
 		return self.jsparql_to_sparql(query)
-		#query_str = ""
-		#for triple in query :
-			#triple = [self.triplelist_value_to_sparql(x) for x in triple]
-			#triple_str = "%s %s %s .\n" % tuple(triple)
-			#query_str += triple_str
-		#return query_str
-		## not sure if this is faster:
-		#return ' .\n'.join(["%s %s %s" % tuple([self.triplelist_value_to_sparql(x) for x in triple]) for triple in query ])
 	
 	def jsparql_to_sparql(self, query) :
 		if type(query) == list and type(query[0]) == list :
@@ -1220,14 +1209,18 @@ class SimpleSPARQL (SPARQLWrapper) :
 				triple_str = "%s %s %s .\n" % tuple(triple)
 				query_str += triple_str + ' .\n'.join(extra_triple_strs)
 			return query_str
-			
 
 	def new_read(self, query, expected_vars = []) :
+		# TODO: extract out the result bindings as in self.read
+		# TODO: allow object notation as root query.
+		#   TODO: depricate read, and others
+		#   TODO: more cleaning
+		# TODO: figure out some way to avoid having resets everywhere.  Should this
+		#   be some other class to do each translation?
 		self.reset_py_to_SPARQL_bnode()
 		self._reset_SPARQL_variables()
 		query_str = self.triplelist_to_sparql(query)
 		ret = self.doQuery("SELECT * WHERE { %s }" % self.wrapGraph(query_str))
-		# TODO: extract out the result bindings
 		return ret
 
 
@@ -1244,359 +1237,3 @@ class SimpleSPARQL (SPARQLWrapper) :
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-"""
-
-		fragment {
-			uri : {
-				n.feed.entry : {
-					n.sparql.create : n.sparql.unless_exists,
-					n.entry['title'] : entry.title,
-					n.entry.date : entry.updated_parsed,
-					n.entry.content : entry.content[0].value
-				}
-			}
-		}
-		
-		"%s feed:entry [
-		   entry:title 'title' ;
-			 entry:date 123 ;
-			 entry:content 'blah blah' 
-		 ]
-		" % uri
-		
-		query = {
-			n.feed.url : entry.content[0].base,
-			n.feed.entry : {
-				n.sparql.create : n.sparql.unless_exists,
-				n.entry['title'] : entry.title,
-				n.entry.date : entry.updated_parsed,
-				n.entry.content : entry.content[0].value
-			}
-		}
-		WHERE = "?uri feed:url 'url' ."
-		INSERT = "?uri feed:entry [
-								entry:title 'title' ;
-								entry:date 'date' ;
-								entry:content 'content'
-							] ."
-		
-		if not query("ASK { %s %s }" % (WHERE, INSERT)) :
-			do("INSERT { %s	} WHERE {	%s	}" % (INSERT, WHERE))
-		
-		query = {
-			n.feed.url : entry.content[0].base,
-			n.feed.entry : [{
-				n.sparql.create : n.sparql.unless_exists,
-				n.entry['title'] : entry.title,
-				n.entry.date : entry.updated_parsed,
-				n.entry.content : entry.content[0].value
-			},{
-				n.sparql.create : n.sparql.unless_exists,
-				n.entry['title'] : entry2.title,
-				n.entry.date : entry2.updated_parsed,
-				n.entry.content : entry2.content[0].value
-			}]
-		}
-		WHERE = "?var1 feed:url 'url' ."
-		INSERT = ["?var1 feed:entry [
-									entry:title 'title' ;
-									entry:date 'date' ;
-									entry:content 'content'
-								] .",
-							"?var1 feed:entry [
-									entry:title 'title2' ;
-									entry:date 'date2' ;
-									entry:content 'content2'
-								] ."]
-		
-		query = {
-			n.feed.url : entry.content[0].base,
-			n.feed.entry : {
-				n.sparql.create : n.sparql.unless_exists,
-				n.entry['title'] : entry.title,
-				n.entry.date : entry.updated_parsed,
-				n.entry.content : entry.content[0].value
-			},
-			n.feed.somethingelse : {
-				n.sparql.create : n.sparql.unless_exists,
-				n.entry['title'] : entry2.title,
-				n.entry.date : entry2.updated_parsed,
-				n.entry.content : entry2.content[0].value
-			}
-		}
-		BASE = {
-			n.feed.url : entry.content[0].base,
-			n.sparql.var : 1,
-			n.sparql.insert : [{
-				n.sparql.predicate : n.feed.entry,
-				n.sparql.create : n.sparql.unless_exists,
-				n.entry['title'] : entry.title,
-				n.entry.date : entry.updated_parsed,
-				n.entry.content : entry.content[0].value
-			}, {
-				n.sparql.predicate : n.feed.somethingelse,
-				n.sparql.create : n.sparql.unless_exists,
-				n.entry['title'] : entry2.title,
-				n.entry.date : entry2.updated_parsed,
-				n.entry.content : entry2.content[0].value
-			}
-		}
-		WHERE = "?uri feed:url 'url' ."
-		INSERT = ["?uri feed:entry [
-									entry:title 'title' ;
-									entry:date 'date' ;
-									entry:content 'content'
-								] .",
-							"?uri feed:somethingelse [
-									entry:title 'title2' ;
-									entry:date 'date2' ;
-									entry:content 'content2'
-								] ."]
-		
-		query = {
-			n.feed.url : entry.content[0].base,
-			n.feed.entry : {
-				n.sparql.create : n.sparql.unless_exists,
-				n.entry['title'] : entry.title,
-				n.entry.date : entry.updated_parsed,
-				n.entry.content : entry.content[0].value
-			},
-			n.feed.friend : {
-				n.feed.entry : {
-					n.sparql.create : n.sparql.unless_exists,
-					n.entry['title'] : entry2.title,
-					n.entry.date : entry2.updated_parsed,
-					n.entry.content : entry2.content[0].value
-				}
-			}
-		}
-		BASE = {
-			n.feed.url : entry.content[0].base,
-			n.feed.friend : {
-				n.sparql.var 2
-			},
-			n.sparql.var : 1,
-			n.sparql.insert : [{
-				n.sparql.subject : 1,
-				n.sparql.predicate : n.feed.entry,
-				n.sparql.create : n.sparql.unless_exists,
-				n.entry['title'] : entry.title,
-				n.entry.date : entry.updated_parsed,
-				n.entry.content : entry.content[0].value
-			},{
-				n.sparql.subject : 2,
-				n.sparql.predicate : n.feed.entry,
-				n.sparql.create : n.sparql.unless_exists,
-				n.entry['title'] : entry2.title,
-				n.entry.date : entry2.updated_parsed,
-				n.entry.content : entry2.content[0].value
-			}]
-		}
-		WHERE = "?var1 feed:url 'url' .
-						 ?var1 feed:friend ?var2 ."
-		INSERT = ["?var1 feed:entry [
-									entry:title 'title' ;
-									entry:date 'date' ;
-									entry:content 'content'
-								] .",
-							"?var2 feed:entry [
-									entry:title 'title2' ;
-									entry:date 'date2' ;
-									entry:content 'content2'
-								] ."]
-		
-		query = {
-			n.feed.url : entry.content[0].base,
-			n.feed.entry : [{
-				n.sparql.create : n.sparql.unless_exists,
-				n.entry['title'] : entry.title,
-				n.entry.date : entry.updated_parsed,
-				n.entry.content : entry.content[0].value
-			},{
-				n.entry['title'] : entry2.title,
-				n.entry.date : entry2.updated_parsed,
-				n.entry.content : entry2.content[0].value
-			}]
-		}
-		BASE = {
-			n.feed.url : entry.content[0].base,
-			n.feed.entry : {
-				n.entry['title'] : entry2.title,
-				n.entry.date : entry2.updated_parsed,
-				n.entry.content : entry2.content[0].value
-			},
-			n.sparql.var : 1,
-			n.sparql.insert : {
-				n.sparql.predicate : n.feed.entry,
-				n.sparql.create : n.sparql.unless_exists,
-				n.entry['title'] : entry.title,
-				n.entry.date : entry.updated_parsed,
-				n.entry.content : entry.content[0].value
-			}
-		}
-		WHERE = "?var1 feed:url 'url' .
-						 ?var1 feed:entry [
-								entry:title 'title2' ;
-								entry:date 'date2' ;
-								entry:content 'content2'
-							] ."
-		INSERT = "?var1 feed:entry [
-								entry:title 'title' ;
-								entry:date 'date' ;
-								entry:content 'content'
-							] ."
-		
-		# in an object with a child1 insert a new object 
-		fragment = {
-			n.e.child1 : {
-				n.e.child2 : {
-					n.sparql.create : n.sparql.unless_exists,
-					n.e.prop : 123
-				}
-			}
-		}
-		"SELECT DISTINCT ?uri
-		WHERE {
-			?var1 e:child ?uri .
-		}"
-		
-		fragment = {
-			n.e.child1 : {
-				n.e.child2 : {
-					n.sparql.create : n.sparql.unless_exists,
-					n.e.prop : 123
-				},
-				n.e.prop 456
-			}
-		}
-		"SELECT DISTINCT ?uri
-		WHERE {
-			?var1 e:child ?uri .
-			?uri e:prop 456 .
-		}"
-		"INSERT {
-			?uri e:child2 
-		} WHERE {
-		}"
-		# problem is that ?uri might be a bnode ... what then? then you really need
-		# SPARUL, yeah, so ... oh yeah ... but ... can not insert a blank node with
-		# Jena SPARUL ... god damn it
-		fragment = {
-			n.schema.property : {
-				n.schema_property.type : None,
-				n.schema_property.type : None
-				n.schema.test : {
-					n.sparql.connect : n.sparql.insert,
-					n.sparql.value : 'this is a test'
-				}
-			},
-			n.rdf.type : n.schema.type
-		}
-		"INSERT {
-			?uri schema:test 'this is a test' .
-		} WHERE {
-			?x schema:property ?uri .
-				?uri schema_property:type ?var1 ;
-				schema_property:default ?var2 .
-			?x rdf:type schema:type .
-		}"
-
-		
-		print self.sparql.write(fragment)
-
-"""
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-"""
-
-the provides data structure could be quite complex or quite simple.  Extra 
-complexity can be added with extra details and requirements about the input and
-output types.  For now, simply define them as inputs or outputs.  Later these
-could get more interesting.
-
-last.fm plugin provides :
-	{
-		n.lastfm.artist : n.transform.input,
-		n.lastfm.number_of_listeners : n.transform.output,
-		n.lastfm.number_of_listens : n.transform.output,
-		n.lastfm.similar_artist : [{
-			n.lastfm.artist : n.transform.output,
-			n.lastfm.similarity_measure : n.transform.output
-		}]
-		...
-		n.transform.guarenteed_output : False
-	}
-	
-	inputs:
-		[n.lastm.artist]
-	outputs:
-		[n.lastfm.number_of_listeners]
-		[n.lastfm.number_of_listens]
-		[n.lastfm.similar_artist, list, n.lastfm.artist]
-		[n.lastfm.similar_artist, list, n.lastfm.similarity_measure]
-	
-query:
-	{
-		n.lastfm.artist : 'The New Pornographers',
-		n.lastfm.similar_artist : [{
-			n.lastfm.artist : None
-		}],
-		n.x.prop : []
-	}
-	
-	inputs (provided) : (given_vars)
-		[n.lastfm.artist]
-	outputs (missing) : (explicit_vars)
-		[n.lastfm.similar_artist, list, n.lastfm.artist]
-		[n.x.prop, list]
-		
-
-
-to determine if a query matches the plugin :
-	for all input variables required by the plugin, the query must provide a value
-	for all missing values in the query, the plguin must provide an output (of the
-		correct type.  Possible types :
-			literal, list of literals, object, list of objects
-		if the query expects a list, just one is fine
-		if the plugin expects a list, just one is fine
-	
-NOTE: extra speed might be possible by using a heuristic which keeps track of 
-	which values are most descriminatory.  If a plugin requires multiple inputs
-	to be provided, some might provide more descriminatory power than the others.
-NOTE: extra speed might also be possible through some kind of hashing of the 
-	variables.  The basic algorithm is an attempt to match two sets of lists from
-	both the query and the output.  Could build a decision tree where each branch
-	is a test about the query having a specific input or output.  The decision 
-	tree could be organized in such a way that more often query/plugin matches
-	require the fewest number of branches.
-
-NOTE: social: keep track of which plugin inputs and outputs are commonly paired
-	(given life)
-
-
-"""
