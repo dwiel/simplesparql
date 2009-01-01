@@ -186,7 +186,7 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 			},
 			n.sparql.var : 2
 		}
-		assert self.sparql.python_to_SPARQL_long(query) == '?var2 <http://dwiel.net/express/rule/0.1/friend> ?var1 . ?var2 <http://dwiel.net/express/rule/0.1/url> "url"@en . ', 'test_python_to_SPARQL_long'
+		assert self.sparql.python_to_SPARQL_long(query) == '?var2 <http://dwiel.net/express/rule/0.1/friend> ?var1 .\n?var2 <http://dwiel.net/express/rule/0.1/url> "url"@en .\n', 'test_python_to_SPARQL_long'
 	
 	#def testWrite(self):
 		#query = {

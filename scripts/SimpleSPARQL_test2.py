@@ -90,11 +90,12 @@ a = n.rdfs.type
 
 
 
+cache_sparql = SimpleSPARQL.SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwiel.net/axpress/testing")
+cache = SimpleSPARQL.Cache(cache_sparql)
+translator = SimpleSPARQL.Translator(cache)
 
 
-
-
-sparql.register_translation({
+translator.register_translation({
 	n.meta.name : 'rdfs.label => music.artist_name',
 	n.meta.input : [
 		[n.var.artist, n.rdfs.label, n.var.artist_name],
@@ -137,7 +138,7 @@ def lastfmsimilar(vars) :
 		}
 	]
 
-sparql.register_translation({
+translator.register_translation({
 	n.meta.name : 'last.fm similar artists',
 	n.meta.input : [
 		[n.var.artist, n.music.artist_name, n.var.artist_name],
@@ -172,7 +173,7 @@ sparql.register_translation({
 
 
 
-ret = sparql.read_translations([
+ret = translator.read_translations([
 #	[n.var.album, n.music.playable, True],
 	[n.var.album, n.music.artist, n.var.similar_artist],
 	[n.var.artist, n.lastfm.similar_to, n.var.similar_artist],
@@ -201,6 +202,26 @@ print SimpleSPARQL.prettyquery(ret)
 				#n.cache.plugin : plugin[n.meta.name],
 				#n.cache.vars : vars,
 			#})
+
+print '---------------'
+print 'new-read'
+print sparql.new_read([
+	[n.tvar.x, n.cache.plugin, 'name'],
+	[n.tvar.x, n.cache.vars, {
+		n.var.xyz : 1,
+		n.var.abc : 2,
+	}],
+	[n.tvar.x, n.cache.value, None],
+	[n.tvar.x, n.cache.date, None],
+])
+print
+
+#sparql.new_read([{
+	#n.cache.plugin : plugin[n.meta.name],
+	#n.cache.vars : vars,
+	#n.cache.value : None,
+	#n.cache.date : None,
+#}])
 
 #sparql.write([
 	#[n.bnode.x, n.cache.value, 1],
