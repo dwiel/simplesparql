@@ -31,20 +31,18 @@ def prettyquery_helper(query, tabs = '', indent = '  ', namespaces = n) :
 	elif type(query) == list :
 		if len(query) == 0 :
 			s += '[]\n'
-		elif len(query) <= 3 :
-			s += '['
-			prettylist = [prettyquery_helper(i, tabs+indent, indent) for i in query]
-			#for item in sorted(prettylist) :
-			for item in prettylist :
-				s += ' ' + item + ','
-			s += ' ]\n'
 		else :
-			s += '[\n'
 			prettylist = [prettyquery_helper(i, tabs+indent, indent) for i in query]
-			#for item in sorted(prettylist) :
-			for item in prettylist :
-				s += tabs + indent + item + ',\n'
-			s += tabs + ']\n'
+			if len(query) <= 3 and any(['\n' not in item for item in prettylist]) :
+				s += '['
+				for item in prettylist :
+					s += ' ' + item + ','
+				s += ' ]\n'
+			else :
+				s += '[\n'
+				for item in prettylist :
+					s += tabs + indent + item + ',\n'
+				s += tabs + ']\n'
 	elif isinstance(query, URIRef) :
 		return unicode(namespaces.shortenForN(query))
 	elif isinstance(query, Literal) :
