@@ -228,7 +228,10 @@ print
 	#[n.bnode.x, n.cache.value, 1],
 	#[n.bnode.x, n.cache.date, time.time()],
 	#[n.bnode.x, n.cache.plugin, 'plugin name'],
-	#[n.bnode.x, n.cache.vars, vars],
+	#[n.bnode.x, n.cache.vars, {
+		#n.var.xyz : 1,
+		#n.var.abc : 2,
+	#}],
 #])
 
 exit()
