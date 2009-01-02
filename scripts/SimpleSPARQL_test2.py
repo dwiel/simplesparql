@@ -1,8 +1,8 @@
-import time
+import time, urllib
 from rdflib import *
-import SimpleSPARQL
+from SimpleSPARQL import *
 
-sparql = SimpleSPARQL.SimpleSPARQL("http://localhost:2020/sparql")
+sparql = SimpleSPARQL("http://localhost:2020/sparql")
 sparql.setGraph("http://dwiel.net/axpress/testing")
 
 n = sparql.n
@@ -17,9 +17,9 @@ n.bind('bound_var', '<http://dwiel.net/axpress/bound_var/0.1/>')
 
 a = n.rdfs.type
 
-cache_sparql = SimpleSPARQL.SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwiel.net/axpress/cache")
-cache = SimpleSPARQL.Cache(cache_sparql)
-translator = SimpleSPARQL.Translator(cache)
+cache_sparql = SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwiel.net/axpress/cache")
+cache = Cache(cache_sparql)
+translator = Translator(cache)
 
 
 
@@ -114,31 +114,34 @@ translator.register_translation({
 # WARNING: the output of this transformation does not always result in > 1 
 # set of bindings.  (If the artist is not in lastfm - or if there is no inet?)
 def lastfmsimilar(vars) :
-	# vars[n.var.similar_artist] = lastfm.Artist(vars[n.var.artist_name]).getSimilar()
-	# vars[n.var.similar_artist] = ['Taken By Trees', 'Viva Voce', 'New Buffalo']
-	#artsts = []
-	#url = 'http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt' % artist_name
-	#f = urllib.urlopen(url)
-	#for line in f :
-		#tokens = line.strip().split(',')
-		#artist.append({
-			#n.lastfm.similarity_measure : float(tokens[0]),
-			#n.lastfm.mbid : tokens[1],
-			#n.lastfm.name : tokens[2],
-		#})
-	#vars[n.var.similar_artist] = artists
-	vars[n.var.similar_artist] = [
-		{
-			n.lastfm.name : 'Taken By Trees',
-			n.lastfm.similarity_measure : 100,
-			n.lastfm.mbid : '924392349239429urjf834',
-		},
-		{
-			n.lastfm.name : 'Viva Voce',
-			n.lastfm.similarity_measure : 96,
-			n.lastfm.mbid : '88r328394nc3jr43jdmmnn',
-		}
-	]
+#	vars[n.var.similar_artist] = lastfm.Artist(vars[n.var.artist_name]).getSimilar()
+#	vars[n.var.similar_artist] = ['Taken By Trees', 'Viva Voce', 'New Buffalo']
+	artists = []
+	url = 'http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt' % urllib.quote(vars[n.var.artist_name])
+	f = urllib.urlopen(url)
+	
+	for line in f :
+		tokens = line.strip().split(',')
+		artists.append({
+			n.lastfm.similarity_measure : float(tokens[0]),
+			n.lastfm.mbid : tokens[1],
+			n.lastfm.name : tokens[2],
+		})
+	vars[n.var.similar_artist] = artists[:10]
+	print 'vars',prettyquery(vars)
+	
+	#vars[n.var.similar_artist] = [
+		#{
+			#n.lastfm.name : 'Taken By Trees',
+			#n.lastfm.similarity_measure : 100,
+			#n.lastfm.mbid : '924392349239429urjf834',
+		#},
+		#{
+			#n.lastfm.name : 'Viva Voce',
+			#n.lastfm.similarity_measure : 96,
+			#n.lastfm.mbid : '88r328394nc3jr43jdmmnn',
+		#}
+	#]
 
 translator.register_translation({
 	n.meta.name : 'last.fm similar artists',
@@ -152,7 +155,7 @@ translator.register_translation({
 	n.meta.function : lastfmsimilar,
 	n.meta.scale : 100,
 	n.meta.expected_time : 1,
-	n.cache.expiration_length : 2629743 # 1 month in seconds
+	n.cache.expiration_length : 2678400 # 1 month in seconds
 })
 
 #input : [
@@ -194,7 +197,7 @@ ret = translator.read_translations([
 
 # make a list from the returned generator
 ret = [[y for y in x] for x in ret]
-print SimpleSPARQL.prettyquery(ret)
+print prettyquery(ret)
 
 #self.sparql.write({
 				#n.sparql.create : n.sparql.unless_exists,
@@ -287,7 +290,7 @@ ret = sparql.eval_translations([
 ])
 
 ret = [x for x in ret]
-print SimpleSPARQL.prettyquery(ret)
+print prettyquery(ret)
 exit()
 
 ret = sparql.eval_translations([
@@ -295,7 +298,7 @@ ret = sparql.eval_translations([
 ])
 
 ret = [x for x in ret]
-print SimpleSPARQL.prettyquery(ret)
+print prettyquery(ret)
 
 #ret = sparql.read_translations([
 	#[n.test.x, n.music.album_name, "Beat Romantic"],
