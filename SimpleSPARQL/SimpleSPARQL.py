@@ -598,6 +598,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 		return self.verify_restrictions_helper(bindings, vars, [], root_var, explicit_vars.keys())
 	
 	def read(self, query) :
+		if type(query) == list and type(query[0]) == list :
+			return self.new_read(query)
 		query = copy.deepcopy(query)
 		n = self.n
 		# try a raw_read which returns exceptions.  If it works, return a status ok;
@@ -611,7 +613,10 @@ class SimpleSPARQL (SPARQLWrapper) :
 		except QueryException, qe :
 			q = query
 			for ele in qe.path :
-				q = q[ele]
+				if ele is list :
+					q = q[0]
+				elif ele is not None :
+					q = q[ele]
 			q[n.sparql.error_inside] = '.'
 			return {
 				n.sparql.status : n.sparql.error,
@@ -977,7 +982,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 					})
 		return new_deletes
 	
-	def write(self, query, where = None) :
+	def write(self, query, where = None, varnamespace = None) :
 		"""
 		writes query expressed in jsparql
 		@arg query is query expressed in jsparql.  Can either be in object or 
@@ -985,11 +990,13 @@ class SimpleSPARQL (SPARQLWrapper) :
 			second argument where is the where clause
 		@arg where is the where clause of a triplelist format query.  Not used if
 			query is an object format.
+		@arg varnamespace is the namespace to use to identify a variable in the case
+			that the triplelist form is used
 		"""
 		
 		# if this is a list of lists, then it is a jsparql query
 		if type(query) == list and type(query[0]) == list :
-			return self.write_tirpleslist(query, where)
+			return self.write_tirpleslist(query, where, varnamespace)
 		
 		sparql = self.n.sparql
 		
@@ -1093,12 +1100,12 @@ class SimpleSPARQL (SPARQLWrapper) :
 		
 		return {'result' : 'ok', 'query' : query}
 	
-	def write_tirpleslist(self, query, where) :
+	def write_tirpleslist(self, query, where, varnamespace) :
 		self._reset_SPARQL_variables()
 		self.reset_py_to_SPARQL_bnode()
-		query_str = self.triplelist_to_sparql(query)
+		query_str = self.triplelist_to_sparql(query, varnamespace)
 		if where :
-			where_str = self.triplelist_to_sparql(where)
+			where_str = self.triplelist_to_sparql(where, varnamespace)
 		else :
 			where_str = ''
 		
@@ -1145,9 +1152,6 @@ class SimpleSPARQL (SPARQLWrapper) :
 		triple = " %s %s %s " % (subject, pred, object)
 		self.doQuery("INSERT INTO <%s> { %s }" % (self.graph, triple))
 		
-######## this is where the recent stuff is
-
-
 	def find_vars(self, query) :
 		try :
 			iter = query.__iter__()
@@ -1170,15 +1174,17 @@ class SimpleSPARQL (SPARQLWrapper) :
 		while True :
 			yield self.next_bnode().n3()
 	
-	def triplelist_value_to_sparql(self, object, extra_triple_strs) :
+	def triplelist_value_to_sparql(self, object, extra_triple_strs, varnamespace = None) :
 		"""
 		@arg object is the python object to convert to sparql
 		@arg extra_triple_strs is a list which is appended to if the object is a
 			dict which needs to use more triples to express in sparql
 		"""
+		if varnamespace == None :
+			varnamespace = self.n.var
 		if type(object) == URIRef :
-			if object.find(self.n.tvar) != -1 :
-				return '?'+object[len(self.n.tvar):]
+			if object.find(varnamespace) != -1 :
+				return '?'+object[len(varnamespace):]
 			elif object.find(self.n.bnode) != -1 :
 				varname = object[len(self.n.bnode):]
 				if varname in self.py_to_SPARQL_bnode :
@@ -1197,30 +1203,32 @@ class SimpleSPARQL (SPARQLWrapper) :
 	def reset_py_to_SPARQL_bnode(self) :
 		self.py_to_SPARQL_bnode = {}
 	
-	def triplelist_to_sparql(self, query) :
+	def triplelist_to_sparql(self, query, varnamespace = None) :
 		# todo: shouldn't have proxy functions like this
 		return self.jsparql_to_sparql(query)
 	
-	def jsparql_to_sparql(self, query) :
+	def jsparql_to_sparql(self, query, varnamespace = None) :
 		if type(query) == list and type(query[0]) == list :
 			query_str = ""
 			for triple in query :
 				extra_triple_strs = []
-				triple = [self.triplelist_value_to_sparql(x, extra_triple_strs) for x in triple]
+				triple = [self.triplelist_value_to_sparql(x, extra_triple_strs, varnamespace) for x in triple]
 				triple_str = "%s %s %s .\n" % tuple(triple)
 				query_str += triple_str + ' .\n'.join(extra_triple_strs)
 			return query_str
 
-	def new_read(self, query, expected_vars = []) :
+	def new_read(self, query, expected_vars = [], varnamespace = None) :
 		# TODO: extract out the result bindings as in self.read
 		# TODO: allow object notation as root query.
 		#   TODO: depricate read, and others
 		#   TODO: more cleaning
 		# TODO: figure out some way to avoid having resets everywhere.  Should this
 		#   be some other class to do each translation?
+		if varnamespace == None :
+			varnamespace = self.n.var
 		self.reset_py_to_SPARQL_bnode()
 		self._reset_SPARQL_variables()
-		query_str = self.triplelist_to_sparql(query)
+		query_str = self.triplelist_to_sparql(query, varnamespace)
 		ret = self.doQuery("SELECT * WHERE { %s }" % self.wrapGraph(query_str))
 		return ret
 

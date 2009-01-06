@@ -285,11 +285,11 @@ class Translator :
 				if output_bindings == None :
 					output_bindings = binding
 				if type(output_bindings) == dict :
-					output_bindingss = [output_bindings]
+					output_bindings_list = [output_bindings]
 				
 				#print 'output_bindingss',prettyquery(output_bindingss),
 				
-				outtriple_sets = self.sub_var_bindings(translation[n.meta.output], output_bindingss)
+				outtriple_sets = self.sub_var_bindings(translation[n.meta.output], output_bindings_list)
 				#outtriple_sets = [x for x in outtriple_sets]
 				#print 'outtriple_sets',prettyquery(outtriple_sets)
 				translation_bindings.extend(outtriple_sets)
@@ -308,7 +308,7 @@ class Translator :
 		
 		found_match = True
 		while found_match :
-#		for xxx in range(2) :
+			print '--- new iteration ---'
 			all_new_final_bindings = []
 			for query in final_bindings :
 				new_final_bindings = [query]
@@ -317,6 +317,8 @@ class Translator :
 				for (translation, (matches, bindings)) in all_bindings :
 					if matches :
 						this_translation_bindings = self.apply_translation_binding(translation, bindings, history)
+						print 'translation', translation[n.meta.name]
+						print 'this_translation_bindings', prettyquery(this_translation_bindings),
 						# 'multiply' each new binding with each previously existing binding
 						if len(this_translation_bindings) != 0 :
 							#print translation[n.meta.name], len(this_translation_bindings), prettyquery(this_translation_bindings),
@@ -331,64 +333,11 @@ class Translator :
 				all_new_final_bindings.extend(new_final_bindings)
 			
 			final_bindings = all_new_final_bindings
+			print 'final_bindings', prettyquery(final_bindings)
 		
 		# print 'final_bindings',prettyquery(final_bindings),
 		return final_bindings
 		#exit()
-		
-		## try a bredth first search:
-		#nexts = []
-		#for translation in self.translations :
-			#self.vars = {}
-			#matches, bindings = self.testtranslation(translation, query)
-			#if matches :
-				#for binding in bindings :
-					#if not self.has_already_executed(history, translation, binding) :
-						## new_history = copy.deepcopy(history)
-						#self.register_executed(new_history, translation, binding)
-						#self.vars = binding
-						
-						## if this translation expects to be cached, use a cache
-						#if n.cache.expiration_length in translation :
-							#output_bindings = self.cache.call(translation, self.vars)
-						#else : 
-							#output_bindings = translation[n.meta.function](self.vars)
-						
-						#if output_bindings == None :
-							#output_bindings = self.vars
-						#if type(output_bindings) == dict :
-							#output_bindingss = [output_bindings]
-						
-						##print 'translation[n.meta.output]', prettyquery(translation[n.meta.output]),
-						##print 'output_bindingss', prettyquery(output_bindingss),
-						#output = self.sub_var_bindings(translation[n.meta.output], output_bindingss)
-						#output = [x for x in output]
-						#output = output[0] # if there are multiple sets of bindings for a given just use the first one for now
-						##print 'output',prettyquery(output),
-						## TODO: is this necessary in the case where output_bindings == self.vars?
-						#output = self.sub_var_bindings(output, [self.vars])
-						##output = [[x] for x in output]
-						##print 'output',prettyquery(output),
-##						print 'name',translation[n.meta.name]
-						
-						#outtriple_sets = output
-						
-						#for outtriple_set in outtriple_sets :
-							#new_var_triples = [var_triple for var_triple in var_triples if not self.find_triple_match(var_triple, outtriple_set)]
-							
-							#new_bound_var_triples = copy.deepcopy(bound_var_triples)
-							#new_bound_var_triples.extend(outtriple_set)
-							
-							#if len(new_var_triples) == 0 :
-								#yield new_bound_var_triples
-							#else :
-								#new_query = copy.deepcopy(query)
-								#new_query.extend(outtriple_set)
-								#nexts.append(self.read_translations_helper(new_query, new_var_triples, new_bound_var_triples, new_history))
-		
-		#for next in nexts :
-			#for result in next :
-				#yield result
 	
 	def read_translations(self, query, find_vars = []) :
 		if find_vars == [] :

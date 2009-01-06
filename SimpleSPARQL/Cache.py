@@ -32,7 +32,7 @@ class Cache :
 				[n.bnode.x, n.cache.date, time.time()],
 				[n.bnode.x, n.cache.translation, translation[n.meta.name]],
 				[n.bnode.x, n.cache.vars, old_vars]
-			])
+			], var, n.tvar)
 			return ret
 			
 			#self.sparql.write({

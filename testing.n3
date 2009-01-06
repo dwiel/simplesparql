@@ -1,0 +1,37 @@
+# this is the data that should be queried against in the test cases.
+
+@prefix test: <http://dwiel.net/express/test/0.1/> .
+
+test:object1
+	test:x 1 ;
+	test:y 2 ;
+	test:z 'hello' ;
+	test:w 3.14 ;
+	.
+
+test:object2
+	test:x 1 ;
+	test:y test:object3 ;
+	test:y test:object31 ;
+	.
+
+test:object3
+	test:b 2 ;
+	.
+
+test:object31
+	test:a 21 ;
+	.
+
+test:object32
+	test:a 22 ;
+	.
+
+test:object4
+	test:a 1 ;
+	.
+
+test:object5
+	test:x 5 ;
+	test:y test:object2 ;
+	.

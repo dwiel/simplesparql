@@ -436,6 +436,29 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 		}
 		assert result == self.sparql.read(query)
 	
+	def testRead13(self) :
+		#query = [
+			#{
+				#n.sparql.subject : None,
+				#None : 21
+			#}
+		#]
+		assert True == False
+	
+	def testRead14(self) :
+		# TODO: allow n.sparql.any as the predicate
+		query = [
+			{
+				n.test.x : None,
+				n.sparql.subject : None,
+				n.sparql.any : None
+			}
+		]
+		result = {}
+		ret = self.sparql.read(query)
+		print prettyquery(ret)
+		assert result == ret
+	
 	# is this query for things with w:100 AND w:200 or w:100 OR w:200 ?
 	# If it does have only one of the above meanings, how do you express the other one?
 	# choose a default meaning
