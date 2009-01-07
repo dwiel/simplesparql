@@ -31,8 +31,6 @@ def load(translator, n) :
 		n.meta.input : [
 			'uri[test.x] = x',
 			'uri[test.y] = y',
-			#[n.var.uri, n.test.x, n.var.x],
-			#[n.var.uri, n.test.y, n.var.y],
 			#'uri = {
 				#test.x : x,
 				#test.y : y,
@@ -58,7 +56,7 @@ def load(translator, n) :
 			[n.var.uri, n.test.z, n.var.z],
 		],
 		n.meta.output : [
-			[n.var.uri, n.test.prod, n.var.prod],
+			'uri[test.prod] = prod',
 		],
 		n.meta.function : prod
 	})
@@ -177,7 +175,7 @@ def load(translator, n) :
 	lastfm.similar_to(artist) :- similar_artist
 	python_call(lastfmsimilar, artist_name, similar_artist)
 	"""
-	# and a query which uses this:
+	# and a query which uses it like this:
 	"""
 	music.artist_name(artist) = 'Lavender Diamond'
 	music.artist(album) = lastfm.similar_to(artist)

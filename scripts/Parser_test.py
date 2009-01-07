@@ -76,6 +76,9 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 	def test11(self):
 		assert self.parser.parse_expression("image[flickr.tag] = x") == [[n.var.image, n.flickr.tag, n.var.x]]
 
+	def test12(self):
+		print prettyquery(self.parser.parse_expression("image[flickr:tag] = True"))
+		assert self.parser.parse_expression("image[flickr:tag] = True") == [[n.var.image, n.flickr.tag, True]]
 	
 	def test_parseQuery1(self):
 		query = [

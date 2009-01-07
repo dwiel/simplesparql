@@ -12,6 +12,8 @@ re_call = re.compile('(.+)\((.*)\)')
 re_call_params = re.compile('([^,]+),')
 re_uri = re.compile('(\D.+)[\.:](.+)')
 
+python_keywords = ['True', 'False']
+
 class Expression() :
 	def __init__(self, exp, missing = None) :
 		self.exp = exp
@@ -197,6 +199,9 @@ class Parser() :
 			value = g.group(2).strip()
 			print 'uri(%s, %s)' % (namespace, value)
 			return 'n.%s.%s' % (namespace, value)
+		
+		if expression in python_keywords :
+			return expression
 		
 		if expression[0].isalpha() and (len(expression) == 1 or expression[1:].isalnum()) :
 			print 'var(%s)' % expression
