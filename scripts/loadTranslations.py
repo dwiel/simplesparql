@@ -4,22 +4,23 @@ import os
 def load(translator, n) :	
 	n.bind('math', '<http://dwiel.net/express/math/0.1/>')
 	
-	# TODO: allow a 'function' to accept a variable number of arguments?
-	def sum(vars) :
-		if type(vars[n.var.number1]) == int and type(vars[n.var.number2]) == int :
-			vars[n.var.sum] = vars[n.var.number1] + vars[n.var.number2]
-		else :
-			raise Exception('cant add things that arent numbers .........')
-	translator.register_translation({
-		n.meta.name : 'sum',
-		n.meta.input : [
-			[n.var.uri, n.var.any, n.var.number1],
-			[n.var.uri, n.var.any, n.var.number2],
-		],
-		n.meta.output : [
-			[n.var.uri, n.math.sum, n.var.sum]
-		]
-	})
+	## TODO: allow a 'function' to accept a variable number of arguments?
+	#def sum(vars) :
+		#if type(vars[n.var.number1]) == int and type(vars[n.var.number2]) == int :
+			#vars[n.var.sum] = vars[n.var.number1] + vars[n.var.number2]
+		#else :
+			#raise Exception('cant add things that arent numbers .........')
+	#translator.register_translation({
+		#n.meta.name : 'sum',
+		#n.meta.input : [
+			#[n.var.uri, n.var.any, n.var.number1],
+			#[n.var.uri, n.var.any, n.var.number2],
+		#],
+		#n.meta.output : [
+			#[n.var.uri, n.math.sum, n.var.sum]
+		#],
+		#n.meta.function : sum
+	#})
 
 	def sum(vars) :
 		vars[n.var.sum] = vars[n.var.x] + vars[n.var.y]
@@ -150,11 +151,11 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'last.fm similar artists',
 		n.meta.input : [
-			'artist[music.artist_name] = artist_name',
+			#'artist[music.artist_name] = artist_name',
 			[n.var.artist, n.music.artist_name, n.var.artist_name],
 		],
 		n.meta.output : [
-			'artist[lastfm.similar_to] = similar_artist'
+			#'artist[lastfm.similar_to] = similar_artist',
 			[n.var.artist, n.lastfm.similar_to, n.var.similar_artist],
 		],
 		n.meta.function : lastfmsimilar,
@@ -183,7 +184,7 @@ def load(translator, n) :
 	def flickr_make_url(photo) :
 		# 'http://farm{farm-id}.static.flickr.com/{server-id}/{id}_{secret}.jpg'
 		# 'http://farm{farm-id}.static.flickr.com/{server-id}/{id}_{secret}_[mstb].jpg'
-		return 'http://farm%s.static.flickr.com/%s/%s_%s_%s.jpg' %
+		return 'http://farm%s.static.flickr.com/%s/%s_%s_%s.jpg' % \
 		        (photo.farm, photo.server, photo.id, photo.secret, 'b')
 	
 	def flickr_photos_search(vars) :
@@ -192,7 +193,7 @@ def load(translator, n) :
 		photos = flickr.photos_search(tags=['sunset'])
 		urls = []
 		for photo in photos.find('photos').findall('photo') :
-    	urls.append(flickr_make_url(photo))
+			urls.append(flickr_make_url(photo))
 		vars[n.file.url] = urls
 		
 	translator.register_translation({
@@ -201,7 +202,7 @@ def load(translator, n) :
 			'photo[flickr.tag] ?= tag', # TODO: ?= means optionally equal to
 			'optional(photo[flickr.tag] = tag)',
 			'optional(photo[flickr.user_id] = user_id)',
-			...
+#			...
 		],
 		n.meta.output : [
 			'photo[file.url] = url',

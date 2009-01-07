@@ -25,26 +25,24 @@ import loadTranslations
 loadTranslations.load(translator, n)
 
 
-#TODO: make this query work as expected.  Right now its a mess.
+ret = translator.read_translations([
+	[n.test.u, n.test.x, 1],
+#	'test.u[test.x] = 1',
+	[n.test.u, n.test.x, 10],	
+	[n.test.u, n.test.y, 2],
+	[n.test.u, n.test.y, 20],
+#	[n.test.u, n.test.sum, n.var.sum],
+	[n.test.u, n.test.z, 100],
+	[n.test.u, n.test.div, n.var.div],
+#	'test.u[test.div] = div',
+#	[n.test.u, n.test.prod, n.var.prod],
+])
 
-#ret = translator.read_translations([
-	#[n.test.u, n.test.x, 1],
-##	'test.u[test.x] = 1',
-	#[n.test.u, n.test.x, 10],	
-	#[n.test.u, n.test.y, 2],
-	#[n.test.u, n.test.y, 20],
-##	[n.test.u, n.test.sum, n.var.sum],
-	#[n.test.u, n.test.z, 100],
-	#[n.test.u, n.test.div, n.var.div],
-##	'test.u[test.div] = div',
-##	[n.test.u, n.test.prod, n.var.prod],
-#])
+# make a list from the returned generator
+ret = [[y for y in x] for x in ret]
+print prettyquery(ret)
 
-## make a list from the returned generator
-#ret = [[y for y in x] for x in ret]
-#print prettyquery(ret)
-
-#exit()
+exit()
 
 
 
