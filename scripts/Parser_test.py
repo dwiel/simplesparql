@@ -73,7 +73,31 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			#[n.var.bnode1, n.color.distance, n.var.distance],
 		#]
 	
+	def test11(self):
+		assert self.parser.parse_expression("image[flickr.tag] = x") == [[n.var.image, n.flickr.tag, n.var.x]]
+
 	
+	def test_parseQuery1(self):
+		query = [
+			'uri[test.sum] = sum',
+		]
+		assert self.parser.parse_query(query) == [
+			[n.var.uri, n.test.sum, n.var.sum],
+		]
+	
+	def test_parseQuery2(self):
+		query = [
+			'uri[test.sum] = sum',
+			'uri[test.x] = uri2[test.x]',
+			[n.var.uri, n.test.x, 1],
+		]
+		assert self.parser.parse_query(query) == [
+			[n.var.uri, n.test.sum, n.var.sum],
+			[n.var.uri, n.test.x, n.var.bnode1],
+			[n.var.uri2, n.test.x, n.var.bnode1],
+			[n.var.uri, n.test.x, 1],
+		]
+
 	
 	
 if __name__ == "__main__" :

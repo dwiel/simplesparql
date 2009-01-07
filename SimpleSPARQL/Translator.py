@@ -23,6 +23,22 @@ class Translator :
 		#self.sparql = sparql
 
 	def register_translation(self, translation) :
+		n = self.n
+		
+		# make sure all of the required keys are present
+		required = [n.meta.input, n.meta.output, n.meta.function, n.meta.name]
+		missing = [key for key in required if key not in translation]
+		if missing :
+			raise Exception('translation is missing keys: %s' % prettyquery(missing))
+		
+		# parse any string expressions
+		translation[n.meta.input] = self.parser.parse_query(translation[n.meta.input])
+		translation[n.meta.output] = self.parser.parse_query(translation[n.meta.output])
+		
+		print translation[n.meta.name]
+		print prettyquery(translation[n.meta.output])
+		print
+		
 		self.translations.append(translation)
 		
 	def is_meta_var(self, data) :

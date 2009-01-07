@@ -3,6 +3,8 @@ import os
 
 def load(translator, n) :	
 	n.bind('math', '<http://dwiel.net/express/math/0.1/>')
+	n.bind('flickr', '<http://dwiel.net/express/flickr/0.1/>')
+	n.bind('file', '<http://dwiel.net/express/file/0.1/>')
 	
 	## TODO: allow a 'function' to accept a variable number of arguments?
 	#def sum(vars) :
@@ -19,7 +21,7 @@ def load(translator, n) :
 		#n.meta.output : [
 			#[n.var.uri, n.math.sum, n.var.sum]
 		#],
-		#n.meta.function : sum
+##		n.meta.function : sum
 	#})
 
 	def sum(vars) :
@@ -27,16 +29,17 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'sum',
 		n.meta.input : [
-			[n.var.uri, n.test.x, n.var.x],
-			[n.var.uri, n.test.y, n.var.y],
+			'uri[test.x] = x',
+			'uri[test.y] = y',
+			#[n.var.uri, n.test.x, n.var.x],
+			#[n.var.uri, n.test.y, n.var.y],
 			#'uri = {
-			#	test.x : x,
-			#	test.y : y,
+				#test.x : x,
+				#test.y : y,
 			#}'
 		],
 		n.meta.output : [
-			[n.var.uri, n.test.sum, n.var.sum],
-			#'uri[test.sum] = sum'
+			'uri[test.sum] = sum',
 		],
 		n.meta.function : sum
 	})
@@ -190,7 +193,7 @@ def load(translator, n) :
 	def flickr_photos_search(vars) :
 		import flickrapi
 		flickr = flickrapi.FlickrAPI('91a5290443e54ec0ff7bcd26328963cd', format='etree')
-		photos = flickr.photos_search(tags=['sunset'])
+		photos = flickr.photos_search(tags=[vars[n.var.tag]])
 		urls = []
 		for photo in photos.find('photos').findall('photo') :
 			urls.append(flickr_make_url(photo))
@@ -199,13 +202,15 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'flickr photos search',
 		n.meta.input : [
-			'photo[flickr.tag] ?= tag', # TODO: ?= means optionally equal to
-			'optional(photo[flickr.tag] = tag)',
-			'optional(photo[flickr.user_id] = user_id)',
+			[n.var.image, n.flickr.tag, n.var.tag],
+#			'photo[flickr.tag] ?= tag', # TODO: ?= means optionally equal to
+#			'optional(photo[flickr.tag] = tag)',
+#			'optional(photo[flickr.user_id] = user_id)',
 #			...
 		],
 		n.meta.output : [
-			'photo[file.url] = url',
+#			'photo[file.url] = url',
+			[n.var.image, n.file.url, n.var.url],
 		],
 		n.meta.function : flickr_photos_search,
 		n.cache.expiration_length : 2678400,

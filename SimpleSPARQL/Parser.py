@@ -79,8 +79,17 @@ class Parser() :
 		print 'code',code
 		return eval(code, {'n' : self.n}, {})
 	
+	def flatten(self, seq):
+		"""
+		flatten seq one level, not recursively
+		"""
+		res = []
+		for item in seq:
+			res.extend(item)
+		return res
+	
 	def parse_query(self, query) :
-		return [isinstance(expression, basestring) and self.parse_expression(expression) or expression for expression in query]
+		return self.flatten([isinstance(expression, basestring) and self.parse_expression(expression) or [expression] for expression in query])
 	
 	def reset_bnode(self) :
 		self.var = 0
@@ -189,7 +198,7 @@ class Parser() :
 			print 'uri(%s, %s)' % (namespace, value)
 			return 'n.%s.%s' % (namespace, value)
 		
-		if expression[0].isalpha() and expression[1:].isalnum() :
+		if expression[0].isalpha() and (len(expression) == 1 or expression[1:].isalnum()) :
 			print 'var(%s)' % expression
 			return 'n.var.%s' % expression
 		

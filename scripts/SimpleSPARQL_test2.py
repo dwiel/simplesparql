@@ -42,7 +42,7 @@ ret = translator.read_translations([
 ret = [[y for y in x] for x in ret]
 print prettyquery(ret)
 
-exit()
+#exit()
 
 
 
