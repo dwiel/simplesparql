@@ -21,190 +21,33 @@ cache_sparql = SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwie
 cache = Cache(cache_sparql)
 translator = Translator(cache)
 
+import loadTranslations
+loadTranslations.load(translator, n)
 
-
-
-
-def foo(vars) :
-	vars[n.var.sum] = vars[n.var.x] + vars[n.var.y]
-translator.register_translation({
-	n.meta.name : 'sum',
-	n.meta.input : [
-		[n.var.uri, n.test.x, n.var.x],
-		[n.var.uri, n.test.y, n.var.y],
-	],
-	n.meta.output : [
-		[n.var.uri, n.test.sum, n.var.sum],
-	],
-	n.meta.function : foo
-})
-
-def foo2(vars) :
-	vars[n.var.prod] = vars[n.var.sum] * vars[n.var.z]
-translator.register_translation({
-	n.meta.name : 'product',
-	n.meta.input : [
-		[n.var.uri, n.test.sum, n.var.sum],
-		[n.var.uri, n.test.z, n.var.z],
-	],
-	n.meta.output : [
-		[n.var.uri, n.test.prod, n.var.prod],
-	],
-	n.meta.function : foo2
-})
-
-def div(vars) :
-	vars[n.var.div] = float(vars[n.var.sum]) / vars[n.var.z]
-translator.register_translation({
-	n.meta.name : 'division',
-	n.meta.input : [
-		[n.var.uri, n.test.sum, n.var.sum],
-		[n.var.uri, n.test.z, n.var.z],
-	],
-	n.meta.output : [
-		[n.var.uri, n.test.div, n.var.div],
-	],
-	n.meta.function : div
-})
 
 #TODO: make this query work as expected.  Right now its a mess.
 
-ret = translator.read_translations([
-	[n.test.u, n.test.x, 1],
-	[n.test.u, n.test.x, 10],	
-	[n.test.u, n.test.y, 2],
-	[n.test.u, n.test.y, 20],
-#	[n.test.u, n.test.sum, n.var.sum],
-	[n.test.u, n.test.z, 100],
-	[n.test.u, n.test.div, n.var.div],
-#	[n.test.u, n.test.prod, n.var.prod],
-])
+#ret = translator.read_translations([
+	#[n.test.u, n.test.x, 1],
+##	'test.u[test.x] = 1',
+	#[n.test.u, n.test.x, 10],	
+	#[n.test.u, n.test.y, 2],
+	#[n.test.u, n.test.y, 20],
+##	[n.test.u, n.test.sum, n.var.sum],
+	#[n.test.u, n.test.z, 100],
+	#[n.test.u, n.test.div, n.var.div],
+##	'test.u[test.div] = div',
+##	[n.test.u, n.test.prod, n.var.prod],
+#])
 
-# make a list from the returned generator
-ret = [[y for y in x] for x in ret]
-print prettyquery(ret)
+## make a list from the returned generator
+#ret = [[y for y in x] for x in ret]
+#print prettyquery(ret)
 
-exit()
-
-
-
-
+#exit()
 
 
 
-
-
-
-
-
-translator.register_translation({
-	n.meta.name : 'rdfs.label => music.artist_name',
-	n.meta.input : [
-		[n.var.artist, n.rdfs.label, n.var.artist_name],
-	],
-	n.meta.output : [
-		[n.var.artist, n.music.artist_name, n.var.artist_name],
-	],
-	n.meta.function : lambda x : None,
-	n.meta.reversable : True,
-	n.meta.scale : 1,
-	n.meta.expected_time : 0,
-})
-
-	
-# these compilations could translate into direct hashes writen to memory/disk
-# these should basically be able to act like globally (or not) referencable
-# garbage collected variables.
-#   garbage collection would require some way to define when somethign expires
-def pre(vars) :
-	vars['getlastime'] = sparql.compile_single_number([
-		{
-			n.hash.namespace : n.lastfm,
-			n.hash.key : 'lastfm-lasttime',
-			n.hash.value : None
-		}
-	])
-	
-	vars['setlasttime'] = sparql.compile_write([
-		{
-			n.hash.namespace : n.lastfm,
-			n.hash.key : 'lastfm-lasttime',
-			n.hash.value : None,
-		}
-	])
-	
-	
-# WARNING: the output of this transformation does not always result in > 1 
-# set of bindings.  (If the artist is not in lastfm - or if there is no inet?)
-def lastfmsimilar(vars) :
-#	vars[n.var.similar_artist] = lastfm.Artist(vars[n.var.artist_name]).getSimilar()
-#	vars[n.var.similar_artist] = ['Taken By Trees', 'Viva Voce', 'New Buffalo']
-	artists = []
-	url = 'http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt' % urllib.quote(vars[n.var.artist_name])
-	f = urllib.urlopen(url)
-	
-	lasttime = vars['getlastime']()
-	while lasttime + 1 < time.time() :
-		# sleep a little
-		pass
-	
-	vars['setlasttime'](time.time())
-	
-	for line in f :
-		tokens = line.strip().split(',')
-		artists.append({
-			n.lastfm.similarity_measure : float(tokens[0]),
-			n.lastfm.mbid : tokens[1],
-			n.lastfm.name : tokens[2],
-		})
-	vars[n.var.similar_artist] = artists[:10]
-	print 'vars',prettyquery(vars)
-	
-	#vars[n.var.similar_artist] = [
-		#{
-			#n.lastfm.name : 'Taken By Trees',
-			#n.lastfm.similarity_measure : 100,
-			#n.lastfm.mbid : '924392349239429urjf834',
-		#},
-		#{
-			#n.lastfm.name : 'Viva Voce',
-			#n.lastfm.similarity_measure : 96,
-			#n.lastfm.mbid : '88r328394nc3jr43jdmmnn',
-		#}
-	#]
-
-translator.register_translation({
-	n.meta.name : 'last.fm similar artists',
-	n.meta.input : [
-		'artist[music.artist_name] = artist_name',
-		[n.var.artist, n.music.artist_name, n.var.artist_name],
-	],
-	n.meta.output : [
-		'artist = lastfm.similar_to(similar_artist)'
-		[n.var.artist, n.lastfm.similar_to, n.var.similar_artist],
-	],
-	n.meta.function : lastfmsimilar,
-	n.meta.scale : 100,
-	n.meta.expected_time : 1,
-	n.cache.expiration_length : 2678400 # 1 month in seconds
-})
-
-#input : [
-	#[var.x, is, '%person%s %relationship%']
-#],
-#output : [
-	#[var.y, name, '%person%']
-	#[var.y, freebase.%relationship%, var.x]
-	#[var.x, name, var.name]
-#],
-
-	
-
-
-#read([
-	#[var.x, is, 'george bushs daughter'],
-	#[var.x, name, var.name]
-#], [var.name])
 
 
 
@@ -215,6 +58,24 @@ ret = translator.read_translations([
 	[n.var.artist, n.lastfm.similar_to, n.var.similar_artist],
 	[n.var.artist, n.rdfs.label, 'Lavender Diamond']
 ], [n.var.album])
+
+alt_query = """
+	artist[rdfs.label] = 'Lavender Diamond'
+	artist[lastfm.similar_to] = similar_artist
+	album[music.artist] = similar_artist
+	album[music.playable] = True
+"""
+
+""" or
+	artist = {
+		rdfs.label : 'Lavendar Diamond',
+		lastfm.similar_to : similar_artist
+	}
+	album = {
+		music.artist : similar_artist,
+		music.playable : True
+	}
+"""
 
 #{
 	#n.rdfs.label : 'Lave',

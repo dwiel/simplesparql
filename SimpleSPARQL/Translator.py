@@ -1,4 +1,7 @@
-from SimpleSPARQL import SimpleSPARQL, Namespaces, prettyquery
+from SimpleSPARQL import SimpleSPARQL
+from Namespaces import Namespaces
+from PrettyQuery import prettyquery
+from Parser import Parser
 
 from rdflib import URIRef
 
@@ -7,13 +10,14 @@ import copy, time, random
 
 class Translator :
 	def __init__(self, cache) :
-		self.n = Namespaces.Namespaces()
+		self.n = Namespaces()
 		#self.n.bind('var', '<http://dwiel.net/axpress/var/0.1/>')
 		#self.n.bind('tvar', '<http://dwiel.net/axpress/translation/var/0.1/>')
 		#self.n.bind('bnode', '<http://dwiel.net/axpress/bnode/0.1/>')
 		#self.n.bind('meta', '<http://dwiel.net/axpress/meta/0.1/>')
 		
 		self.cache = cache
+		self.parser = Parser()
 
 		self.translations = []
 		#self.sparql = sparql
@@ -308,7 +312,7 @@ class Translator :
 		
 		found_match = True
 		while found_match :
-			print '--- new iteration ---'
+#			print '--- new iteration ---'
 			all_new_final_bindings = []
 			for query in final_bindings :
 				new_final_bindings = [query]
@@ -317,8 +321,8 @@ class Translator :
 				for (translation, (matches, bindings)) in all_bindings :
 					if matches :
 						this_translation_bindings = self.apply_translation_binding(translation, bindings, history)
-						print 'translation', translation[n.meta.name]
-						print 'this_translation_bindings', prettyquery(this_translation_bindings),
+#						print 'translation', translation[n.meta.name]
+#						print 'this_translation_bindings', prettyquery(this_translation_bindings),
 						# 'multiply' each new binding with each previously existing binding
 						if len(this_translation_bindings) != 0 :
 							#print translation[n.meta.name], len(this_translation_bindings), prettyquery(this_translation_bindings),
@@ -333,7 +337,7 @@ class Translator :
 				all_new_final_bindings.extend(new_final_bindings)
 			
 			final_bindings = all_new_final_bindings
-			print 'final_bindings', prettyquery(final_bindings)
+#			print 'final_bindings', prettyquery(final_bindings)
 		
 		# print 'final_bindings',prettyquery(final_bindings),
 		return final_bindings
@@ -344,6 +348,8 @@ class Translator :
 			var_triples = self.find_var_triples(query)
 		else :
 			var_triples = self.find_specific_var_triples(query, find_vars)
+		
+		query = self.parser.parse_query(query)
 		
 		return self.read_translations_helper(query, var_triples, [], [])
 		

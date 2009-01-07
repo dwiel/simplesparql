@@ -65,7 +65,12 @@ class Namespaces() :
 	
 	def iteritems(self) :
 		return self.namespaces.iteritems()
-
+	
+	def __eq__(self, obj) :
+		if isinstance(obj, Namespaces) :
+			return self.namespaces == obj.namespaces
+		else :
+			return False
 
 
 

@@ -3,6 +3,7 @@ from Translator import Translator
 from Cache import Cache
 from Namespaces import Namespaces, globalNamespaces, uri_could_be_from_namespace
 from RDFObject import RDFObject
+from Parser import Parser
 
 from PrettyQuery import prettyquery
 
