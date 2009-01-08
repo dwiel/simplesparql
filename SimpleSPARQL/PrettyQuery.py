@@ -15,6 +15,8 @@ def prettyquery(query, tabs = '', indent = '  ', namespaces = n) :
 			new_lines[-1] += ','
 		else :
 			new_lines.append(line)
+	if len(new_lines[-1]) == 0 :
+		new_lines.pop()
 	return '\n'.join(new_lines)
 
 def prettyquery_helper(query, tabs = '', indent = '  ', namespaces = n) :

@@ -5,6 +5,7 @@ def load(translator, n) :
 	n.bind('math', '<http://dwiel.net/express/math/0.1/>')
 	n.bind('flickr', '<http://dwiel.net/express/flickr/0.1/>')
 	n.bind('file', '<http://dwiel.net/express/file/0.1/>')
+	n.bind('playlist', '<http://dwiel.net/express/playlist/0.1/>')
 	n.bind('image', '<http://dwiel.net/express/image/0.1/>')
 	n.bind('pil', '<http://dwiel.net/express/python/pil/0.1/>')
 	n.bind('call', '<http://dwiel.net/express/call/0.1/>')
@@ -222,25 +223,28 @@ def load(translator, n) :
 	def load_image(vars) :
 		from PIL import Image
 		im = Image.open(vars['filename'])
-		vars['image'] = im
+		im.load() # force the data to be loaded (Image.open is lazy)
+		vars['pil_image'] = im
 	translator.register_translation({
 		n.meta.name : 'load image',
 		n.meta.input : [
 			'image[file.filename] = filename'
 		],
 		n.meta.output : [
-			'image[pil.image] = image'
+			'image[pil.image] = pil_image'
 		],
 		n.meta.function : load_image,
 	})
 		
 	def image_thumbnail(vars) :
+		from PIL import Image
+		im = vars['pil_image']
 		im.thumbnail((4, 4), Image.ANTIALIAS)
-		vars['filename'] = im
+		vars['thumb_image'] = im
 	translator.register_translation({
 		n.meta.name : 'image thumbnail',
 		n.meta.input : [
-			'x[pil.image] = image',
+			'image[pil.image] = pil_image',
 			'thumb = image.thumbnail(image, x, y)',
 		],
 		n.meta.output : [
@@ -253,3 +257,72 @@ def load(translator, n) :
 
 
 
+
+	def playlist_enuque(vars):
+		pass
+	translator.register_translation({
+		n.meta.name : 'playlist enqueue',
+		n.meta.input : [
+			'playlist.enqueue(playlist.playlist, album) = True',
+			'album[music.track] = track',
+			'track[file.url] = url',
+			'track[music.title] = title',
+			'track[music.track_number] = track_number',
+		],
+		n.meta.output : [
+		],
+		n.meta.function : playlist_enuque,
+	})
+
+
+
+	#def foo(vars):
+		#pass
+	#translator.register_translation({
+		#n.meta.name : '',
+		#n.meta.input : [
+		#],
+		#n.meta.output : [
+		#],
+		#n.meta.function : foo,
+	#})
+
+
+
+
+
+"""
+
+
+
+
+
+
+
+new_final_bindings [
+  [
+    [ n.var.image, n.file.filename, '/home/dwiel/AMOSvid/1065/20080821_083129.jpg', ],
+    [ n.var.bnode1, n.call.arg1, n.var.image, ],
+    [ n.var.bnode1, n.call.arg2, 4, ],
+    [ n.var.bnode1, n.call.arg3, 4, ],
+    [ n.var.bnode1, n.image.thumbnail, n.var.thumb, ],
+    [ n.var.image, n.pil.image, <PIL.JpegImagePlugin.JpegImageFile instance at 0x837d8cc>, ],
+    [ n.var.thumb, n.pil.image, <PIL.JpegImagePlugin.JpegImageFile instance at 0x837d8cc>, ],
+  ],
+]
+
+applying image thumbnail
+binding {
+  n.var._ : n.var.thumb,
+  n.var.bnode1 : n.var.bnode1,
+  n.var.image : <PIL.JpegImagePlugin.JpegImageFile instance at 0x837d8cc>,
+  n.var.thumb : n.var.thumb,
+  n.var.x : 4,
+  n.var.y : 4,
+}
+
+
+
+
+
+"""

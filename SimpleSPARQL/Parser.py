@@ -10,7 +10,7 @@ re_dict = re.compile('(.+){(.+)}')
 re_dict_pair = re.compile('\s*([^,:\.]*[:\.]*[^,:\.]*)\s*:\s*([^,:\.]*[:\.]*[^,:\.]*)\s*,')
 re_call = re.compile('(.+)\((.*)\)')
 re_call_params = re.compile('([^,]+),')
-re_uri = re.compile('(\D.+)[\.:](.+)')
+re_uri = re.compile('(\D\w+)[\.:](\w+)')
 re_var = re.compile('^[a-zA-Z_]\w*$')
 
 python_keywords = ['True', 'False']
@@ -52,8 +52,6 @@ class Expression() :
 					other.missing = [0] + other.missing
 				self.missing = [len(self.exp) + other.missing[0], other.missing[1]]
 		self.exp.extend(other.exp)
-		print 'missing',self.missing
-		print 'exp',self.exp
 	
 	def __str__(self) :
 		return '<Expression %s>' % str((self.exp, self.missing))
@@ -71,15 +69,11 @@ class Parser() :
 
 	def parse_expression(self, expression) :
 		self.reset_bnode()
-		print
-		print '---------------------'
-		print 'expression',expression
+		print 'exp', expression
 		exp = self.parse_expression_new(expression)
-		print 'exp',exp
 		code = '[\n%s\n]' % ',\n'.join([
 			'[%s]' % ', '.join(triple) for triple in exp.triplelist()
 		])
-		print 'code',code
 		return eval(code, {'n' : self.n}, {})
 	
 	def flatten(self, seq):
@@ -104,16 +98,11 @@ class Parser() :
 	def parse_expression_new(self, expression) :
 		expression = expression.replace('\n', '')
 		expression = expression.strip()
-		print expression
 		g = re_equals.match(expression)
 		if g is not None :
 			lhs = self.parse_expression_new(g.group(1))
 			rhs = self.parse_expression_new(g.group(2))
 			
-			print '='
-			print 'lhs',lhs
-			print 'rhs',rhs
-			print '-[]'
 			if isinstance(lhs, Expression) :
 				if isinstance(rhs, Expression) :
 					bnode = self.next_bnode()
@@ -136,10 +125,6 @@ class Parser() :
 			obj = self.parse_expression_new(g.group(1))
 			prop = self.parse_expression_new(g.group(2))
 			
-			print '[]'
-			print 'obj',obj
-			print 'prop',prop
-			print '-[]'
 			if isinstance(obj, Expression) :
 				if isinstance(prop, Expression) :
 					return None
@@ -160,9 +145,6 @@ class Parser() :
 			inside = g.group(2).strip() + ','
 			
 			obj = self.parse_expression_new(obj)	
-			
-			print 'obj',obj
-			print 'inside',inside
 			
 			pairs = re_dict_pair.findall(inside)
 			if pairs is not [] :
@@ -198,7 +180,6 @@ class Parser() :
 		if g is not None :
 			namespace = g.group(1).strip()
 			value = g.group(2).strip()
-			print 'uri(%s, %s)' % (namespace, value)
 			return 'n.%s.%s' % (namespace, value)
 		
 		if expression in python_keywords :
@@ -206,12 +187,9 @@ class Parser() :
 		
 		#if expression[0].isalpha() and (len(expression) == 1 or expression[1:].isalnum()) :
 		if re_var.match(expression) :
-			print 'var(%s)' % expression
 			return 'n.var.%s' % expression
 		
 		return expression
-		
-		print
 		
 
 

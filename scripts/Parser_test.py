@@ -5,6 +5,8 @@ from SimpleSPARQL import *
 n = globalNamespaces()
 n.bind('string', '<http://dwiel.net/express/string/0.1/>')
 n.bind('math', '<http://dwiel.net/express/math/0.1/>')
+n.bind('file', '<http://dwiel.net/express/file/0.1/>')
+n.bind('glob', '<http://dwiel.net/express/glob/0.1/>')
 n.bind('color', '<http://dwiel.net/express/color/0.1/>')
 n.bind('sparql', '<http://dwiel.net/express/sparql/0.1/>')
 n.bind('call', '<http://dwiel.net/express/call/0.1/>')
@@ -82,6 +84,15 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 	
 	def test13(self):
 		assert self.parser.parse_expression("image[flickr.tag] = image_tag") == [[n.var.image, n.flickr.tag, n.var.image_tag]]
+		
+	def test14(self):
+		assert self.parser.parse_expression('image[file.filename] = "/home/dwiel/AMOSvid/1065/20080821_083129.jpg"') == [[n.var.image, n.file.filename, "/home/dwiel/AMOSvid/1065/20080821_083129.jpg"]]
+		
+	def test15(self):
+		assert self.parser.parse_expression('image[file.filename] = "home/dwiel/AMOSvid/1065/*.jpg"[glob.glob]') == [
+			[n.var.image, n.file.filename, n.var.bnode1],
+			["home/dwiel/AMOSvid/1065/*.jpg", n.glob.glob, n.var.bnode1],
+		]
 	
 	def test_parseQuery1(self):
 		query = [

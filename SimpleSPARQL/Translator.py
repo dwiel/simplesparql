@@ -36,6 +36,7 @@ class Translator :
 		translation[n.meta.output] = self.parser.parse_query(translation[n.meta.output])
 		
 		print translation[n.meta.name]
+		print prettyquery(translation[n.meta.input])
 		print prettyquery(translation[n.meta.output])
 		print
 		
@@ -110,8 +111,10 @@ class Translator :
 		bindings = []
 		for qtriple in query :
 			binding = self.get_binding(triple, qtriple)
-			if binding not in bindings :
+			if binding and binding not in bindings :
 				bindings.append(binding)
+		
+#		bindings = [binding for binding in bindings if binding]
 		return bindings
 	
 	def conflicting_bindings(self, a, b) :
@@ -128,7 +131,7 @@ class Translator :
 		return [translation, binding] in history
 	
 	def register_executed(self, history, translation, binding) :
-		history.append(copy.deepcopy([translation, binding]))
+		history.append([translation, copy.copy(binding)])
 		
 	def find_meta_vars(self, query) :
 		try :
@@ -154,13 +157,13 @@ class Translator :
 		matches is True if the query matches the translation
 		bindings is a list of bindings for meta_var to value
 		"""
+		print 'translation',prettyquery(translation)
+		print 'q',prettyquery(query)
 		bindings = [{}]
 		for ttriple in translation :
-			#print 'q',prettyquery(query)
-			#print 't',prettyquery(ttriple)
+			print 't',prettyquery(ttriple)
 			possible_bindings = self.find_bindings(ttriple, query)
-			#print 'p',prettyquery(possible_bindings)
-			#print
+			print 'p',prettyquery(possible_bindings)
 			new_bindings = []
 			# see if any of the next_bindings fit with the existing bindings
 			for pbinding in possible_bindings :
@@ -168,7 +171,8 @@ class Translator :
 				# value in bindings 
 				for binding in bindings :
 					if not self.conflicting_bindings(binding, pbinding) :
-						new_binding = copy.deepcopy(binding)
+						# WARNING: this isn't going to copy the values of the bindings!!!
+						new_binding = copy.copy(binding)
 						#print prettyquery(new_binding)
 						#print prettyquery(pbinding)
 						#print
@@ -176,6 +180,8 @@ class Translator :
 						if new_binding not in new_bindings :
 							new_bindings.append(new_binding)
 			bindings = new_bindings
+			print 'bindings',prettyquery(bindings)
+			print
 		
 		# get a set of all meta_vars
 		meta_vars = self.find_meta_vars(translation)
@@ -292,6 +298,8 @@ class Translator :
 			# print 'history',prettyquery([[t[0][n.meta.name], t[1]] for t in history]),
 			# print 'now',prettyquery([translation[n.meta.name], binding]),
 			if [translation, binding] not in history :
+				print 'applying',translation[n.meta.name]
+				print 'binding',prettyquery(binding)
 				history.append([translation, copy.copy(binding)])
 				
 				# if this translation expects to be cached, use a cache
@@ -317,12 +325,13 @@ class Translator :
 					# convert the binding key from 'keys' to n.var.keys
 					output_bindings_list = [dict([(self.n.var[var], value) for var, value in output_bindings.iteritems()]) for output_bindings in output_bindings_list]
 				
-				print 'output_bindings_list',prettyquery(output_bindings_list),
+				#print 'output_bindings_list',prettyquery(output_bindings_list),
 				
 				outtriple_sets = self.sub_var_bindings(translation[n.meta.output], output_bindings_list)
 				#outtriple_sets = [x for x in outtriple_sets]
 				#print 'outtriple_sets',prettyquery(outtriple_sets)
 				translation_bindings.extend(outtriple_sets)
+				#print 'translation_bindings',prettyquery(translation_bindings)
 		return translation_bindings
 	
 	def read_translations_helper(self, query, var_triples, bound_var_triples = [], history = []) :
@@ -359,11 +368,12 @@ class Translator :
 								for new_binding in this_translation_bindings :
 									tmp_new_final_bindings.append(binding + new_binding)
 							new_final_bindings = tmp_new_final_bindings
+							print 'new_final_bindings',prettyquery(new_final_bindings)
 							
 				all_new_final_bindings.extend(new_final_bindings)
 			
 			final_bindings = all_new_final_bindings
-#			print 'final_bindings', prettyquery(final_bindings)
+			#print 'final_bindings', prettyquery(final_bindings)
 		
 		# print 'final_bindings',prettyquery(final_bindings),
 		return final_bindings

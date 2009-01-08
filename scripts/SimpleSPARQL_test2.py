@@ -38,14 +38,80 @@ ret = translator.read_translations([
 #	[n.test.u, n.test.prod, n.var.prod],
 ])
 
-# make a list from the returned generator
-ret = [[y for y in x] for x in ret]
+assert ret == [
+  [
+    [ n.test.u, n.test.x, 1, ],
+    [ n.test.u, n.test.x, 10, ],
+    [ n.test.u, n.test.y, 2, ],
+    [ n.test.u, n.test.y, 20, ],
+    [ n.test.u, n.test.z, 100, ],
+    [ n.test.u, n.test.div, n.var.div, ],
+    [ n.test.u, n.test.sum, 3, ],
+    [ n.test.u, n.test.prod, 300, ],
+    [ n.test.u, n.test.div, 0.029999999999999999, ],
+  ], [
+    [ n.test.u, n.test.x, 1, ],
+    [ n.test.u, n.test.x, 10, ],
+    [ n.test.u, n.test.y, 2, ],
+    [ n.test.u, n.test.y, 20, ],
+    [ n.test.u, n.test.z, 100, ],
+    [ n.test.u, n.test.div, n.var.div, ],
+    [ n.test.u, n.test.sum, 12, ],
+    [ n.test.u, n.test.prod, 1200, ],
+    [ n.test.u, n.test.div, 0.12, ],
+  ], [
+    [ n.test.u, n.test.x, 1, ],
+    [ n.test.u, n.test.x, 10, ],
+    [ n.test.u, n.test.y, 2, ],
+    [ n.test.u, n.test.y, 20, ],
+    [ n.test.u, n.test.z, 100, ],
+    [ n.test.u, n.test.div, n.var.div, ],
+    [ n.test.u, n.test.sum, 21, ],
+    [ n.test.u, n.test.prod, 2100, ],
+    [ n.test.u, n.test.div, 0.20999999999999999, ],
+  ], [
+    [ n.test.u, n.test.x, 1, ],
+    [ n.test.u, n.test.x, 10, ],
+    [ n.test.u, n.test.y, 2, ],
+    [ n.test.u, n.test.y, 20, ],
+    [ n.test.u, n.test.z, 100, ],
+    [ n.test.u, n.test.div, n.var.div, ],
+    [ n.test.u, n.test.sum, 30, ],
+    [ n.test.u, n.test.prod, 3000, ],
+    [ n.test.u, n.test.div, 0.29999999999999999, ],
+  ],
+]
+
 print prettyquery(ret)
+
+#ret = [[y for y in x] for x in ret]
+#print prettyquery(ret)
 
 #exit()
 
+ret = translator.read_translations([
+	'test.u[test.x] = 1',
+	'test.u[test.x] = 2',
+	'test.u[test.y] = 10',
+	'test.u[test.sum] = sum',
+])
+print prettyquery(ret)
 
 
+ret = translator.read_translations([
+	'test.v[test.x] = 1',
+	'test.u[test.x] = 2',
+	'test.u[test.y] = 10',
+	'test.u[test.sum] = sum',
+])
+print prettyquery(ret)
+
+
+ret = translator.read_translations([
+	'image[file.filename] = "/home/dwiel/AMOSvid/1065/20080821_083129.jpg"',
+	'thumb = image.thumbnail(image, 4, 4)'
+])
+print prettyquery(ret)
 
 
 
@@ -62,6 +128,16 @@ alt_query = """
 	artist[lastfm.similar_to] = similar_artist
 	album[music.artist] = similar_artist
 	album[music.playable] = True
+"""
+
+alt_query = """
+where translate:
+	artist[rdfs.label] = 'Lavender Diamond'
+	artist[lastfm.similar_to] = similar_artist
+	album[music.artist] = similar_artist
+	album[music.playable] = True
+write translate:
+	playlist.enqueue(playlist.playlist, album)
 """
 
 """ or
