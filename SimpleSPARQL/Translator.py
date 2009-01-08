@@ -296,18 +296,28 @@ class Translator :
 				
 				# if this translation expects to be cached, use a cache
 				if n.cache.expiration_length in translation :
-					output_bindings = self.cache.call(translation, binding)
-				else : 
-					output_bindings = translation[n.meta.function](binding)
+					output_bindings_list = self.cache.call(translation, binding)					
+				else :
+					# convert the binding key from n.var.keys to 'keys'
+					string_binding = dict([(var[len(self.n.var):], value) for var, value in binding.iteritems()])
+					
+					# call the function
+					output_bindings = translation[n.meta.function](string_binding)
+					
+					# make sure the output_bindings is a list of possible bindings.
+					# this allows a plugin to simply modify the binding passed in
+					# or return a new set if that is easier
+					if output_bindings == None :
+						output_bindings = string_binding
+					if type(output_bindings) == dict :
+						output_bindings_list = [output_bindings]
+					else :
+						output_bindings_list = output_bindings
+					
+					# convert the binding key from 'keys' to n.var.keys
+					output_bindings_list = [dict([(self.n.var[var], value) for var, value in output_bindings.iteritems()]) for output_bindings in output_bindings_list]
 				
-				# make sure the output_bindings is a list of possible bindings.
-				# this allows a plugin to simply modify the binding passed in
-				if output_bindings == None :
-					output_bindings = binding
-				if type(output_bindings) == dict :
-					output_bindings_list = [output_bindings]
-				
-				#print 'output_bindingss',prettyquery(output_bindingss),
+				print 'output_bindings_list',prettyquery(output_bindings_list),
 				
 				outtriple_sets = self.sub_var_bindings(translation[n.meta.output], output_bindings_list)
 				#outtriple_sets = [x for x in outtriple_sets]

@@ -5,6 +5,9 @@ def load(translator, n) :
 	n.bind('math', '<http://dwiel.net/express/math/0.1/>')
 	n.bind('flickr', '<http://dwiel.net/express/flickr/0.1/>')
 	n.bind('file', '<http://dwiel.net/express/file/0.1/>')
+	n.bind('image', '<http://dwiel.net/express/image/0.1/>')
+	n.bind('pil', '<http://dwiel.net/express/python/pil/0.1/>')
+	n.bind('call', '<http://dwiel.net/express/call/0.1/>')
 	
 	## TODO: allow a 'function' to accept a variable number of arguments?
 	#def sum(vars) :
@@ -25,7 +28,8 @@ def load(translator, n) :
 	#})
 
 	def sum(vars) :
-		vars[n.var.sum] = vars[n.var.x] + vars[n.var.y]
+		print prettyquery(vars)
+		vars['sum'] = vars['x'] + vars['y']
 	translator.register_translation({
 		n.meta.name : 'sum',
 		n.meta.input : [
@@ -48,7 +52,7 @@ def load(translator, n) :
 	"""
 	
 	def prod(vars) :
-		vars[n.var.prod] = vars[n.var.sum] * vars[n.var.z]
+		vars['prod'] = vars['sum'] * vars['z']
 	translator.register_translation({
 		n.meta.name : 'product',
 		n.meta.input : [
@@ -62,7 +66,7 @@ def load(translator, n) :
 	})
 	
 	def div(vars) :
-		vars[n.var.div] = float(vars[n.var.sum]) / vars[n.var.z]
+		vars['div'] = float(vars['sum']) / vars['z']
 	translator.register_translation({
 		n.meta.name : 'division',
 		n.meta.input : [
@@ -117,7 +121,7 @@ def load(translator, n) :
 	#	vars[n.var.similar_artist] = lastfm.Artist(vars[n.var.artist_name]).getSimilar()
 	#	vars[n.var.similar_artist] = ['Taken By Trees', 'Viva Voce', 'New Buffalo']
 		artists = []
-		url = 'http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt' % urllib.quote(vars[n.var.artist_name])
+		url = 'http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt' % urllib.quote(vars['artist_name'])
 		f = urllib.urlopen(url)
 		
 		lasttime = vars['getlastime']()
@@ -134,7 +138,7 @@ def load(translator, n) :
 				n.lastfm.mbid : tokens[1],
 				n.lastfm.name : tokens[2],
 			})
-		vars[n.var.similar_artist] = artists[:10]
+		vars['similar_artist'] = artists[:10]
 		print 'vars',prettyquery(vars)
 		
 		#vars[n.var.similar_artist] = [
@@ -191,11 +195,11 @@ def load(translator, n) :
 	def flickr_photos_search(vars) :
 		import flickrapi
 		flickr = flickrapi.FlickrAPI('91a5290443e54ec0ff7bcd26328963cd', format='etree')
-		photos = flickr.photos_search(tags=[vars[n.var.tag]])
+		photos = flickr.photos_search(tags=[vars['tag']])
 		urls = []
 		for photo in photos.find('photos').findall('photo') :
 			urls.append(flickr_make_url(photo))
-		vars[n.file.url] = urls
+		vars['url'] = urls
 		
 	translator.register_translation({
 		n.meta.name : 'flickr photos search',
@@ -214,7 +218,36 @@ def load(translator, n) :
 		n.cache.expiration_length : 2678400,
 		n.meta.requires : 'flickrapi' # TODO: make this work
 	})
-
+	
+	def load_image(vars) :
+		from PIL import Image
+		im = Image.open(vars['filename'])
+		vars['image'] = im
+	translator.register_translation({
+		n.meta.name : 'load image',
+		n.meta.input : [
+			'image[file.filename] = filename'
+		],
+		n.meta.output : [
+			'image[pil.image] = image'
+		],
+		n.meta.function : load_image,
+	})
+		
+	def image_thumbnail(vars) :
+		im.thumbnail((4, 4), Image.ANTIALIAS)
+		vars['filename'] = im
+	translator.register_translation({
+		n.meta.name : 'image thumbnail',
+		n.meta.input : [
+			'x[pil.image] = image',
+			'thumb = image.thumbnail(image, x, y)',
+		],
+		n.meta.output : [
+			'thumb[pil.image] = thumb_image',
+		],
+		n.meta.function : image_thumbnail,
+	})
 
 
 

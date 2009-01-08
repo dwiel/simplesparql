@@ -11,6 +11,7 @@ re_dict_pair = re.compile('\s*([^,:\.]*[:\.]*[^,:\.]*)\s*:\s*([^,:\.]*[:\.]*[^,:
 re_call = re.compile('(.+)\((.*)\)')
 re_call_params = re.compile('([^,]+),')
 re_uri = re.compile('(\D.+)[\.:](.+)')
+re_var = re.compile('^[a-zA-Z_]\w*$')
 
 python_keywords = ['True', 'False']
 
@@ -203,7 +204,8 @@ class Parser() :
 		if expression in python_keywords :
 			return expression
 		
-		if expression[0].isalpha() and (len(expression) == 1 or expression[1:].isalnum()) :
+		#if expression[0].isalpha() and (len(expression) == 1 or expression[1:].isalnum()) :
+		if re_var.match(expression) :
 			print 'var(%s)' % expression
 			return 'n.var.%s' % expression
 		
