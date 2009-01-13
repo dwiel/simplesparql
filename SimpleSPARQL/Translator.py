@@ -387,6 +387,12 @@ class Translator :
 		
 		query = self.parser.parse_query(query)
 		
+		print '----------------------------------------------'
+		print 'parsed query'
+		print prettyquery(query)
+		print '/'
+		print
+		
 		return self.read_translations_helper(query, var_triples, [], [])
 		
 		# look for all possible routes through the translations to see which paths

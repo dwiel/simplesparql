@@ -66,10 +66,8 @@ class Parser() :
 		
 		self.n = n
 		self.var = 0
-
+	
 	def parse_expression(self, expression) :
-		self.reset_bnode()
-		print 'exp', expression
 		exp = self.parse_expression_new(expression)
 		code = '[\n%s\n]' % ',\n'.join([
 			'[%s]' % ', '.join(triple) for triple in exp.triplelist()
@@ -86,6 +84,7 @@ class Parser() :
 		return res
 	
 	def parse_query(self, query) :
+		self.reset_bnode()
 		return self.flatten([isinstance(expression, basestring) and self.parse_expression(expression) or [expression] for expression in query])
 	
 	def reset_bnode(self) :

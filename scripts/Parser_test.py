@@ -9,6 +9,9 @@ n.bind('file', '<http://dwiel.net/express/file/0.1/>')
 n.bind('glob', '<http://dwiel.net/express/glob/0.1/>')
 n.bind('color', '<http://dwiel.net/express/color/0.1/>')
 n.bind('sparql', '<http://dwiel.net/express/sparql/0.1/>')
+n.bind('image', '<http://dwiel.net/express/image/0.1/>')
+n.bind('pil', '<http://dwiel.net/express/python/pil/0.1/>')
+n.bind('glob', '<http://dwiel.net/express/python/glob/0.1/>')
 n.bind('call', '<http://dwiel.net/express/call/0.1/>')
 n.bind('test', '<http://dwiel.net/express/test/0.1/>')
 
@@ -79,7 +82,6 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 		assert self.parser.parse_expression("image[flickr.tag] = x") == [[n.var.image, n.flickr.tag, n.var.x]]
 
 	def test12(self):
-		print prettyquery(self.parser.parse_expression("image[flickr:tag] = True"))
 		assert self.parser.parse_expression("image[flickr:tag] = True") == [[n.var.image, n.flickr.tag, True]]
 	
 	def test13(self):
@@ -113,6 +115,24 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			[n.var.uri, n.test.x, n.var.bnode1],
 			[n.var.uri2, n.test.x, n.var.bnode1],
 			[n.var.uri, n.test.x, 1],
+		]
+	
+	def test_parseQuery3(self):
+		query = [
+			'image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]',
+			'thumb = image.thumbnail(image, 4, 4, image.antialias)',
+			'thumb_image = thumb[pil.image]',
+		]
+		ret = self.parser.parse_query(query)
+		assert ret == [
+			[ n.var.image, n.file.filename, n.var.bnode1, ],
+			[ '/home/dwiel/pictures/stitt blanket/*.jpg', n.glob.glob, n.var.bnode1, ],
+			[ n.var.bnode2, n.call.arg1, n.var.image, ],
+			[ n.var.bnode2, n.call.arg2, 4, ],
+			[ n.var.bnode2, n.call.arg3, 4, ],
+			[ n.var.bnode2, n.call.arg4, n.image.antialias, ],
+			[ n.var.bnode2, n.image.thumbnail, n.var.thumb, ],
+			[ n.var.thumb, n.pil.image, n.var.thumb_image, ],
 		]
 
 	

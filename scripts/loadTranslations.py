@@ -8,6 +8,7 @@ def load(translator, n) :
 	n.bind('playlist', '<http://dwiel.net/express/playlist/0.1/>')
 	n.bind('image', '<http://dwiel.net/express/image/0.1/>')
 	n.bind('pil', '<http://dwiel.net/express/python/pil/0.1/>')
+	n.bind('glob', '<http://dwiel.net/express/python/glob/0.1/>')
 	n.bind('call', '<http://dwiel.net/express/call/0.1/>')
 	
 	## TODO: allow a 'function' to accept a variable number of arguments?
@@ -34,15 +35,15 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'sum',
 		n.meta.input : [
-			'uri[test.x] = x',
-			'uri[test.y] = y',
+			'_foo[test.x] = x',
+			'_foo[test.y] = y',
 			#'uri = {
 				#test.x : x,
 				#test.y : y,
 			#}'
 		],
 		n.meta.output : [
-			'uri[test.sum] = sum',
+			'_foo[test.sum] = sum',
 		],
 		n.meta.function : sum
 	})
@@ -57,11 +58,11 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'product',
 		n.meta.input : [
-			[n.var.uri, n.test.sum, n.var.sum],
-			[n.var.uri, n.test.z, n.var.z],
+			[n.meta_var.uri, n.test.sum, n.var.sum],
+			[n.meta_var.uri, n.test.z, n.var.z],
 		],
 		n.meta.output : [
-			'uri[test.prod] = prod',
+			'_uri[test.prod] = prod',
 		],
 		n.meta.function : prod
 	})
@@ -228,10 +229,10 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'load image',
 		n.meta.input : [
-			'image[file.filename] = filename'
+			'_image[file.filename] = filename'
 		],
 		n.meta.output : [
-			'image[pil.image] = pil_image'
+			'_image[pil.image] = pil_image'
 		],
 		n.meta.function : load_image,
 	})
@@ -273,9 +274,81 @@ def load(translator, n) :
 		],
 		n.meta.function : playlist_enuque,
 	})
-
-
-
+	
+	
+	
+	
+	
+	## how to express a SQL query in this language?
+	## this is going to require more thinking ...
+	## the SQL query schema might be useful here
+	## so might some kind of macros ... wow
+	#def foo(vars):
+		#pass
+	#translator.register_translation({
+		#n.meta.name : 'sql_where',
+		#n.meta.input : [
+			#'sql[sql.connection] = connection',
+			#'sql[sql.select] = col_name',
+			#'sql[sql.select_from] = table_name',
+			#'sql[sql.where] = col_name'
+		#],
+		#n.meta.output : [
+		#],
+		#n.meta.function : foo,
+	#})
+	
+	
+	
+	
+	
+	"""
+	"/home/dwiel/*.jpg[glob.glob] = "/home/dwiel/abc.jpg"
+	
+	if the input pattern is *anything* (var or literal) then the above is actually
+	a query to finish out that list of globs.  Is that what we want?
+	
+	what if _ only matches a variable or missing value
+	
+	then the above just makes a statement, its not a query
+	
+	but then you also sometime want a literal or a variable, anything will do
+		as in a uri/object name you don't care about
+	
+	types of variables:
+		literal or variable  name   =>  var.name
+		only a literal       _name  =>  lit_var.name
+		only a variable      ?name  =>  meta_var.name
+	
+	will we inevitably find more types of variables we want?
+		maybe only accepts a literal of type string
+		could be done with:
+	
+	isupper(var) = bool =>
+	isupper(var) = bool
+	def foo(vars) :
+		if vars['var'].isupper() :
+			vars['bool'] = True
+		else :
+			vars['bool'] = False
+		
+	"""
+	
+	def glob_glob(vars):
+		import glob
+		vars['filename'] = glob.glob(vars['pattern'])
+	translator.register_translation({
+		n.meta.name : '',
+		n.meta.input : [
+			'pattern[glob.glob] = _filename'
+		],
+		n.meta.output : [
+			'pattern[glob.glob] = filename'
+		],
+		n.meta.function : glob_glob,
+	})
+	
+	
 	#def foo(vars):
 		#pass
 	#translator.register_translation({

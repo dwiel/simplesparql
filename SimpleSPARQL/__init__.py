@@ -4,6 +4,7 @@ from Cache import Cache
 from Namespaces import Namespaces, globalNamespaces, uri_could_be_from_namespace
 from RDFObject import RDFObject
 from Parser import Parser
+from MultilineParser import MultilineParser
 
 from PrettyQuery import prettyquery
 

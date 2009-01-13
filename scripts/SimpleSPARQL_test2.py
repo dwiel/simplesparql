@@ -26,36 +26,7 @@ loadTranslations.load(translator, n)
 
 
 
-#ret = [[y for y in x] for x in ret]
-#print prettyquery(ret)
-
-#exit()
-
-ret = translator.read_translations([
-	'test.u[test.x] = 1',
-	'test.u[test.x] = 2',
-	'test.u[test.y] = 10',
-	'test.u[test.sum] = sum',
-])
-print prettyquery(ret)
-
-
-ret = translator.read_translations([
-	'test.v[test.x] = 1',
-	'test.u[test.x] = 2',
-	'test.u[test.y] = 10',
-	'test.u[test.sum] = sum',
-])
-print prettyquery(ret)
-
-
-ret = translator.read_translations([
-	'image[file.filename] = "/home/dwiel/AMOSvid/1065/20080821_083129.jpg"',
-	'thumb = image.thumbnail(image, 4, 4)'
-])
-print prettyquery(ret)
-
-
+exit()
 
 
 ret = translator.read_translations([
