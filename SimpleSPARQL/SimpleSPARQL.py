@@ -1245,8 +1245,10 @@ class SimpleSPARQL (SPARQLWrapper) :
 					newbinding[var] = URIRef(value['value'])
 				elif value['type'] == 'bnode' :
 					raise Exception('cant do bnodes')
-					
-		return ret
+			
+			yield newbinding
+		
+		#return ret
 
 
 

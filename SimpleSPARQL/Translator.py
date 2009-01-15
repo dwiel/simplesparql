@@ -419,13 +419,10 @@ class Translator :
 	
 	def read_translations_helper(self, query, var_triples, bound_var_triples = [], history = []) :
 		n = self.n		
-		# TODO: a list of values in a set of bound vars should opperate as a list of
-		#  values which occur simultaneously.  A plugin can denote that there are 
-		#  mutliple possibilities by returning a list of bindings.  Right now, both
-		#  cases are treated as occuring simultaneously
 		
 		# updated once at the end of each iteration.  This will have more than one
-		# set of bindings iff one translation has multiple possible bindings
+		# set of bindings if one translation has multiple possible bindings or if
+		# a translation binds a variable to a list (not a tuple) of values
 		final_bindings = [query]
 		
 		found_match = True
