@@ -14,11 +14,11 @@ n.bind('pil', '<http://dwiel.net/express/python/pil/0.1/>')
 n.bind('glob', '<http://dwiel.net/express/python/glob/0.1/>')
 n.bind('call', '<http://dwiel.net/express/call/0.1/>')
 n.bind('test', '<http://dwiel.net/express/test/0.1/>')
+n.bind('flickr', '<http://dwiel.net/express/flickr/0.1/>')
 
 class PassCompleteReadsTestCase(unittest.TestCase):
 	def setUp(self):
 		self.parser = Parser(n)
-		n.bind('flickr', '<http://dwiel.net/axpress/flickr/0.1/>')
 	
 	def test1(self):
 		assert self.parser.parse_expression("image[flickr.tag] = 'sunset'") == [[n.var.image, n.flickr.tag, 'sunset']]
@@ -94,6 +94,11 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 		assert self.parser.parse_expression('image[file.filename] = "home/dwiel/AMOSvid/1065/*.jpg"[glob.glob]') == [
 			[n.var.image, n.file.filename, n.var.bnode1],
 			["home/dwiel/AMOSvid/1065/*.jpg", n.glob.glob, n.var.bnode1],
+		]
+	
+	def test16(self):
+		assert self.parser.parse_expression('_pattern[glob.glob] = ?filename') == [
+			[n.lit_var.pattern, n.glob.glob, n.meta_var.filename],
 		]
 	
 	def test_parseQuery1(self):

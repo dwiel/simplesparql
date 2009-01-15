@@ -332,6 +332,24 @@ def load(translator, n) :
 		else :
 			vars['bool'] = False
 		
+	
+	how else could this kind of matching be done?
+	
+	The 'type' information could also be infered from the function and the variables it uses.
+	That might be [impossibly] hard to detect...
+	
+	The 'type' information could also just be another meta data line:
+		n.meta.input_variable_type : {
+			'filename' : 'variable',
+			'pattern' : 'literal'
+		},
+		n.meta.output_variable_type : {
+			'filename' : 'literal',
+			'pattern' : 'literal'
+		},
+	
+	for now, the prefix on the variable name makes sense.  It would be easy to add
+	a meta-data like above to the translation syntax
 	"""
 	
 	def glob_glob(vars):
@@ -340,10 +358,10 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'glob glob',
 		n.meta.input : [
-			'pattern[glob.glob] = filename'
+			'_pattern[glob.glob] = ?filename'
 		],
 		n.meta.output : [
-			'pattern[glob.glob] = filename'
+			'_pattern[glob.glob] = _filename'
 		],
 		n.meta.function : glob_glob,
 	})

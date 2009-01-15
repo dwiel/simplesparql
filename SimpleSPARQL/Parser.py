@@ -12,6 +12,8 @@ re_call = re.compile('(.+)\((.*)\)')
 re_call_params = re.compile('([^,]+),')
 re_uri = re.compile('(\D\w+)[\.:](\w+)')
 re_var = re.compile('^[a-zA-Z_]\w*$')
+re_meta_var = re.compile('^\?[a-zA-Z_]\w*$')
+re_lit_var = re.compile('^_[a-zA-Z_]\w*$')
 
 python_keywords = ['True', 'False']
 
@@ -63,6 +65,9 @@ class Parser() :
 	def __init__(self, n = None) :
 		if n == None :
 			n = Namespaces.Namespaces()
+		
+		n.bind('meta_var', '<http://dwiel.net/express/meta_var/0.1/>')
+		n.bind('lit_var', '<http://dwiel.net/express/lit_var/0.1/>')
 		
 		self.n = n
 		self.var = 0
@@ -184,7 +189,13 @@ class Parser() :
 		if expression in python_keywords :
 			return expression
 		
-		#if expression[0].isalpha() and (len(expression) == 1 or expression[1:].isalnum()) :
+		g = re_lit_var.match(expression)
+		if g is not None :
+			return 'n.lit_var.%s' % expression[1:]
+		
+		if re_meta_var.match(expression) :
+			return 'n.meta_var.%s' % expression[1:]
+		
 		if re_var.match(expression) :
 			return 'n.var.%s' % expression
 		

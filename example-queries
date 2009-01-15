@@ -14,7 +14,7 @@ write database
 
 
 
-english: play all albums by artists related to Lavender Diamond
+english: enqueue all albums by artists related to Lavender Diamond
 
 where translate:
 	artist[rdfs.label] = 'Lavender Diamond'

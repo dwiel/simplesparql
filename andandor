@@ -106,9 +106,10 @@ def foo(vars) :
 this use of a tuple isnt strictly pythonic.  The tuple here is being used as a list but distinguishible from a list.  Could just as easily do like above and have atonce([...]).
 
 either way, does this satisfy the cases?
+for now, this handles 95% of the cases that I can think of.  New syntax for the other cases can be created when I have a better understanding of what they even are.
 
 
 === conclusion?
 
-at each translation, there is a set of possible bindings.  Each 
+at each translation, there is a set of possible bindings.
 
