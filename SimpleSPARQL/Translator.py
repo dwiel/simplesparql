@@ -47,7 +47,31 @@ class Translator :
 		if type(data) == URIRef :
 			if data.find(self.n.var) == 0 :
 				return True
+			elif data.find(self.n.meta_var) == 0 :
+				return True
+			elif data.find(self.n.lit_var) == 0 :
+				return True
 		return False
+	
+	def var_name(self, uri) :
+		if uri.find(self.n.var) == 0 :
+			return uri[len(self.n.var):]
+		elif uri.find(self.n.meta_var) == 0 :
+			return uri[len(self.n.meta_var):]
+		elif uri.find(self.n.lit_var) == 0 :
+			return uri[len(self.n.lit_var):]
+		else :
+			raise Exception('data is not a variable' % repr(data))
+	
+	def var_type(self, uri) :
+		if uri.find(self.n.var) == 0 :
+			return self.n.var
+		elif uri.find(self.n.meta_var) == 0 :
+			return self.n.meta_var
+		elif uri.find(self.n.lit_var) == 0 :
+			return self.n.lit_var
+		else :
+			raise Exception('data is not a variable' % repr(data))
 	
 	def var(self, data) :
 		if is_var(data) :
@@ -55,19 +79,23 @@ class Translator :
 		return None
 	
 	def values_match(self, value, qvalue) :
-		# if this is a meta-var, then anything matches
 		# TODO: keep track of values of meta-vars to make sure they are consistant
 		# throughout.  This will actually require a backtracking search ...
+		# is this really not taken care of?
 		if type(value) == URIRef :
 			if value.find(self.n.var) == 0 :
 				return True
+			if value.find(self.n.meta_var) == 0 :
+				return qvalue.find(self.n.var) == 0
+			if value.find(self.n.lit_var) == 0 :
+				return qvalue.find(self.n.var) != 0
 			# if this meta value is a variable, see what it is
-			if value.find(self.n.var) == 0 :
-				if value in self.vars :
-					# TODO deal with this some other way
-					raise Exception('this var is bound twice ...' + value + ' : '+str(qvalue))
-				self.vars[value] = qvalue
-				return True
+			#if value.find(self.n.var) == 0 :
+				#if value in self.vars :
+					## TODO deal with this some other way
+					#raise Exception('this var is bound twice ...' + value + ' : '+str(qvalue))
+				#self.vars[value] = qvalue
+				#return True
 		if value == qvalue :
 			return True
 	
@@ -86,7 +114,7 @@ class Translator :
 	def get_binding(self, triple, qtriple) :
 		binding = {}
 		for t, q in izip(triple, qtriple) :
-			if self.is_var(t) :
+			if self.is_var(t) and self.values_match(t, q):
 				# if the same var is trying to be bound to two different values, 
 				# not a valid binding
 				if t in binding and binding[t] != q :
@@ -124,12 +152,14 @@ class Translator :
 		history.append([translation, copy.copy(binding)])
 		
 	def find_vars(self, query) :
+		"""
+		given a query, find the set of names of all vars, meta_vars and lit_vars
+		"""
 		try :
 			iter = query.__iter__()
 		except AttributeError :
-			if type(query) == URIRef :
-				if query.find(self.n.var) == 0 :
-					return set([query[len(self.n.var):]])
+			if self.is_var(query) :
+				return set([self.var_name(query)])
 			return set()
 		
 		vars = set()
@@ -297,7 +327,11 @@ class Translator :
 					output_bindings_list = self.cache.call(translation, binding)					
 				else :
 					# convert the binding key from n.var.keys to 'keys'
-					string_binding = dict([(var[len(self.n.var):], value) for var, value in binding.iteritems()])
+					string_binding = dict([(self.var_name(var), value) for var, value in binding.iteritems()])
+					## remember what the variable types were keyed by their short name
+					#var_types = dict([(self.var_name(var), self.var_type(var)) for var in binding])
+					#print 'var_types',prettyquery(var_types)
+					## ERROR: this fails because variable types change from the input to output
 					
 					# call the function
 					output_bindings = translation[n.meta.function](string_binding)
@@ -313,7 +347,7 @@ class Translator :
 						output_bindings_list = output_bindings
 					
 					# convert the binding key from 'keys' to n.var.keys
-					output_bindings_list = [dict([(self.n.var[var], value) for var, value in output_bindings.iteritems()]) for output_bindings in output_bindings_list]
+					output_bindings_list = [dict([(n.var[var], value) for var, value in output_bindings.iteritems()]) for output_bindings in output_bindings_list]
 				
 				#print 'output_bindings_list',prettyquery(output_bindings_list),
 				
