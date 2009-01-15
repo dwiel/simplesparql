@@ -24,13 +24,13 @@ class Cache :
 		else :
 			old_vars = copy.copy(vars)
 			# convert the binding key from n.var.keys to 'keys'
-			string_vars = dict([(var[len(self.n.var):], value) for var, value in vars.iteritems()])
-			ret = translation[n.meta.function](string_vars)
+			#string_vars = dict([(var[len(self.n.var):], value) for var, value in vars.iteritems()])
+			ret = translation[n.meta.function](vars)
 			if ret == None :
 				ret = vars
 			if type(ret) is not list :
 				ret = [ret]
-			ret = [dict([(self.n.var[var], value) for var, value in r.iteritems()]) for r in ret]
+			#ret = [dict([(self.n.var[var], value) for var, value in r.iteritems()]) for r in ret]
 			# TODO: error check result of write
 			self.sparql.write([
 				[n.bnode.x, n.cache.value, ret],

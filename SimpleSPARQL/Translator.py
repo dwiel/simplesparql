@@ -61,7 +61,7 @@ class Translator :
 		elif uri.find(self.n.lit_var) == 0 :
 			return uri[len(self.n.lit_var):]
 		else :
-			raise Exception('data is not a variable' % repr(data))
+			raise Exception('data is not a variable' % str(uri))
 	
 	def var_type(self, uri) :
 		if uri.find(self.n.var) == 0 :
@@ -71,7 +71,7 @@ class Translator :
 		elif uri.find(self.n.lit_var) == 0 :
 			return self.n.lit_var
 		else :
-			raise Exception('data is not a variable' % repr(data))
+			raise Exception('data is not a variable' % str(uri))
 	
 	def var(self, data) :
 		if is_var(data) :
@@ -117,9 +117,9 @@ class Translator :
 			if self.is_var(t) and self.values_match(t, q):
 				# if the same var is trying to be bound to two different values, 
 				# not a valid binding
-				if t in binding and binding[t] != q :
+				if t in binding and binding[self.var_name(t)] != q :
 					return {}
-				binding[t] = q
+				binding[self.var_name(t)] = q
 			elif t != q :
 				return {}
 		return binding
@@ -232,8 +232,8 @@ class Translator :
 		return matches, bindings
 	
 	def sub_bindings_value(self, value, bindings) :
-		if value in bindings :
-			return bindings[value]
+		if self.is_var(value) and self.var_name(value) in bindings :
+			return bindings[self.var_name(value)]
 		return value
 	
 	def next_bnode(self) :
@@ -327,7 +327,8 @@ class Translator :
 					output_bindings_list = self.cache.call(translation, binding)					
 				else :
 					# convert the binding key from n.var.keys to 'keys'
-					string_binding = dict([(self.var_name(var), value) for var, value in binding.iteritems()])
+					#string_binding = dict([(self.var_name(var), value) for var, value in binding.iteritems()])
+					string_binding = binding
 					## remember what the variable types were keyed by their short name
 					#var_types = dict([(self.var_name(var), self.var_type(var)) for var in binding])
 					#print 'var_types',prettyquery(var_types)
@@ -347,7 +348,7 @@ class Translator :
 						output_bindings_list = output_bindings
 					
 					# convert the binding key from 'keys' to n.var.keys
-					output_bindings_list = [dict([(n.var[var], value) for var, value in output_bindings.iteritems()]) for output_bindings in output_bindings_list]
+					#output_bindings_list = [dict([(n.var[var], value) for var, value in output_bindings.iteritems()]) for output_bindings in output_bindings_list]
 				
 				#print 'output_bindings_list',prettyquery(output_bindings_list),
 				
