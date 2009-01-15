@@ -35,6 +35,7 @@ class Translator :
 		translation[n.meta.input] = self.parser.parse_query(translation[n.meta.input])
 		translation[n.meta.output] = self.parser.parse_query(translation[n.meta.output])
 		
+		print 'registering'
 		print translation[n.meta.name]
 		print prettyquery(translation[n.meta.input])
 		print prettyquery(translation[n.meta.output])

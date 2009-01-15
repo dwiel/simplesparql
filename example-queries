@@ -1,0 +1,27 @@
+example queries:
+
+
+english: generate thumbnails for all of the pictures in <folder x> and store them
+
+read translate
+	image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
+	thumb = image.thumbnail(image, 4, 4, image.antialias)
+	thumb_image = thumb[pil.image]
+write database
+	image[amos.thumb] = thumb
+	thumb[pil.image] = thumb_image
+
+
+
+
+english: play all albums by artists related to Lavender Diamond
+
+where translate:
+	artist[rdfs.label] = 'Lavender Diamond'
+	artist[lastfm.similar_to] = similar_artist
+	album[music.artist] = similar_artist
+	album[music.playable] = True
+write translate:
+	playlist.enqueue(playlist.playlist, album)
+
+

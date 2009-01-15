@@ -1,0 +1,114 @@
+what do 'and' and 'or' mean?
+
+
+
+image[file.filename] = "*.jpg"[glob.glob]
+
+["*.jpg", glob.glob, filename],
+[var.image, file.filename, filename],
+
+
+glob.glob could bind multiple filenames connected with 'and' or 'or'.  What is the wording of the question?
+
+what set of variables could fit this pattern?
+
+
+
+
+
+
+["*.jpg", glob.glob, '/a.jpg']
+[var.image, file.filename, '/a.jpg'],
+[var.image, file.filename, '/b.jpg'],
+[var.image, file.filename, '/c.jpg'],
+
+
+
+
+
+
+-----------------------
+
+artist[rdfs.label] = 'Lavender Diamond'
+artist[lastfm.similar_to] = similar_artist
+album[music.artist] = similar_artist
+
+always keep around a set of possible bindings
+[
+	"""artist[lastfm.similar_to] = 'ABC'""",
+	"""artist[lastfm.similar_to] = 'DEF'""",
+	"""artist[lastfm.similar_to] = 'GHI'""",
+	"""artist[lastfm.similar_to] = 'LMN'""",
+]
+
+[
+	"""artist[lastfm.similar_to] = 'ABC'
+     album[music.artist] = 'xyz'""",
+	"""artist[lastfm.similar_to] = 'ABC'
+     album[music.artist] = 'qwe'""",
+	"""artist[lastfm.similar_to] = 'DEF'
+     album[music.artist] = 'abc'""",
+]
+
+
+
+def foo(vars) :
+	vars['x'] = [1, 2, 3]
+
+this could mean that x can be bound to all 3 of these at once, or it could mean that x can be bound to 1 or x can be bound to 2, etc.
+
+What other syntax could mean a similar thing?
+
+def foo(vars) :
+	return [{'x' : 1},{'x' : 2},{'x' : 3}]
+
+this is quite verbose and would be annoying to do a lot...
+maybe just some wrapper token:
+
+def foo(vars) :
+	vars['x'] = atonce([1,2,3])
+
+what about more complex situations?
+
+def foo(vars) :
+	vars['x'] = atonce([1,2,3])
+	vars['y'] = [10,20,30]
+
+equivelent to:
+
+[
+	{
+		'x' : 1,
+		'x' : 2,
+		'x' : 3,
+		'y' : 10
+	},{
+		'x' : 1,
+		'x' : 2,
+		'x' : 3,
+		'y' : 20
+	},{
+		'x' : 1,
+		'x' : 2,
+		'x' : 3,
+		'y' : 30
+	}
+]
+but since python dicts can't have multiple values for one key ...
+new class Binding which supports multiple values for one key?  seems reasonable.  Could also house code which manipulates Bindings.
+
+or ...
+
+def foo(vars) :
+	vars['x'] = (1,2,3)
+	vars['y'] = [10,20,30]
+
+this use of a tuple isnt strictly pythonic.  The tuple here is being used as a list but distinguishible from a list.  Could just as easily do like above and have atonce([...]).
+
+either way, does this satisfy the cases?
+
+
+=== conclusion?
+
+at each translation, there is a set of possible bindings.  Each 
+

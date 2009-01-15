@@ -35,15 +35,15 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'sum',
 		n.meta.input : [
-			'_foo[test.x] = x',
-			'_foo[test.y] = y',
+			'foo[test.x] = x',
+			'foo[test.y] = y',
 			#'uri = {
 				#test.x : x,
 				#test.y : y,
 			#}'
 		],
 		n.meta.output : [
-			'_foo[test.sum] = sum',
+			'foo[test.sum] = sum',
 		],
 		n.meta.function : sum
 	})
@@ -58,11 +58,11 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'product',
 		n.meta.input : [
-			[n.meta_var.uri, n.test.sum, n.var.sum],
-			[n.meta_var.uri, n.test.z, n.var.z],
+			[n.var.uri, n.test.sum, n.var.sum],
+			[n.var.uri, n.test.z, n.var.z],
 		],
 		n.meta.output : [
-			'_uri[test.prod] = prod',
+			'uri[test.prod] = prod',
 		],
 		n.meta.function : prod
 	})
@@ -338,9 +338,9 @@ def load(translator, n) :
 		import glob
 		vars['filename'] = glob.glob(vars['pattern'])
 	translator.register_translation({
-		n.meta.name : '',
+		n.meta.name : 'glob glob',
 		n.meta.input : [
-			'pattern[glob.glob] = _filename'
+			'pattern[glob.glob] = filename'
 		],
 		n.meta.output : [
 			'pattern[glob.glob] = filename'

@@ -1,0 +1,7 @@
+immidiate todo:
+	make multiline work
+		from sparql read to sparql write
+		from translate read to sparql write
+	make the image multiline thing work
+	make change to allow different kinds of variables?
+	make sure vars['x'] = [1,2,3] works as outlined in andandor

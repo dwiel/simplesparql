@@ -1229,7 +1229,23 @@ class SimpleSPARQL (SPARQLWrapper) :
 		self.reset_py_to_SPARQL_bnode()
 		self._reset_SPARQL_variables()
 		query_str = self.triplelist_to_sparql(query, varnamespace)
+		print 'query_str',query_str
 		ret = self.doQuery("SELECT * WHERE { %s }" % self.wrapGraph(query_str))
+		for binding in ret['results']['bindings'] :
+			newbinding = {}
+			for var, value in binding.iteritems() :
+				if value['type'] == 'typed-literal' :
+					if value['datatype'] == 'http://www.w3.org/2001/XMLSchema#integer' :
+						newbinding[var] = int(value['value'])
+					elif value['datatype'] == 'http://www.w3.org/2001/XMLSchema#decimal' :
+						newbinding[var] = float(value['value'])
+				elif value['type'] == 'literal' :
+					newbinding[var] = value['value']
+				elif value['type'] == 'uri' :
+					newbinding[var] = URIRef(value['value'])
+				elif value['type'] == 'bnode' :
+					raise Exception('cant do bnodes')
+					
 		return ret
 
 
