@@ -1,7 +1,14 @@
 immidiate todo:
-	make multiline work
-		from sparql read to sparql write
-		from translate read to sparql write
-	make the image multiline thing work
-	make change to allow different kinds of variables?
-	make sure vars['x'] = [1,2,3] works as outlined in andandor
+
+		make multiline work
+			from sparql read to sparql write
+			from translate read to sparql write
+		make the image multiline thing work
+		!!! make compile !!! (is it really that hard?)
+	x	make change to allow different kinds of variables?
+	-	make sure vars['x'] = [1,2,3] works as outlined in andandor
+			its close enough. still left:
+				vars['x'] = (1,2,3)
+				vars['x'] = [1,2,(3,4),5]
+				...
+		make optional parts of a query and part of a translation work

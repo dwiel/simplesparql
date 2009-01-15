@@ -86,9 +86,15 @@ class Translator :
 			if value.find(self.n.var) == 0 :
 				return True
 			if value.find(self.n.meta_var) == 0 :
-				return qvalue.find(self.n.var) == 0
+				if type(qvalue) == URIRef :
+					return qvalue.find(self.n.var) == 0
+				else :
+					return False
 			if value.find(self.n.lit_var) == 0 :
-				return qvalue.find(self.n.var) != 0
+				if type(qvalue) == URIRef :
+					return qvalue.find(self.n.var) != 0
+				else :
+					return True
 			# if this meta value is a variable, see what it is
 			#if value.find(self.n.var) == 0 :
 				#if value in self.vars :
@@ -292,12 +298,64 @@ class Translator :
 	
 	def sub_bindings_triple(self, triple, bindings) :
 		triple = [self.sub_bindings_value(value, bindings) for value in triple]
-		return self.explode_triple(triple)
+		print 'preplosion',prettyquery(triple)
+		# explode = self.explode_triple(triple)
+		# explode = [triple]
+		print 'postplosion',prettyquery(explode)
+		return explode
 	
-	def sub_var_bindings(self, output, output_bindings) :
+	def sub_var_bindings_old(self, output, output_bindings) :
+		print 'output',prettyquery(output)
+		print 'output_bindings',prettyquery(output_bindings)
 		for bindings in output_bindings :
 			for triple in output :
 				yield [bound_triple for bound_triple in self.sub_bindings_triple(triple, bindings)]
+	
+	def sub_bindings_triple_new(self, triple, bindings) :
+		return [self.sub_bindings_value(value, bindings) for value in triple]
+	
+	def explode_binding(self, bindings) :
+		list_of_new_bindings = [{}]
+		for var, value in bindings.iteritems() :
+			if type(value) == list :
+				# each value in the list of values is a new set of bindings
+				new_list_of_new_bindings = []
+				for v in value :
+					for new_bindings in list_of_new_bindings :
+						tmp_new_bindings = copy.copy(new_bindings)
+						tmp_new_bindings[var] = v
+						new_list_of_new_bindings.append(tmp_new_bindings)
+				list_of_new_bindings = new_list_of_new_bindings
+			elif type(value) == tuple :
+				# each value in the tuple of values is simultaneous
+				for new_bindings in list_of_new_bindings :
+					# TODO: this is like the explode from before ... need a Bindings class ...
+					new_bindings[var] = value
+			else :
+				for new_bindings in list_of_new_bindings :
+					new_bindings[var] = value
+		return list_of_new_bindings
+		
+	
+	def sub_var_bindings(self, output, output_bindings) :
+		print 'output',prettyquery(output)
+		print 'output_bindings',prettyquery(output_bindings)
+		
+		# explode the output_bindings which have multiple values into multiple
+		# bindings
+		all_new_output_bindings = []
+		for bindings in output_bindings :
+			all_new_output_bindings.extend(self.explode_binding(bindings))
+		print 'all_new_output_bindings',prettyquery(all_new_output_bindings)
+		
+		output_bindings = all_new_output_bindings
+		
+		for bindings in output_bindings :
+			triples = []
+			for triple in output :
+				triples.append([bound_triple for bound_triple in self.sub_bindings_triple_new(triple, bindings)])
+			yield triples
+		
 		
 	def find_paths(self, query, find_vars) :
 		for possible_translation in possible_translations :

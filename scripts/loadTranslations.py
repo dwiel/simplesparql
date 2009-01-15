@@ -35,15 +35,15 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'sum',
 		n.meta.input : [
-			'foo[test.x] = x',
-			'foo[test.y] = y',
+			'foo[test.x] = _x',
+			'foo[test.y] = _y',
 			#'uri = {
 				#test.x : x,
 				#test.y : y,
 			#}'
 		],
 		n.meta.output : [
-			'foo[test.sum] = sum',
+			'foo[test.sum] = _sum',
 		],
 		n.meta.function : sum
 	})
@@ -58,11 +58,11 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'product',
 		n.meta.input : [
-			[n.var.uri, n.test.sum, n.var.sum],
-			[n.var.uri, n.test.z, n.var.z],
+			[n.var.uri, n.test.sum, n.lit_var.sum],
+			[n.var.uri, n.test.z, n.lit_var.z],
 		],
 		n.meta.output : [
-			'uri[test.prod] = prod',
+			'uri[test.prod] = _prod',
 		],
 		n.meta.function : prod
 	})
@@ -72,11 +72,11 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'division',
 		n.meta.input : [
-			[n.var.uri, n.test.sum, n.var.sum],
-			[n.var.uri, n.test.z, n.var.z],
+			[n.var.uri, n.test.sum, n.lit_var.sum],
+			[n.var.uri, n.test.z, n.lit_var.z],
 		],
 		n.meta.output : [
-			[n.var.uri, n.test.div, n.var.div],
+			[n.var.uri, n.test.div, n.lit_var.div],
 		],
 		n.meta.function : div
 	})
@@ -158,12 +158,12 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'last.fm similar artists',
 		n.meta.input : [
-			#'artist[music.artist_name] = artist_name',
-			[n.var.artist, n.music.artist_name, n.var.artist_name],
+			'artist[music.artist_name] = _artist_name',
+			#[n.var.artist, n.music.artist_name, n.lit_var.artist_name],
 		],
 		n.meta.output : [
-			#'artist[lastfm.similar_to] = similar_artist',
-			[n.var.artist, n.lastfm.similar_to, n.var.similar_artist],
+			'artist[lastfm.similar_to] = _similar_artist',
+			#[n.var.artist, n.lastfm.similar_to, n.lit_var.similar_artist],
 		],
 		n.meta.function : lastfmsimilar,
 		n.meta.scale : 100,
@@ -206,15 +206,16 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'flickr photos search',
 		n.meta.input : [
-			[n.var.image, n.flickr.tag, n.var.tag],
-#			'photo[flickr.tag] ?= tag', # TODO: ?= means optionally equal to
-#			'optional(photo[flickr.tag] = tag)',
-#			'optional(photo[flickr.user_id] = user_id)',
+#			[n.var.image, n.flickr.tag, n.var.tag],
+			'image[flickr.tag] = _tag',
+#			'image[flickr.tag] ?= tag', # TODO: ?= means optionally equal to
+#			'optional(image[flickr.tag] = tag)',
+#			'optional(image[flickr.user_id] = user_id)',
 #			...
 		],
 		n.meta.output : [
-#			'photo[file.url] = url',
-			[n.var.image, n.file.url, n.var.url],
+			'image[file.url] = _url',
+			#[n.var.image, n.file.url, n.var.url],
 		],
 		n.meta.function : flickr_photos_search,
 		n.cache.expiration_length : 2678400,
@@ -229,10 +230,10 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'load image',
 		n.meta.input : [
-			'image[file.filename] = filename'
+			'image[file.filename] = _filename'
 		],
 		n.meta.output : [
-			'image[pil.image] = pil_image'
+			'image[pil.image] = _pil_image'
 		],
 		n.meta.function : load_image,
 	})
@@ -240,16 +241,16 @@ def load(translator, n) :
 	def image_thumbnail(vars) :
 		from PIL import Image
 		im = vars['pil_image']
-		im.thumbnail((4, 4), Image.ANTIALIAS)
+		im.thumbnail((int(vars['x']), int(vars['y'])), Image.ANTIALIAS)
 		vars['thumb_image'] = im
 	translator.register_translation({
 		n.meta.name : 'image thumbnail',
 		n.meta.input : [
-			'image[pil.image] = pil_image',
-			'thumb = image.thumbnail(image, x, y)',
+			'image[pil.image] = _pil_image',
+			'thumb = image.thumbnail(image, _x, _y)',
 		],
 		n.meta.output : [
-			'thumb[pil.image] = thumb_image',
+			'thumb[pil.image] = _thumb_image',
 		],
 		n.meta.function : image_thumbnail,
 	})
@@ -317,7 +318,7 @@ def load(translator, n) :
 	
 	types of variables:
 		literal or variable  name   =>  var.name
-		only a literal       _name  =>  lit_var.name
+		only a literal       _name  =>  lit_var.name   (this just means bound - could be a bnode)
 		only a variable      ?name  =>  meta_var.name
 	
 	will we inevitably find more types of variables we want?
@@ -359,10 +360,10 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'glob glob',
 		n.meta.input : [
-			'pattern[glob.glob] = ?filename'
+			'_pattern[glob.glob] = ?filename'
 		],
 		n.meta.output : [
-			'pattern[glob.glob] = filename'
+			'_pattern[glob.glob] = _filename'
 		],
 		n.meta.function : glob_glob,
 	})

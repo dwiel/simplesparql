@@ -113,3 +113,105 @@ for now, this handles 95% of the cases that I can think of.  New syntax for the 
 
 at each translation, there is a set of possible bindings.
 
+
+
+
+
+
+
+
+
+
+but wait, theres more ...
+how do you say and/or in the query?
+
+test.u[test.x] = 1
+test.u[test.x] = 10
+test.u[test.y] = 2
+test.u[test.y] = 20
+test.u[test.z] = 100
+test.u[test.div] = div
+
+what does this mean?
+
+could mean that all of those exist at once
+
+could say:
+
+test.u[test.x] = 1
+| test.u[test.x] = 10
+test.u[test.y] = 2
+| test.u[test.y] = 20
+test.u[test.z] = 100
+test.u[test.div] = div
+
+meaning x is 1 or x is 10 and y is 2 or y is 20 and z is 100
+
+simplist way to deal with this now is to leave it how it is I think.
+Multiple sets of binding appear when:
+	* there are multiple sets of input bindings to a translation
+	* a translation returns a list of values bound to a variable
+
+Is it dangerous to work so far without a clear understanding of how an or query
+might look?  It doesn't fit easily into the triple format I dont think
+
+Maybe an or like this:
+
+test.u[test.x] = 1
+| test.u[test.x] = 10
+test.u[test.y] = 2
+| test.u[test.y] = 20
+
+would get translated so this is the initial bindings are these:
+[
+	[
+		test.u[test.x] = 1
+		test.u[test.y] = 2
+	],[
+		test.u[test.x] = 10
+		test.u[test.y] = 2
+	],[
+		test.u[test.x] = 1
+		test.u[test.y] = 20
+	],[
+		test.u[test.x] = 10
+		test.u[test.y] = 20
+	]
+]
+
+instead of these:
+[
+	[
+		test.u[test.x] = 1
+		test.u[test.y] = 2
+	]
+]
+
+which is a transformation that happens in the very begenning of read_translations
+
+sweet.
+
+
+
+
+
+for later: [1,2,(3,4),5] :=
+[
+	{
+		'x' : 1
+	},{
+		'x' : 2
+	},{
+		'x' : 3,
+		'x' : 4
+	},{
+		'x' : 5
+	}
+]
+
+...
+
+
+
+
+
