@@ -121,6 +121,7 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			'image[file.filename] = "/home/dwiel/AMOSvid/1065/20080821_083129.jpg"',
 			'thumb = image.thumbnail(image, 4, 4)'
 		])
+		print 'retret',prettyquery(ret)
 		ret[0][5][2] = type(ret[0][5][2])
 		ret[0][6][2] = type(ret[0][6][2])
 		assert ret == [

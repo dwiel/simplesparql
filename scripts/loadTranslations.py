@@ -229,10 +229,10 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'load image',
 		n.meta.input : [
-			'_image[file.filename] = filename'
+			'image[file.filename] = filename'
 		],
 		n.meta.output : [
-			'_image[pil.image] = pil_image'
+			'image[pil.image] = pil_image'
 		],
 		n.meta.function : load_image,
 	})
@@ -358,10 +358,10 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'glob glob',
 		n.meta.input : [
-			'_pattern[glob.glob] = ?filename'
+			'pattern[glob.glob] = filename'
 		],
 		n.meta.output : [
-			'_pattern[glob.glob] = _filename'
+			'pattern[glob.glob] = filename'
 		],
 		n.meta.function : glob_glob,
 	})

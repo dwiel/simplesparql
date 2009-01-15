@@ -43,22 +43,11 @@ class Translator :
 		
 		self.translations.append(translation)
 		
-	def is_meta_var(self, data) :
-		if type(data) == URIRef :
-			if data.find(self.n.var) == 0 :
-				return True
-		return False
-	
 	def is_var(self, data) :
 		if type(data) == URIRef :
 			if data.find(self.n.var) == 0 :
 				return True
 		return False
-	
-	def meta_var(self, data) :
-		if is_meta_var(data) :
-			return data[len(self.n.var):]
-		return None
 	
 	def var(self, data) :
 		if is_var(data) :
@@ -97,8 +86,8 @@ class Translator :
 	def get_binding(self, triple, qtriple) :
 		binding = {}
 		for t, q in izip(triple, qtriple) :
-			if self.is_meta_var(t) :
-				# if the same meta_var is trying to be bound to two different values, 
+			if self.is_var(t) :
+				# if the same var is trying to be bound to two different values, 
 				# not a valid binding
 				if t in binding and binding[t] != q :
 					return {}
@@ -134,7 +123,7 @@ class Translator :
 	def register_executed(self, history, translation, binding) :
 		history.append([translation, copy.copy(binding)])
 		
-	def find_meta_vars(self, query) :
+	def find_vars(self, query) :
 		try :
 			iter = query.__iter__()
 		except AttributeError :
@@ -145,10 +134,10 @@ class Translator :
 		
 		vars = set()
 		for i in iter :
-			vars.update(self.find_meta_vars(i))
+			vars.update(self.find_vars(i))
 		return vars
 
-	def bind_meta_vars(self, translation, query, bindings = []) :
+	def bind_vars(self, translation, query, bindings = []) :
 		"""
 		input:
 			translation : a list of triples (the translation)
@@ -156,7 +145,7 @@ class Translator :
 			bindings : a list of possible bindings (dict) thus far
 		returns matches, bindings
 		matches is True if the query matches the translation
-		bindings is a list of bindings for meta_var to value
+		bindings is a list of bindings for var to value
 		"""
 		print 'translation',prettyquery(translation)
 		print 'q',prettyquery(query)
@@ -184,17 +173,17 @@ class Translator :
 			print 'bindings',prettyquery(bindings)
 			print
 		
-		# get a set of all meta_vars
-		meta_vars = self.find_meta_vars(translation)
+		# get a set of all vars
+		vars = self.find_vars(translation)
 		
-		# if there are no meta_vars, this does still match, but there are no bindings
-		if len(meta_vars) == 0 :
+		# if there are no vars, this does still match, but there are no bindings
+		if len(vars) == 0 :
 			return True, []
 		
-		# keep only the bindings which contain bindings for all of the meta_vars
-		bindings = [binding for binding in bindings if len(binding) == len(meta_vars)]
+		# keep only the bindings which contain bindings for all of the vars
+		bindings = [binding for binding in bindings if len(binding) == len(vars)]
 		
-		# if there are no bindings (and there are meta_vars), failed to find a match
+		# if there are no bindings (and there are vars), failed to find a match
 		if len(bindings) == 0 :
 			return False, []
 		
@@ -207,8 +196,8 @@ class Translator :
 			if not self.find_triple_match(triple, query) :
 				return False, None
 		
-		# find all possible bindings for the meta_vars if any exist
-		matches, bindings = self.bind_meta_vars(translation[self.n.meta.input], query)
+		# find all possible bindings for the vars if any exist
+		matches, bindings = self.bind_vars(translation[self.n.meta.input], query)
 		
 		return matches, bindings
 	
