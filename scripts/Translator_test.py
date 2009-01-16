@@ -43,7 +43,7 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			'test.u[test.z] = 100',
 			'test.u[test.div] = div',
 		])
-		
+		print prettyquery(ret)
 		assert ret == [
 			[
 				[ n.test.u, n.test.x, 1, ],

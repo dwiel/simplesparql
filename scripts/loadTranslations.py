@@ -54,7 +54,7 @@ def load(translator, n) :
 	"""
 	
 	def prod(vars) :
-		vars['prod'] = vars['sum'] * vars['z']
+		vars['prod'] = float(vars['sum']) * vars['z']
 	translator.register_translation({
 		n.meta.name : 'product',
 		n.meta.input : [
@@ -73,10 +73,10 @@ def load(translator, n) :
 		n.meta.name : 'division',
 		n.meta.input : [
 			'uri[test.sum] = _sum',
-			'uri[test.x] = _z',
+			'uri[test.z] = _z',
 		],
 		n.meta.output : [
-			'uri[test.div] = _div]',
+			'uri[test.div] = _div',
 		],
 		n.meta.function : div
 	})

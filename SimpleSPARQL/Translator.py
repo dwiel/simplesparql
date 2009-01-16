@@ -35,11 +35,11 @@ class Translator :
 		translation[n.meta.input] = self.parser.parse_query(translation[n.meta.input])
 		translation[n.meta.output] = self.parser.parse_query(translation[n.meta.output])
 		
-		print 'registering'
-		print translation[n.meta.name]
-		print prettyquery(translation[n.meta.input])
-		print prettyquery(translation[n.meta.output])
-		print
+		#print 'registering'
+		#print translation[n.meta.name]
+		#print prettyquery(translation[n.meta.input])
+		#print prettyquery(translation[n.meta.output])
+		#print
 		
 		self.translations.append(translation)
 		
@@ -183,8 +183,8 @@ class Translator :
 		matches is True if the query matches the translation
 		bindings is a list of bindings for var to value
 		"""
-		print 'translation',prettyquery(translation)
-		print 'q',prettyquery(query)
+		#print 'translation',prettyquery(translation)
+		#print 'q',prettyquery(query)
 		bindings = [{}]
 		for ttriple in translation :
 			print 't',prettyquery(ttriple)
@@ -206,7 +206,7 @@ class Translator :
 						if new_binding not in new_bindings :
 							new_bindings.append(new_binding)
 			bindings = new_bindings
-			print 'bindings',prettyquery(bindings)
+			#print 'bindings',prettyquery(bindings)
 			print
 		
 		# get a set of all vars
@@ -245,73 +245,7 @@ class Translator :
 	def next_bnode(self) :
 		return self.n.bnode[str(time.time()).replace('.','') + '_' +  str(random.random()).replace('.','')]
 	
-	def explode_triple(self, triple) :
-		"""
-		explode_triple([1, [2, 3], [1, 2]]) -->
-		[
-			[1, 2, 1],
-			[1, 3, 1],
-			[1, 2, 2],
-			[1, 3, 2]
-		]
-		explode_triple([1, [2, {1 : 2}], [1, 2]]) -->
-		[
-			[ 1, 2, 1, ],
-			[ 1, 2, 2, ],
-			[ 1, n.bnode.123083579593_0472807752819, 1, ],
-			[ 1, n.bnode.123083579593_00654954466184, 2, ],
-			[ n.bnode.123083579593_0472807752819, 1, 2, ],
-			[ n.bnode.123083579593_00654954466184, 1, 2, ],
-		]
-		"""
-		# convert each value to a list of values unless it is already a list
-		triple = [type(value) == list and value or [value] for value in triple]
-		
-		triples = [[i] for i in triple[0]]
-		
-		new_triples = []
-		
-		for t in triples :
-			for i in triple[1] :
-				new_triples.append(t + [i])
-		
-		triples = new_triples
-		new_triples = []
-		for t in triples :
-			for i in triple[2] :
-				new_triples.append(t + [i])
-		
-		# TODO: only one layer of bnodes for now ...
-		# TODO: should these bnodes or vars?
-		# TODO: should each dict be mapped to only one bnode over the entire process
-		#   see above example for how only one dict gets mapped to multiple bnodes
-		for t in range(len(new_triples)) :
-			for vi in range(3) :
-				if type(new_triples[t][vi]) == dict :
-					d = new_triples[t][vi]
-					b = self.next_bnode()
-					new_triples[t][vi] = b
-					for k, v in d.iteritems() :
-						new_triples.append([b, k, v])
-		
-		return new_triples
-	
 	def sub_bindings_triple(self, triple, bindings) :
-		triple = [self.sub_bindings_value(value, bindings) for value in triple]
-		print 'preplosion',prettyquery(triple)
-		# explode = self.explode_triple(triple)
-		# explode = [triple]
-		print 'postplosion',prettyquery(explode)
-		return explode
-	
-	def sub_var_bindings_old(self, output, output_bindings) :
-		print 'output',prettyquery(output)
-		print 'output_bindings',prettyquery(output_bindings)
-		for bindings in output_bindings :
-			for triple in output :
-				yield [bound_triple for bound_triple in self.sub_bindings_triple(triple, bindings)]
-	
-	def sub_bindings_triple_new(self, triple, bindings) :
 		return [self.sub_bindings_value(value, bindings) for value in triple]
 	
 	def explode_binding(self, bindings) :
@@ -338,22 +272,22 @@ class Translator :
 		
 	
 	def sub_var_bindings(self, output, output_bindings) :
-		print 'output',prettyquery(output)
-		print 'output_bindings',prettyquery(output_bindings)
+		#print 'output',prettyquery(output)
+		#print 'output_bindings',prettyquery(output_bindings)
 		
 		# explode the output_bindings which have multiple values into multiple
 		# bindings
 		all_new_output_bindings = []
 		for bindings in output_bindings :
 			all_new_output_bindings.extend(self.explode_binding(bindings))
-		print 'all_new_output_bindings',prettyquery(all_new_output_bindings)
+		#print 'all_new_output_bindings',prettyquery(all_new_output_bindings)
 		
 		output_bindings = all_new_output_bindings
 		
 		for bindings in output_bindings :
 			triples = []
 			for triple in output :
-				triples.append([bound_triple for bound_triple in self.sub_bindings_triple_new(triple, bindings)])
+				triples.append([bound_triple for bound_triple in self.sub_bindings_triple(triple, bindings)])
 			yield triples
 		
 		
@@ -376,8 +310,8 @@ class Translator :
 			# print 'history',prettyquery([[t[0][n.meta.name], t[1]] for t in history]),
 			# print 'now',prettyquery([translation[n.meta.name], binding]),
 			if [translation, binding] not in history :
-				print 'applying',translation[n.meta.name]
-				print 'binding',prettyquery(binding)
+				#print 'applying',translation[n.meta.name]
+				#print 'binding',prettyquery(binding)
 				history.append([translation, copy.copy(binding)])
 				
 				# if this translation expects to be cached, use a cache
@@ -448,7 +382,7 @@ class Translator :
 								for new_binding in this_translation_bindings :
 									tmp_new_final_bindings.append(binding + new_binding)
 							new_final_bindings = tmp_new_final_bindings
-							print 'new_final_bindings',prettyquery(new_final_bindings)
+							#print 'new_final_bindings',prettyquery(new_final_bindings)
 							
 				all_new_final_bindings.extend(new_final_bindings)
 			
@@ -460,6 +394,13 @@ class Translator :
 		#exit()
 	
 	def read_translations(self, query, find_vars = []) :
+		"""
+		look for all possible bindings of these vars
+		iterate through every possible translation of this query
+		  if this translation matches the output
+					add the bindings to the bindings
+		"""
+		
 		if find_vars == [] :
 			var_triples = self.find_var_triples(query)
 		else :
@@ -467,30 +408,26 @@ class Translator :
 		
 		query = self.parser.parse_query(query)
 		
-		print '----------------------------------------------'
-		print 'parsed query'
-		print prettyquery(query)
-		print '/'
-		print
+		#print '----------------------------------------------'
+		#print 'parsed query'
+		#print prettyquery(query)
+		#print '/'
+		#print
 		
 		return self.read_translations_helper(query, var_triples, [], [])
-		
-		# look for all possible routes through the translations to see which paths
-		#   might provide an output
-		#		* how to deal with cycles?
-		#		* how to deal with translations which result in nearly anything (aka possible paths explode to be every possible translation permuted infinite times)
-		# paths = self.find_paths(query, find_vars)
-		# evaluate those
-		# 
-		# evaluate all possible routes
-		# 
-		# look for all possible bindings of these vars
-		# iterate through every possible translation of this query
-		#   if this translation matches the output
-		#			add the bindings to the bindings
-		
-		#return bindings
-		return []
 	
-	def compile(self, query, input = [], output = []) :
-		return
+	def compile(self, query, find_vars = [], input = [], output = []) :
+		if find_vars == [] :
+			var_triples = self.find_var_triples(query)
+		else :
+			var_triples = self.find_specific_var_triples(query, find_vars)
+		
+		query = self.parser.parse_query(query)
+		
+		#print '----------------------------------------------'
+		#print 'parsed query'
+		#print prettyquery(query)
+		#print '/'
+		#print
+		
+		return self.read_translations_helper(query, var_triples, [], [])
