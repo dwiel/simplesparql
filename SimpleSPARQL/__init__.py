@@ -1,5 +1,6 @@
 from SimpleSPARQL import SimpleSPARQL
 from Translator import Translator
+from Compiler import Compiler
 from Cache import Cache
 from Namespaces import Namespaces, globalNamespaces, uri_could_be_from_namespace
 from RDFObject import RDFObject
