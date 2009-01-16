@@ -1,0 +1,39 @@
+thoughts on interaction with GUI
+
+single commands are easy to write and understand.
+
+How would a set of them interact?
+
+initial thought:
+	draw out a GUI similar to visual basic and assign commands with events.
+	
+	avoid extra code ... This could essentially be done by giving each GUI event
+		some unique structure and then writing translations for what that means.
+
+	concerns:
+		
+		what if the GUI design needs to be generated on the fly?
+		
+		how are the GUI elements designed?
+
+
+
+
+another thought:
+	computer is an information portal.  You want to give it information and have 
+		it respond with information.  In a word processor, the information in and 
+		out are nearly identicle.  In a web search, the information in and out are
+		extremely different.
+	initial interaction would be a request for information:
+		show me the document titled xyz (or open xyz)
+		who is playing right now?
+		play the beatles next
+	
+	There is information on the screen which can be used as context to do other
+		things.  For example, you could right click an email and reply.  You could
+		click the sort button to sort a list.
+
+	concerns:
+		
+		what if the information is best presented not modularly?  This depends 
+			exclusively on the rendering engine, not this model.

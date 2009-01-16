@@ -132,14 +132,47 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			],
 		]
 	
-	# fix this case, there are 3 sets of bindings ... should be 1 I think
+	# this case should be seperated from activity on my hard drive
 	def test_glob_glob(self):
 		ret = translator.read_translations([
 			'"/home/dwiel/AMOSvid/*.py"[glob.glob] = filename'
 		])
-		print 'ret',prettyquery(ret)
-
-
+		assert ret == [
+			[
+				[ '/home/dwiel/AMOSvid/*.py', n.glob.glob, n.var.filename, ],
+				[ '/home/dwiel/AMOSvid/*.py', n.glob.glob, '/home/dwiel/AMOSvid/generate_thumbnail_images.py', ],
+			],
+			[
+				[ '/home/dwiel/AMOSvid/*.py', n.glob.glob, n.var.filename, ],
+				[ '/home/dwiel/AMOSvid/*.py', n.glob.glob, '/home/dwiel/AMOSvid/imagevid.py', ],
+			],
+			[
+				[ '/home/dwiel/AMOSvid/*.py', n.glob.glob, n.var.filename, ],
+				[ '/home/dwiel/AMOSvid/*.py', n.glob.glob, '/home/dwiel/AMOSvid/find_closest_thumnail.py', ],
+			],
+		]
+	
+	def test_compile1(self):
+		# in this case the compiler should come up with the paths required to 
+		# evalutate it, but not actually evaluate it
+		ret = translator.compile([
+			'test.u[test.x] = 1',
+			'test.u[test.x] = 10',
+			'test.u[test.y] = 2',
+			'test.u[test.y] = 20',
+			'test.u[test.z] = 100',
+			'test.u[test.div] = div',
+		], input = [], output = ['div'])
+	
+	def test_compile2(self):
+		ret = translator.compile([
+			'test.u[test.x] = x',
+			'test.u[test.x] = 10',
+			'test.u[test.y] = 2',
+			'test.u[test.y] = 20',
+			'test.u[test.z] = 100',
+			'test.u[test.div] = div',
+		], input = ['x'], output = ['div'])
 
 
 if __name__ == "__main__" :

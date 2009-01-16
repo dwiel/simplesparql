@@ -491,4 +491,6 @@ class Translator :
 		
 		#return bindings
 		return []
-		
+	
+	def compile(self, query, input = [], output = []) :
+		return
