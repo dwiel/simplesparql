@@ -144,7 +144,7 @@ class Translator :
 	def conflicting_bindings(self, a, b) :
 		"""
 		a and b are dictionaries.  Returns True if there are keys which are in 
-		both a and b, but have different values
+		both a and b, but have different values.  Used in unification
 		"""
 		for k, v in a.iteritems() :
 			if k in b and b[k] != v :

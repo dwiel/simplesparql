@@ -58,8 +58,8 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'product',
 		n.meta.input : [
-			[n.var.uri, n.test.sum, n.lit_var.sum],
-			[n.var.uri, n.test.z, n.lit_var.z],
+			'uri[test.sum] = _sum',
+			'uri[test.z] = _z',
 		],
 		n.meta.output : [
 			'uri[test.prod] = _prod',
@@ -72,11 +72,11 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'division',
 		n.meta.input : [
-			[n.var.uri, n.test.sum, n.lit_var.sum],
-			[n.var.uri, n.test.z, n.lit_var.z],
+			'uri[test.sum] = _sum',
+			'uri[test.x] = _z',
 		],
 		n.meta.output : [
-			[n.var.uri, n.test.div, n.lit_var.div],
+			'uri[test.div] = _div]',
 		],
 		n.meta.function : div
 	})
@@ -84,10 +84,10 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'rdfs.label => music.artist_name',
 		n.meta.input : [
-			[n.var.artist, n.rdfs.label, n.var.artist_name],
+			'artist[rdfs.label] = artist_name',
 		],
 		n.meta.output : [
-			[n.var.artist, n.music.artist_name, n.var.artist_name],
+			'artist[music.artist_name] = artist_name',
 		],
 		n.meta.function : lambda x : None,
 		n.meta.reversable : True,
@@ -122,7 +122,6 @@ def load(translator, n) :
 	def lastfmsimilar(vars) :
 	#	vars[n.var.similar_artist] = lastfm.Artist(vars[n.var.artist_name]).getSimilar()
 	#	vars[n.var.similar_artist] = ['Taken By Trees', 'Viva Voce', 'New Buffalo']
-		artists = []
 		url = 'http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt' % urllib.quote(vars['artist_name'])
 		f = urllib.urlopen(url)
 		
@@ -133,15 +132,16 @@ def load(translator, n) :
 		
 		vars['setlasttime'](time.time())
 		
+		outputs = []
 		for line in f :
 			tokens = line.strip().split(',')
-			artists.append({
-				n.lastfm.similarity_measure : float(tokens[0]),
-				n.lastfm.mbid : tokens[1],
-				n.lastfm.name : tokens[2],
+			outputs.append({
+				'similarity_measure' : float(tokens[0]),
+				'mbid' : tokens[1],
+				'name' : tokens[2],
 			})
-		vars['similar_artist'] = artists[:10]
-		print 'vars',prettyquery(vars)
+		return outputs[:10]
+		print 'vars',prettyquery(outputs[:10])
 		
 		#vars[n.var.similar_artist] = [
 			#{
@@ -159,11 +159,12 @@ def load(translator, n) :
 		n.meta.name : 'last.fm similar artists',
 		n.meta.input : [
 			'artist[music.artist_name] = _artist_name',
-			#[n.var.artist, n.music.artist_name, n.lit_var.artist_name],
 		],
 		n.meta.output : [
 			'artist[lastfm.similar_to] = _similar_artist',
-			#[n.var.artist, n.lastfm.similar_to, n.lit_var.similar_artist],
+			'_similar_artist[lastfm.similarity_measure] = _similarity_measure',
+			'_similar_artist[lastfm.mbid] = _mbid',
+			'_similar_artist[lastfm.name] = _name',
 		],
 		n.meta.function : lastfmsimilar,
 		n.meta.scale : 100,
@@ -206,7 +207,6 @@ def load(translator, n) :
 	translator.register_translation({
 		n.meta.name : 'flickr photos search',
 		n.meta.input : [
-#			[n.var.image, n.flickr.tag, n.var.tag],
 			'image[flickr.tag] = _tag',
 #			'image[flickr.tag] ?= tag', # TODO: ?= means optionally equal to
 #			'optional(image[flickr.tag] = tag)',
@@ -215,7 +215,6 @@ def load(translator, n) :
 		],
 		n.meta.output : [
 			'image[file.url] = _url',
-			#[n.var.image, n.file.url, n.var.url],
 		],
 		n.meta.function : flickr_photos_search,
 		n.cache.expiration_length : 2678400,

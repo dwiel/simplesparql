@@ -1,2 +1,105 @@
 compiler-thoughts
 
+	def test_compile1(self):
+		# in this case the compiler should come up with the paths required to 
+		# evalutate it, but not actually evaluate it
+		ret = translator.compile([
+			'test.u[test.x] = 1',
+			'test.u[test.x] = 10',
+			'test.u[test.y] = 2',
+			'test.u[test.y] = 20',
+			'test.u[test.z] = 100',
+			'test.u[test.div] = div',
+		], input = [], output = ['div'])
+	
+	def test_compile2(self):
+		ret = translator.compile([
+			'test.u[test.x] = x',
+			'test.u[test.x] = 10',
+			'test.u[test.y] = 2',
+			'test.u[test.y] = 20',
+			'test.u[test.z] = 100',
+			'test.u[test.div] = div',
+		], input = ['x'], output = ['div'])
+
+what kind of information is/might be necessary to describe the input and output
+variables, x and div in this case?
+
+can the query describe everything?
+what can the query not describe?
+
+Core assumptions made and information about translations needed for the compiler
+to operate correctly:
+* all input varialbes will be substituted for a literal value
+* all input varialbes will not be substituted for a complex value (literal plus more triples involving it)
+	aka. there will not be any more triples added to the query after it is compiled
+* translations can not be allowed to add triples not in the output description
+
+if an input variable is bound in the input and output of a  translation, the 
+variable will be changed between the input and output.
+
+how might these assertions change?
+
+some input variables might be deemed optional. (no value)  only if all triples
+which use those variables are also optional ... I think
+
+
+
+
+how is the compiler matching different from the evaluation matching?
+
+an input variable matches with a literal
+
+two variable could be the same or different ...
+
+situation in the middle of compiling:
+
+query w/ bindings
+'image1[prop.prop1] = im'
+'image2[prop.prop2] = 2'
+
+translation:
+image[prop.prop1] = _im
+image[prop.prop2] = _number
+=>
+image[prop.prop3] = _out
+
+this actually translation *might* match, if image1 and image2 are the same.  In
+the unification step (conflicting_bindings()) two input_vars *might* match
+
+* what is the name for (input variable?) intermediate variable in compile stage
+which has been derived from the output of a translation?
+	it needs to describe what it may contain:
+	* _name => a literal value
+	* ?name => a variable value
+	* Just like the types used in translations
+
+How to express in the translation which variables might change and which 
+definitely wont?
+* define list of variables which are constant:
+		n.meta.constant-vars : ['x', 'y']
+
+note: these could be automatically filled in by an IDE or editor by looking at
+	simple code.  though not necessarily well.  However, with debug mode enabled,
+	these assertions could be tested.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
