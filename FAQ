@@ -1,0 +1,15 @@
+The FAQ
+
+
+Q: What is the difference between axpress and a macro language?
+A: In a way, it is a macro language for information and truths, rather than a
+	standard programming language like C, Python, Java, Scheme, etc.
+
+Q: What is the difference between axpress and a macro language in prolog?
+A: All of Prolog is macros ... ?
+
+Q: What is the difference between axpress and an object oriented prolog?
+A: Thats kinda what it is ... if the objects don't ever have to be explicitly
+	defined.
+
+
