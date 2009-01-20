@@ -25,5 +25,7 @@ immidiate todo:
 			its close enough. still left:
 				vars['x'] = (1,2,3)
 				vars['x'] = [1,2,(3,4),5]
+		
+		disallow input variables like bnode1
 				...
 		make optional parts of a query and part of a translation work

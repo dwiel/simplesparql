@@ -50,7 +50,14 @@ how is the compiler matching different from the evaluation matching?
 * an input variable matches with a literal
 * instead of calling a function when a translation [might] match, add the 
 	translation to the returned set of [possible] paths through the translation 
-	space
+	space.
+	rename all bound variables which are not constant to express the change that 
+	may have been made if the function were called
+* compiler doesn't worry about case where there are multiple bindings returned
+	by a translation.
+* does the compiler need to worry about the cases where there are mutliple ways
+	a translation could be bound?  Yes, they are all *possible* or *guarenteed*
+	translations, like any other.  No need for explosions of sets though
 * two variable could be the same or different ...
 	situation in the middle of compiling:
 	
@@ -78,7 +85,8 @@ how is the compiler matching different from the evaluation matching?
 	How to express in the translation which variables might change and which 
 	definitely wont?
 	* define list of variables which are constant:
-			n.meta.constant-vars : ['x', 'y']
+			n.meta.constant_vars : ['x', 'y']
+		this seems a bit clunky ...
 	
 	note: these could be automatically filled in by an IDE or editor by looking at
 		simple code.  though not necessarily well.  However, with debug mode enabled,
@@ -88,10 +96,108 @@ how is the compiler matching different from the evaluation matching?
 
 
 
+Compile to what?
+How can we be sure that the translations that are compiled with still exist at
+execution time?
+Can these compilations be saved?
+Or do they become useless after each change to the set of translations?
+This gets complicated.  Need a higher order, 'does this change to the language
+change the way this is compiled?' and similar queries answered.
+Also keep in mind that all we mean by compiling is to do some preprocessing 
+without actually evaluating the answer.  At this point compiling could always 
+happen every execution and never stored or planned for persistance.
+The compiler can also avoid latency in execution if a query is known about 
+before it needs to be executed
 
 
 
 
+
+
+What does the output of the compiler look like?
+note: the output is going to be piped into code which evaluates it, so it 
+	doesn't need to be human readable ... except I have to write that code too
+	so it should be human readable
+
+{
+	'guarenteed' : [<step>],
+	'possible' : [<step>]
+}
+
+step := {
+	'translation' : <translation>,
+	'triplelist' : <triplelist>,
+	'input-bindings' : <bindings>,
+	'output-bindings' : <bindings>,
+}
+
+triplelist : [<triple>]
+
+
+What is needed to execute a compiled path?
+
+follow guarenteed paths first
+
+for translation :
+	translation(vars = translation['input-bindings']
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+check out the results right now:
+	new_query [
+		[ n.test.u, n.test.x, 1, ],
+		[ n.test.u, n.test.x, 2, ],
+		[ n.test.u, n.test.y, 10, ],
+		[ n.test.u, n.test.sum, n.meta_var.sum, ],
+		[ n.test.u, n.test.sum, n.lit_var.sum, ],
+	]
+
+[ n.test.u, n.test.sum, n.var.sum, ] is the triple from the input query that is
+being searched for
+[ n.test.u, n.test.sum, n.lit_var.sum, ] is the triple generated after following
+one iteration of guarenteed translations.
+these match? how to tell the two apart?  Does there need to be a different input
+variable namespace for the initial var.sum?
+
+note: right now, the compiler and interpreter lack a mechanism to actually 
+return a set of bindings as the result (needed), and also no way to determine
+if a set of triples sufficiently matches the input query to result in a new
+set of matched bindings.
+
+Q: does a search stop once matched bindings are found?
+		when does this happen?
 
 
 

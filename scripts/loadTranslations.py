@@ -45,7 +45,8 @@ def load(translator, n) :
 		n.meta.output : [
 			'foo[test.sum] = _sum',
 		],
-		n.meta.function : sum
+		n.meta.function : sum,
+		n.meta.constant_vars : ['foo'],
 	})
 	"""
 	uri[test.sum] = x + y

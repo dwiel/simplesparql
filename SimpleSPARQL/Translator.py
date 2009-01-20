@@ -187,9 +187,7 @@ class Translator :
 		#print 'q',prettyquery(query)
 		bindings = [{}]
 		for ttriple in translation :
-			print 't',prettyquery(ttriple)
 			possible_bindings = self.find_bindings(ttriple, query)
-			print 'p',prettyquery(possible_bindings)
 			new_bindings = []
 			# see if any of the next_bindings fit with the existing bindings
 			for pbinding in possible_bindings :
@@ -205,7 +203,8 @@ class Translator :
 						new_binding.update(pbinding)
 						if new_binding not in new_bindings :
 							new_bindings.append(new_binding)
-			bindings = new_bindings
+			if len(new_bindings) > 0 :
+				bindings = new_bindings
 			#print 'bindings',prettyquery(bindings)
 			print
 		
