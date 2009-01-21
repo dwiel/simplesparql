@@ -247,10 +247,10 @@ def load(translator, n) :
 		n.meta.name : 'image thumbnail',
 		n.meta.input : [
 			'image[pil.image] = _pil_image',
-			'thumb = image.thumbnail(image, _x, _y)',
+			'?thumb = image.thumbnail(image, _x, _y)',
 		],
 		n.meta.output : [
-			'thumb[pil.image] = _thumb_image',
+			'?thumb[pil.image] = _thumb_image',
 		],
 		n.meta.function : image_thumbnail,
 	})

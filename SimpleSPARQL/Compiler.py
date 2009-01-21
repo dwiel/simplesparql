@@ -13,15 +13,18 @@ import copy, time, random
 class Compiler :
 	MAYBE = 'maybe'
 	
-	def __init__(self, cache) :
-		self.n = Namespaces()
+	def __init__(self, cache, n = None) :
+		if n :
+			self.n = n
+		else :
+			self.n = Namespaces()
 		#self.n.bind('var', '<http://dwiel.net/axpress/var/0.1/>')
 		#self.n.bind('tvar', '<http://dwiel.net/axpress/translation/var/0.1/>')
 		#self.n.bind('bnode', '<http://dwiel.net/axpress/bnode/0.1/>')
 		#self.n.bind('meta', '<http://dwiel.net/axpress/meta/0.1/>')
 		
 		self.cache = cache
-		self.parser = Parser()
+		self.parser = Parser(self.n)
 
 		self.translations = []
 		#self.sparql = sparql
@@ -66,6 +69,12 @@ class Compiler :
 				return True
 		return False
 	
+	def is_lit_var(self, data) :
+		if type(data) == URIRef :
+			if data.find(self.n.lit_var) == 0 :
+				return True
+		return False	
+	
 	def var_name(self, uri) :
 		if uri.find(self.n.var) == 0 :
 			return uri[len(self.n.var):]
@@ -97,7 +106,7 @@ class Compiler :
 		# is this really not taken care of?
 		if type(value) == URIRef :
 			if value.find(self.n.var) == 0 :
-				return True
+				return not self.is_meta_var(qvalue)
 			if value.find(self.n.meta_var) == 0 :
 				if type(qvalue) == URIRef :
 					# return qvalue.find(self.n.var) == 0
@@ -108,7 +117,7 @@ class Compiler :
 			if value.find(self.n.lit_var) == 0 :
 				if type(qvalue) == URIRef :
 					# return qvalue.find(self.n.var) != 0
-					return not self.is_var(qvalue)
+					return self.is_lit_var(qvalue) or not self.is_var(qvalue)
 					# return qvalue.find(self.n.var) != 0 and qvalue.find(self.n.lit_var) != 0
 				else :
 					return True
@@ -260,9 +269,9 @@ class Compiler :
 		# check that all of the translation inputs match part of the query
 		for triple in pattern :
 			if not self.find_triple_match(triple, data) :
+				print 'no match for',prettyquery(triple)
 				return False, None
 		
-		print 'got this far'
 		# find all possible bindings for the vars if any exist
 		matches, bindings_set = self.bind_vars(pattern, data)
 		
@@ -489,6 +498,7 @@ class Compiler :
 		for translation in self.translations :
 			matches, bindings_set = self.testtranslation(translation, query)
 			if matches :
+				print translation[n.meta.name],'matches!!!'
 				for bindings in bindings_set :
 					if [translation, bindings] not in history :
 						history.append([translation, copy.copy(bindings)])
@@ -512,8 +522,10 @@ class Compiler :
 								possible_steps.append({
 									'query' : query,
 									'bindings' : bindings,
-									'translation' : translation,
+									'translation' : translation[n.meta.name],
 									'new_triples' : new_triples,
+									'guarenteed' : [],
+									'possible' : [],
 								})
 						elif matches == True :
 							for new_triples in triple_sets :
@@ -521,8 +533,10 @@ class Compiler :
 								
 								guarenteed_steps.append({
 									'bindings' : bindings,
-									'translation' : translation,
+									'translation' : translation[n.meta.name],
 									'new_triples' : new_triples,
+									'guarenteed' : [],
+									'possible' : [],
 								})
 		
 		return guarenteed_steps, possible_steps
@@ -551,6 +565,14 @@ class Compiler :
 		
 		return translation_step
 	
+	def contains_all_bindings(self, required, obtained) :
+		for key in required :
+			if key not in obtained :
+				return False
+			if not self.values_match(self.n.lit_var[key], obtained[key]) :
+				return False
+		return True
+	
 	def follow_guarenteed(self, query, possible_stack, history) :
 		"""
 		follow guarenteed translations and add possible translations to the 
@@ -562,6 +584,9 @@ class Compiler :
 		@return the compiled guarenteed path (see thoughts for more info on this 
 			structure)
 		"""
+		print 'follow_guarenteed',prettyquery(query)
+		print 'history',prettyquery(history)
+		
 		compile_node = {
 			'guarenteed' : [],
 			'possible' : [],
@@ -569,6 +594,7 @@ class Compiler :
 		
 		# recursively search through all possible guarenteed translations
 		guarenteed_steps, possible_steps = self.next_translations(query, history)
+		print len(guarenteed_steps), len(possible_steps)
 		for step in guarenteed_steps :
 			# next_query, input_bindings, output_bindings
 			# compile_step = self.follow_step(query, step)
@@ -580,22 +606,29 @@ class Compiler :
 			new_query.extend(step['new_triples'])
 			
 			print 'new_query',prettyquery(new_query)
-			print 'original_query',prettyquery(self.original_query)
-			matches, bindings = self.find_bindings(new_query, self.original_query)
-			print 'matches',prettyquery(matches)
-			print 'bindings',prettyquery(bindings)
 			
-			exit(0)
-			self.follow_guarenteed(new_query, possible_stack, history)
+			# if the new information at this point is enough to fulfil the query, done
+			# otherwise, continue searching
+			found_solution = False
+			matches, bindings = self.find_bindings(new_query, self.original_query)
+			if bindings is not None :
+				for binding in bindings :
+					if self.contains_all_bindings(self.vars, binding) :
+						print 'found solution:',prettyquery(binding)
+						found_solution = True
+			if not found_solution :
+				step['guarenteed'].append(self.follow_guarenteed(new_query, possible_stack, history))
 		
 		# don't follow the possible translations yet, just add then to a stack to
 		# follow once all guarenteed translations have been found
-		for translation in possible_translations:
+		for step in possible_steps:
 			possible_stack.append({
 				'root' : compile_node,
-				'translation' : translation,
+				'step' : step,
 				'query' : query,
 			})
+		
+		return compile_node
 	
 	def follow_possible(self, query, possible_stack) :
 		"""
@@ -618,6 +651,9 @@ class Compiler :
 		query = self.parser.parse_query(query)
 		
 		self.original_query = query
+		# print 'var_triples',prettyquery(var_triples)
+		self.vars = self.find_vars(query)
+		# print 'self.vars',prettyquery(self.vars)
 		
 		possible_stack = []
 		history = []

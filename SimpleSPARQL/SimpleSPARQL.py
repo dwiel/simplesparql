@@ -24,13 +24,16 @@ from Cache import Cache
 # from parseMatchOutput import construct
 
 class SimpleSPARQL (SPARQLWrapper) :
-	def __init__(self, baseURI, returnFormat=None, defaultGraph=None, sparul=None, graph=None):
+	def __init__(self, baseURI, returnFormat=None, defaultGraph=None, sparul=None, graph=None, n=None):
 		SPARQLWrapper.__init__(self, baseURI, returnFormat, defaultGraph)
 		if sparul :
 			self.setSPARUL(sparul)
 		else :
 			self.setSPARUL(baseURI.replace('sparql', 'sparul'))
-		self.n = Namespaces.Namespaces()
+		if n :
+			self.n = n
+		else :
+			self.n = Namespaces.Namespaces()
 		self.n.bind('var', '<http://dwiel.net/axpress/var/0.1/>')
 		self.n.bind('tvar', '<http://dwiel.net/axpress/translation/var/0.1/>')
 		self.n.bind('bnode', '<http://dwiel.net/axpress/bnode/0.1/>')

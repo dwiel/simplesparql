@@ -129,6 +129,8 @@ step := {
 	'triplelist' : <triplelist>,
 	'input-bindings' : <bindings>,
 	'output-bindings' : <bindings>,
+	'guarenteed' : [<step>],
+	'possible' : [<step>],
 }
 
 triplelist : [<triple>]
