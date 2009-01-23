@@ -3,6 +3,7 @@ import os
 
 def load(translator, n) :	
 	n.bind('math', '<http://dwiel.net/express/math/0.1/>')
+	n.bind('type', '<http://dwiel.net/express/type/0.1/>')
 	n.bind('flickr', '<http://dwiel.net/express/flickr/0.1/>')
 	n.bind('file', '<http://dwiel.net/express/file/0.1/>')
 	n.bind('playlist', '<http://dwiel.net/express/playlist/0.1/>')
@@ -34,14 +35,10 @@ def load(translator, n) :
 		vars['sum'] = vars['x'] + vars['y']
 	translator.register_translation({
 		n.meta.name : 'sum',
-		n.meta.input : [
-			'foo[test.x] = _x',
-			'foo[test.y] = _y',
-			#'uri = {
-				#test.x : x,
-				#test.y : y,
-			#}'
-		],
+		n.meta.input : """
+			foo[test.x] = _x
+			foo[test.y] = _y
+		""",
 		n.meta.output : [
 			'foo[test.sum] = _sum',
 		],
@@ -96,6 +93,21 @@ def load(translator, n) :
 		n.meta.reversable : True,
 		n.meta.scale : 1,
 		n.meta.expected_time : 0,
+	})
+	
+	def is_num(vars) :
+		vars['is_num'] = isinstance(vars['x'], (int, long, float))
+		print 'is_num:',vars['is_num']
+	translator.register_translation({
+		n.meta.name : 'is_num',
+		n.meta.input : """
+			type.is_num(_x) = is_num
+		""",
+		n.meta.output : """
+			type.is_num(_x) = _is_num
+		""",
+		n.meta.function : is_num,
+		n.meta.constant_vars : ['x'],
 	})
 	
 		
@@ -244,6 +256,7 @@ def load(translator, n) :
 	def image_thumbnail(vars) :
 		from PIL import Image
 		im = vars['pil_image']
+		# print 'im',prettyquery(im)
 		im.thumbnail((int(vars['x']), int(vars['y'])), Image.ANTIALIAS)
 		vars['thumb_image'] = im
 	translator.register_translation({

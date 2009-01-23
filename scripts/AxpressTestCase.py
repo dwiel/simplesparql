@@ -32,29 +32,47 @@ class AxpressTestCase(unittest.TestCase):
 	def setUp(self):
 		cache_sparql = SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwiel.net/axpress/cache")
 		cache = Cache(cache_sparql)
-		self.translator = Translator(cache)
+		self.compiler = Compiler(cache)
 		
 		import loadTranslations
-		loadTranslations.load(self.translator, n)
+		loadTranslations.load(self.compiler, n)
 		
-		self.parser = MultilineParser(n, sparql = sparql, translator = self.translator)
-		self.axpress = Axpress(sparql = sparql, translator = self.translator)
+		#self.parser = MultilineParser(n, sparql = sparql, translator = self.translator)
+		self.axpress = Axpress(sparql = sparql, compiler = self.compiler)
 	
-	def test1(self):
-		self.axpress.read_sparql("""
-				test.object2[test.x] = x
-				test.object2[test.y] = y
-		""")
-		#assert self.parser.parse("""
-			#read sparql
-				#test.object2[test.x] = x
-				#test.object2[test.y] = y
-			#write sparql
-				#test.object2[test.yyy] = y
-		#""") == 'hello'
+	#def test1(self):
+		#def is_num(x):
+			#return isinstance(x, (int, long, float))
+		
+		#bindings_set = self.axpress.read_sparql("""
+			#foo[test.x] = x
+			#foo[test.y] = y
+		#""")
+		
+		## reduce bindings to those whose x and y values are numbers
+		#print 'bindings_set',prettyquery(bindings_set)
+		#new_bindings_set = []
+		#for bindings in bindings_set :
+			#if is_num(bindings['x']) and is_num(bindings['y']) :
+				#new_bindings_set.append(bindings)
+		#bindings_set = new_bindings_set
+		#print 'bindings_set',prettyquery(bindings_set)
+		
+		#ret = self.axpress.read_translate("""
+			#foo[test.x] = x
+			#foo[test.y] = y
+			#foo[test.sum] = _sum
+		#""", bindings_set = bindings_set)
+		#print 'ret',prettyquery(ret)
 	
-	#def test2(self):
-		#facts, history, bindings_set = self.parser.translator.
+	def test2(self):
+		# facts, history, bindings_set = self.parser.translator.
+		ret = self.axpress.read_translate("""
+			image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
+			thumb = image.thumbnail(image, 4, 4, image.antialias)
+			thumb[pil.image]= _thumb_image
+		""", reqd_bound_vars = ['thumb_image'])
+		print 'ret',prettyquery(ret)
 		#assert self.parser.parse("""
 			#where translate
 				#image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]

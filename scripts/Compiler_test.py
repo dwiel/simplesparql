@@ -193,8 +193,9 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			image[file.filename] = "/home/dwiel/AMOSvid/1065/20080821_083129.jpg"
 			thumb = image.thumbnail(image, 4, 4)
 			thumb_image = thumb[pil.image]
-		""", ['image', 'thumb', 'thumb_image'])
+		""", ['thumb_image'])
 		print 'ret',prettyquery(ret)
+		assert ret is not False
 
 if __name__ == "__main__" :
 	unittest.main()

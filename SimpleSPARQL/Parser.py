@@ -98,6 +98,9 @@ class Parser() :
 			if line is not '' :
 				yield line
 	
+	def parse(self, query) :
+		return self.parse_query(query)
+	
 	def parse_query(self, query) :
 		if isinstance(query, basestring) :
 			query = self.break_multiline_string(query)

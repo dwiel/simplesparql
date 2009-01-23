@@ -62,14 +62,14 @@ class Compiler :
 			if value.find(self.n.var) == 0 :
 				return True
 				#return not is_meta_var(qvalue)
-			if value.find(self.n.meta_var) == 0 :
+			if is_meta_var(value) :
 				if type(qvalue) == URIRef :
 					# return qvalue.find(self.n.var) == 0
 					return is_var(qvalue)
 					# return is_var(qvalue) and not is_meta_var(qvalue)
 				else :
 					return False
-			if value.find(self.n.lit_var) == 0 :
+			if is_lit_var(value) :
 				if type(qvalue) == URIRef :
 					# return qvalue.find(self.n.var) != 0
 					return is_lit_var(qvalue) or not is_var(qvalue)
@@ -486,6 +486,9 @@ class Compiler :
 			print 'bindings',prettyquery(bindings)
 			if bindings is not None :
 				for binding in bindings :
+					#print '... testing ...'
+					#print 'self.vars',prettyquery(self.vars)
+					#print 'binding',prettyquery(binding)
 					if self.contains_all_bindings(self.vars, binding) :
 						print '-------------------------------------------------'
 						print 'found solution:',prettyquery(binding)
@@ -530,7 +533,7 @@ class Compiler :
 		if isinstance(query, basestring) :
 			query = [line.strip() for line in query.split('\n')]
 			query = [line for line in query if line is not ""]
-		query = self.parser.parse_query(query)
+		query = self.parser.parse(query)
 		
 		if reqd_bound_vars == [] :
 			var_triples = self.find_var_triples(query)
@@ -540,14 +543,15 @@ class Compiler :
 		print 'var_triples',prettyquery(var_triples)
 		bindings = dict([(var, self.n.lit_var[var]) for var in reqd_bound_vars])
 		print 'bindings',prettyquery(bindings)
-		var_triples = [x for x in sub_var_bindings(var_triples, [bindings])]
+		var_triples = [x for x in sub_var_bindings(var_triples, [bindings])][0]
 		
 		print 'query',prettyquery(query)
 		print 'var_triples',prettyquery(var_triples)
 		
 		self.original_query = var_triples
 		# print 'var_triples',prettyquery(var_triples)
-		self.vars = find_vars(query)
+		# self.vars = find_vars(query)
+		self.vars = reqd_bound_vars
 		self.vars = [var for var in self.vars if var.find('bnode') is not 0]
 		print 'self.vars',prettyquery(self.vars)
 		
