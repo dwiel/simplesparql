@@ -404,18 +404,4 @@ class Translator :
 		
 		return self.read_translations_helper(query, var_triples, [], [])
 	
-	def compile(self, query, find_vars = [], input = [], output = []) :
-		if find_vars == [] :
-			var_triples = self.find_var_triples(query)
-		else :
-			var_triples = self.find_specific_var_triples(query, find_vars)
-		
-		query = self.parser.parse_query(query)
-		
-		#print '----------------------------------------------'
-		#print 'parsed query'
-		#print prettyquery(query)
-		#print '/'
-		#print
-		
-		return self.read_translations_helper(query, var_triples, [], [])
+

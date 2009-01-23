@@ -16,12 +16,205 @@ write database
 
 english: enqueue all albums by artists related to Lavender Diamond
 
-where translate:
+where translate
 	artist[rdfs.label] = 'Lavender Diamond'
 	artist[lastfm.similar_to] = similar_artist
 	album[music.artist] = similar_artist
 	album[music.playable] = True
-write translate:
+write translate
 	playlist.enqueue(playlist.playlist, album)
+
+
+
+
+english: render all notes tagged axpress in html
+
+where translate
+	note[note.tag] = 'axpress'
+	note[html.html] = html
+
+
+
+
+english: render all artists using a font color for each corresponding to the frequency they are played
+
+where sparql
+	artist[music.artist_name] = artist_name
+	artist[scrobble.play_count] = play_count
+	html_element[html.text] = artist_name
+	html_element[html.color] = play_count
+	html[html.elements] = html_elements
+	html[html.html] = _html
+
+
+
+
+english: render the first 10 artists sorted by play count using a font color for each corresponding to their play count
+
+where sparql
+	artist[music.artist_name] = artist_name
+	artist[scrobble.play_count] = play_count
+where translate
+	html_element[html.text] = artist_name
+	html_element[html.color] = play_count
+	html_elements[sort.sort_ascending] = html.color
+	html[html.elements] = html_elements[:10]
+	html[html.html] = _html
+
+
+
+
+english: webpages tagged in dwiel's delicious account as gardening with the word bamboo in the page
+
+where translate
+	user[delicious.user_name] = 'dwiel'
+	user[delicious.bookmark] = page
+	page[delicious.tag] = 'gardening'
+	page[html.text] = '(.*)bamboo(.*)'
+	page[file.url] = _url
+
+
+
+
+english: images on pages in dwiel's delicious account sorted ascending by average color distance from green
+
+where translate
+	user[delicious.user_name] = 'dwiel'
+	user[delicious.bookmark] = page
+	page[html.image] = image
+	image[image.average_color] = color
+	color.distance(color.green, color) = distance
+	sparql.order_ascending = distance
+
+but why not?:
+
+where translate
+	user[delicious.user_name] = 'dwiel'
+	user[delicious.bookmark] = page
+	page[html.image] = image
+	color.distance(color.green, image) = distance
+	sparql.order_ascending = distance
+
+supper sussinct:
+	user{
+		delicious.user = 'dwiel'
+		delicious.bookmark[html.image] = image
+	}
+	color.distance(color.green, image) = distance
+	sparql.order_ascending = distance
+	
+
+
+where translate:
+	user delicious account dwiel
+	user bookmark page
+	images on page
+	distance from green to image
+	order ascending by distance
+	
+
+
+
+english: images on flickr tagged sunet sorted by average distance from the color red
+
+where translate
+	image[flickr.tag] = 'sunset'
+	image[image.average_color] = color
+	color.distance(color.red, color) = distance
+	sparql.order_ascending = distance
+
+or (same as above)
+
+where translate
+	image[flickr.tag] = 'sunset'
+	sparql.order_ascending = color.distance(color.red, image.average_color(image))
+
+
+
+
+
+
+
+
+
+
+
+
+
+english: generate an rss feed containing all pages bookmarked by Nate tagged 'gardening' and add it to my rss reader tagged friends
+
+(plugin) 5min
+where translate
+	user[delicious.user] = 'nate'
+	user[delicious.page] = page
+	page[delicious.tag] = 'gardening'
+	page[file.url] = page_url
+where translate
+	rss_feed[rss.element] = page_urls
+write translate
+	rss_feed_generate(rss_feed)
+read translate
+	rss_feed[file.url] = rss_url
+write_translate
+	rss_reader[rss_reader.contains] = rss_url
+	
+or
+
+read translate
+	user[delicious.user] = 'nate'
+	user[delicious.page] = page
+	page[delicious.tag] = 'gardening'
+	page[file.url] = page_url
+read translate
+	rss_feed[rss.element] = page_urls
+write translate
+	rss_feed_generate(rss_feed)
+read translate
+	rss_feed[file.url] = rss_url
+write translate
+	rss_reader[rss_reader.contains] = rss_url
+
+or
+
+# python
+facts, history, bindings_set = axpress("""
+read translate
+	user[delicious.user] = 'nate'
+	user[delicious.page] = page
+	page[delicious.tag] = 'gardening'
+	page[file.url] = _page_url
+""")
+
+# can only make a variable plural in a seperate sub-query ... ?
+#   all values for a plural variable must be found before its plural form can
+#		be passed into a translation.
+# can the compiler skip past this?
+#		no, because the compiler needs to find the path through the space and the
+#		order of that path here matters a lot.
+page_urls = [bindings['page_url'] for bindings in bindings_set]
+
+facts = axpress("""
+given
+	rss_feed[rss.element] = page_urls
+translate write
+	rss_feed_generate(rss_feed)
+""", bindings = {page_urls : page_urls})
+
+facts = axpress("""
+read translate
+	rss_feed[file.url] = rss_url
+write translate
+	rss_reader[rss_reader.contains] = rss_url
+""", given = facts)
+
+
+
+
+
+
+
+
+
+
 
 

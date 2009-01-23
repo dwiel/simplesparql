@@ -213,3 +213,190 @@ Q: does a search stop once matched bindings are found?
 
 
 
+
+With the following multiquery, which varialbes need to be bound in the where 
+clause so that the write clause can execute?
+
+	where translate
+		image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
+		thumb = image.thumbnail(image, 4, 4, image.antialias)
+		thumb_image = thumb[pil.image]
+	write sparql
+		image[amos.thumb] = thumb
+		thumb[pil.image] = thumb_image
+
+My first instinct was that every variable bound in both the 'current' subquery
+and some future subquery[s] needs to be bound in the first case so that its 
+value can be passed onto the future ones.
+
+In this case however, the varialbe image is used in both cases as a bnode or
+placeholder.  Its actual literal value is never defined and doesn't need to be
+defined ...
+
+well maybe image would be defined if it an image already existed in the sparql
+triplestore ... so maybe this query would be more appropriet?
+
+	where translate
+		filename = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
+	read sparql or write sparql
+		image[file.filename] = filename
+	where translate
+		thumb = image.thumbnail(image, 4, 4, image.antialias)
+		thumb_image = thumb[pil.image]
+	write sparql
+		image[amos.thumb] = thumb
+		thumb[pil.image] = thumb_image
+
+so this maybe is alright, but what about:
+
+	
+	where translate
+		image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
+		thumb = image.thumbnail(image, 4, 4, image.antialias)
+		thumb_image = thumb[pil.image]
+	write translate
+		window3d[window3d.background] = thumb_image
+
+or what would be preferable is:
+
+	where translate
+		image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
+		thumb = image.thumbnail(image, 4, 4, image.antialias)
+	write translate
+		window3d[window3d.background] = thumb
+
+Q: how could this be possible ? ... ?
+A: would need to compile the whole thing 'together' ...
+
+what happens if its all smushed into one query and compiled?
+
+	compiled = compile(query = """
+		image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
+		thumb = image.thumbnail(image, 4, 4, image.antialias)
+	""", final_test = """
+		window3d[window3d.background] = thumb
+	""")
+
+what about a more complex situation?
+
+	where translate
+		image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
+		thumb = image.thumbnail(image, 4, 4, image.antialias)
+	write sparql
+		image[amos.thumb] = thumb
+		thumb[pil.image] = thumb_image
+	write translate
+		window3d[window3d.background] = thumb
+
+	OK the where is the query and the writes are combined to the final_tests
+
+For now, I think a read, then write format is > 90% of the power
+
+### take 3
+
+instead of passing bindings between each sub-query and instead of smushing into one big query which doesnt even really make syntactic sense ...
+pass the entire set of triples and bindings on to the next subquery.
+
+
+time-out:
+
+problem: in example above, translations might be necessary in order to convert
+the thumb variable into it's pil.image value, which is technically what is 
+needed:
+
+	window3d[window3d.background] = image
+	image[pil.image] = _pil_image
+
+better example:
+
+
+
+
+what about a query with interleived read and writes?
+why would this be necessary?
+* if a write produced output, otherwise, why put a read after it?
+* if it was important that a read happened sequentially after the write.  And
+	required data bound from previous subqueries
+	? how does time work?  How can it be used ...
+	* for now, could just have time be implemented in some plugin
+		for example, write out a MIDI note along with when it should be played
+		could just have a generic plugin:
+			timed_action[timed_action.time] = time
+			timed_action[timed_action.action] = action
+			action[action.callable] = True
+			# or
+			action is action.callable
+			# or
+			action.callable(action)
+		constantly polling for actions to execute
+			which is what I am afraid of ... How fast can this be?  Every time a triple
+			is writen to the database that this is watching, it must be checked to see
+			if it matches any of the plugins triples and if so, then the rest of the 
+			database must also be checked.
+		not constantly polling per se, more constantly watching.  The system itself
+			allows for these plugins to be activated when matching information is added
+		This process could be sped up incredibly with a hash lookup from predicates
+			which have a list of which plugins are watching each predicate and go from
+			there.  Other ways to quickly hash-match the patterns could work.
+		
+		There should be an effort to reduce the number of stores so that information
+			can reliably be found in one spot.  This means that any plugin watching
+			essentially the entire computer could cause things to be significantly 
+			slower ...
+		although, really, as long as the predicates are kept useful and unique, it
+			should scale nearly infitily ...
+		Problems could arise if compiled queries didn't know what predicates they
+			were going to write, but no, it would have to be that they wouldn't know
+			what predicates they are writing, which can't happen.
+		Problems would arise if a plugin for some reason wanted to be making new 
+			predicates all of the time.  For example, music_artist.beatles but for
+			every artist name.  This technically would be allowed, but would obviously
+			be super slow and would add unecessary size to the plugin hash.  Although
+			it should be farily easy to keep reasonable.
+		Cool
+	
+
+
+
+
+
+
+
+
+
+
+
+general:
+
+Q: what if [in an application] you want to have a set of bindings or variables which
+is always available in memory because it is so common?
+A: write to SPARQL RAM xyz
+	this keeps it in RAM ... but then what about speed at which the data is 
+	retrieved out of here.  It has to be matched against every time ...
+	A: in the future, an APP might also be able to optimize itself based on how
+		its internal structures are being accessed.  If you only ever acces some 
+		variable or match pattern like it is a set, then that is how it can be 
+		stored ... 
+		Q: What are the logistics of this ... ?
+		Q: Does this then also limit how other applications might inspect and adjust
+			this data?
+			Q: does *all* data used in an app (even internal seemingly useless data)
+				need to be accessible from everyone in whatever way?
+			A: that does kinda seem to be the point here ...  Otherwise, whats the 
+				point
+			A: well you could specify in an app which data is public and which is 
+				private.  Might need to do that for security reasons anyway ...
+		Q: What is an app?
+		A: a unified set of actions which seemlessly work together.
+			Q: is it not the goal here to turn the desktop into one app in a way?
+		Q: What does the UI look like?
+		A: FOR NOW:
+			user interface is a text box which allows the typing of a query in the logic
+			style language or conceivably, in the near future, in an english like language.
+			no need to reimplement firefox ...
+		Q: How is this information accessed?
+
+
+
+
+

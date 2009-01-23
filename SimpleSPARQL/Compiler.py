@@ -2,6 +2,7 @@ from SimpleSPARQL import SimpleSPARQL
 from Namespaces import Namespaces
 from PrettyQuery import prettyquery
 from Parser import Parser
+from Utils import *
 
 from Bindings import Bindings
 
@@ -52,53 +53,6 @@ class Compiler :
 		#print
 		
 		self.translations.append(translation)
-		
-	def is_var(self, data) :
-		if type(data) == URIRef :
-			if data.find(self.n.var) == 0 :
-				return True
-			elif data.find(self.n.meta_var) == 0 :
-				return True
-			elif data.find(self.n.lit_var) == 0 :
-				return True
-		return False
-	
-	def is_meta_var(self, data) :
-		if type(data) == URIRef :
-			if data.find(self.n.meta_var) == 0 :
-				return True
-		return False
-	
-	def is_lit_var(self, data) :
-		if type(data) == URIRef :
-			if data.find(self.n.lit_var) == 0 :
-				return True
-		return False	
-	
-	def var_name(self, uri) :
-		if uri.find(self.n.var) == 0 :
-			return uri[len(self.n.var):]
-		elif uri.find(self.n.meta_var) == 0 :
-			return uri[len(self.n.meta_var):]
-		elif uri.find(self.n.lit_var) == 0 :
-			return uri[len(self.n.lit_var):]
-		else :
-			raise Exception('data is not a variable' % str(uri))
-	
-	def var_type(self, uri) :
-		if uri.find(self.n.var) == 0 :
-			return self.n.var
-		elif uri.find(self.n.meta_var) == 0 :
-			return self.n.meta_var
-		elif uri.find(self.n.lit_var) == 0 :
-			return self.n.lit_var
-		else :
-			raise Exception('data is not a variable' % str(uri))
-	
-	def var(self, data) :
-		if is_var(data) :
-			return data[len(self.n.var):]
-		return None
 	
 	def values_match(self, value, qvalue) :
 		# TODO: keep track of values of meta-vars to make sure they are consistant
@@ -106,18 +60,19 @@ class Compiler :
 		# is this really not taken care of?
 		if type(value) == URIRef :
 			if value.find(self.n.var) == 0 :
-				return not self.is_meta_var(qvalue)
+				return True
+				#return not is_meta_var(qvalue)
 			if value.find(self.n.meta_var) == 0 :
 				if type(qvalue) == URIRef :
 					# return qvalue.find(self.n.var) == 0
-					# return self.is_var(qvalue)
-					return self.is_var(qvalue) and not self.is_meta_var(qvalue)
+					return is_var(qvalue)
+					# return is_var(qvalue) and not is_meta_var(qvalue)
 				else :
 					return False
 			if value.find(self.n.lit_var) == 0 :
 				if type(qvalue) == URIRef :
 					# return qvalue.find(self.n.var) != 0
-					return self.is_lit_var(qvalue) or not self.is_var(qvalue)
+					return is_lit_var(qvalue) or not is_var(qvalue)
 					# return qvalue.find(self.n.var) != 0 and qvalue.find(self.n.lit_var) != 0
 				else :
 					return True
@@ -140,12 +95,12 @@ class Compiler :
 	def get_binding(self, triple, qtriple) :
 		binding = {}
 		for t, q in izip(triple, qtriple) :
-			if self.is_var(t) and self.values_match(t, q):
+			if is_var(t) and self.values_match(t, q):
 				# if the same var is trying to be bound to two different values, 
 				# not a valid binding
-				if t in binding and binding[self.var_name(t)] != q :
+				if t in binding and binding[var_name(t)] != q :
 					return {}
-				binding[self.var_name(t)] = q
+				binding[var_name(t)] = q
 			elif t != q :
 				return {}
 		return binding
@@ -179,22 +134,6 @@ class Compiler :
 	def register_executed(self, history, translation, binding) :
 		history.append([translation, copy.copy(binding)])
 		
-	def find_vars(self, query) :
-		"""
-		given a query, find the set of names of all vars, meta_vars and lit_vars
-		"""
-		try :
-			iter = query.__iter__()
-		except AttributeError :
-			if self.is_var(query) :
-				return set([self.var_name(query)])
-			return set()
-		
-		vars = set()
-		for i in iter :
-			vars.update(self.find_vars(i))
-		return vars
-
 	def bind_vars(self, translation, query) :
 		"""
 		@arg translation is a list of triples (the translation)
@@ -242,7 +181,7 @@ class Compiler :
 				bindings = new_bindings
 		
 		# get a set of all vars
-		vars = self.find_vars(translation)
+		vars = find_vars(translation)
 		
 		# if there are no vars, this does still match, but there are no bindings
 		if len(vars) == 0 :
@@ -288,76 +227,8 @@ class Compiler :
 		"""
 		return self.find_bindings(query, translation[self.n.meta.input])
 	
-	def sub_bindings_value(self, value, bindings) :
-		if self.is_var(value) and self.var_name(value) in bindings :
-			return bindings[self.var_name(value)]
-		return value
-	
 	def next_bnode(self) :
 		return self.n.bnode[str(time.time()).replace('.','') + '_' +  str(random.random()).replace('.','')]
-	
-	def sub_bindings_triple(self, triple, bindings) :
-		return [self.sub_bindings_value(value, bindings) for value in triple]
-	
-	def explode_binding(self, bindings) :
-		list_of_new_bindings = [{}]
-		for var, value in bindings.iteritems() :
-			if type(value) == list :
-				# each value in the list of values is a new set of bindings
-				new_list_of_new_bindings = []
-				for v in value :
-					for new_bindings in list_of_new_bindings :
-						tmp_new_bindings = copy.copy(new_bindings)
-						tmp_new_bindings[var] = v
-						new_list_of_new_bindings.append(tmp_new_bindings)
-				list_of_new_bindings = new_list_of_new_bindings
-			elif type(value) == tuple :
-				# each value in the tuple of values is simultaneous
-				for new_bindings in list_of_new_bindings :
-					# TODO: this is like the explode from before ... need a Bindings class
-					# if there are to actually be mutliple values for each variable/key
-					new_bindings[var] = value
-			else :
-				for new_bindings in list_of_new_bindings :
-					new_bindings[var] = value
-		return list_of_new_bindings
-		
-	
-	def sub_var_bindings(self, triples, bindings_set) :
-		"""
-		Substitutes each of the bindings into the set of triples.  bindings_set may
-			look like:
-			{
-				'varname' : [1, 2, 3]
-			}
-			which is equivelent to:
-			[	{ 'varname' : 1 },
-				{ 'varname' : 2 },
-				{ 'varname' : 3 } ]
-			which is why this function takes in a set of bindings and returns a set of
-			triple_sets rather than just doing one at a time.
-		@arg triples is the set of triples to substitute the bindings into
-		@arg bindings_set is the set of bindings to substitute into the triples
-		@return a generator of triple_sets with bindings substituted in.
-		"""
-		
-		#print 'triples',prettyquery(triples)
-		#print 'bindings',prettyquery(bindings_set)
-		
-		# explode the bindings_set which have multiple values into multiple
-		# bindings
-		new_bindings_set = []
-		for bindings in bindings_set :
-			new_bindings_set.extend(self.explode_binding(bindings))
-		print 'new_bindings_set',prettyquery(new_bindings_set)
-		
-		bindings_set = new_bindings_set
-		
-		for bindings in bindings_set :
-			new_triples = []
-			for triple in triples :
-				new_triples.append([bound_triple for bound_triple in self.sub_bindings_triple(triple, bindings)])
-			yield new_triples
 	
 	def find_paths(self, query, find_vars) :
 		for possible_translation in possible_translations :
@@ -365,11 +236,11 @@ class Compiler :
 	
 	# return all triples which have at least one var
 	def find_var_triples(self, query) :
-		return [triple for triple in query if any(map(lambda x:self.is_var(x), triple))]
+		return [triple for triple in query if any(map(lambda x:is_var(x), triple))]
 	
 	# return all triples which have at least one var
 	def find_specific_var_triples(self, query, vars) :
-		return [triple for triple in query if any(map(lambda x:x in vars, triple))]
+		return [triple for triple in query if any(map(lambda x:is_var(x) and var_name(x) in vars, triple))]
 
 	def apply_translation_binding(self, translation, bindings, history) :
 		"""
@@ -404,7 +275,7 @@ class Compiler :
 				
 				output_bindings_list = [output_bindings]
 				
-				outtriple_sets = self.sub_var_bindings(translation[n.meta.output], output_bindings_list)
+				outtriple_sets = sub_var_bindings(translation[n.meta.output], output_bindings_list)
 				
 				#outtriple_sets = [x for x in outtriple_sets]
 				#print 'outtriple_sets',prettyquery(outtriple_sets)
@@ -513,7 +384,7 @@ class Compiler :
 								const_bindings[var] = value
 						
 						#print 'const_bindings',prettyquery(const_bindings)
-						triple_sets = self.sub_var_bindings(translation[n.meta.output], [const_bindings])
+						triple_sets = sub_var_bindings(translation[n.meta.output], [const_bindings])
 												
 						if matches == self.MAYBE :
 							for new_triples in triple_sets :
@@ -568,8 +439,10 @@ class Compiler :
 	def contains_all_bindings(self, required, obtained) :
 		for key in required :
 			if key not in obtained :
+				print '1not',key
 				return False
-			if not self.values_match(self.n.lit_var[key], obtained[key]) :
+			elif not self.values_match(self.n.lit_var[key], obtained[key]) :
+				print '3not',key
 				return False
 		return True
 	
@@ -591,15 +464,12 @@ class Compiler :
 			'guarenteed' : [],
 			'possible' : [],
 		}
+		compile_node_found_solution = False
 		
 		# recursively search through all possible guarenteed translations
 		guarenteed_steps, possible_steps = self.next_translations(query, history)
 		print len(guarenteed_steps), len(possible_steps)
 		for step in guarenteed_steps :
-			# next_query, input_bindings, output_bindings
-			# compile_step = self.follow_step(query, step)
-			compile_node['guarenteed'].append(step)
-			
 			print 'step',prettyquery(step)
 			
 			new_query = copy.copy(query)
@@ -608,16 +478,27 @@ class Compiler :
 			print 'new_query',prettyquery(new_query)
 			
 			# if the new information at this point is enough to fulfil the query, done
-			# otherwise, continue searching
+			# otherwise, recursively continue searching
 			found_solution = False
+			print 'original_query',prettyquery(self.original_query)
 			matches, bindings = self.find_bindings(new_query, self.original_query)
+			print 'matches',matches
+			print 'bindings',prettyquery(bindings)
 			if bindings is not None :
 				for binding in bindings :
 					if self.contains_all_bindings(self.vars, binding) :
+						print '-------------------------------------------------'
 						print 'found solution:',prettyquery(binding)
 						found_solution = True
 			if not found_solution :
-				step['guarenteed'].append(self.follow_guarenteed(new_query, possible_stack, history))
+				child_steps = self.follow_guarenteed(new_query, possible_stack, history)
+				if child_steps :
+					found_solution = True
+					step['guarenteed'].append(child_steps)
+			
+			if found_solution :
+				compile_node['guarenteed'].append(step)
+				compile_node_found_solution = True
 		
 		# don't follow the possible translations yet, just add then to a stack to
 		# follow once all guarenteed translations have been found
@@ -628,7 +509,10 @@ class Compiler :
 				'query' : query,
 			})
 		
-		return compile_node
+		if compile_node_found_solution == False :
+			return False
+		else :
+			return compile_node
 	
 	def follow_possible(self, query, possible_stack) :
 		"""
@@ -642,18 +526,30 @@ class Compiler :
 		
 		
 	
-	def new_compile(self, query, find_vars = [], input = [], output = []) :
-		if find_vars == [] :
-			var_triples = self.find_var_triples(query)
-		else :
-			var_triples = self.find_specific_var_triples(query, find_vars)
-		
+	def new_compile(self, query, reqd_bound_vars = [], input = [], output = []) :
+		if isinstance(query, basestring) :
+			query = [line.strip() for line in query.split('\n')]
+			query = [line for line in query if line is not ""]
 		query = self.parser.parse_query(query)
 		
-		self.original_query = query
+		if reqd_bound_vars == [] :
+			var_triples = self.find_var_triples(query)
+		else :
+			var_triples = self.find_specific_var_triples(query, reqd_bound_vars)
+		
+		print 'var_triples',prettyquery(var_triples)
+		bindings = dict([(var, self.n.lit_var[var]) for var in reqd_bound_vars])
+		print 'bindings',prettyquery(bindings)
+		var_triples = [x for x in sub_var_bindings(var_triples, [bindings])]
+		
+		print 'query',prettyquery(query)
+		print 'var_triples',prettyquery(var_triples)
+		
+		self.original_query = var_triples
 		# print 'var_triples',prettyquery(var_triples)
-		self.vars = self.find_vars(query)
-		# print 'self.vars',prettyquery(self.vars)
+		self.vars = find_vars(query)
+		self.vars = [var for var in self.vars if var.find('bnode') is not 0]
+		print 'self.vars',prettyquery(self.vars)
 		
 		possible_stack = []
 		history = []

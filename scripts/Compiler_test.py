@@ -154,59 +154,66 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			#],
 		#]
 	
-	def test_compile0(self):
-		# in this case the compiler should come up with the paths required to 
-		# evalutate it, but not actually evaluate it
-		ret = compiler.new_compile([
-			'test.u[test.x] = 1',
-			'test.u[test.x] = 2',
-			'test.u[test.y] = 10',
-			'test.u[test.sum] = sum',
-		], input = [], output = ['sum'])
-		print 'ret',prettyquery(ret)
-	
-	def test_compile1(self):
-		# in this case the compiler should come up with the paths required to 
-		# evalutate it, but not actually evaluate it
-		ret = compiler.new_compile([
-			'test.u[test.x] = 1',
-			'test.u[test.y] = 2',
-			'test.u[test.sum] = ?sum',
-			'test.u[test.z] = 100',
-			'test.u[test.div] = ?div',
-		], input = [], output = ['sum', 'div'])
-		print 'ret',prettyquery(ret)
+	#def test_compile0(self):
+		## in this case the compiler should come up with the paths required to 
+		## evalutate it, but not actually evaluate it
+		#ret = compiler.new_compile("""
+			#test.u[test.x] = 1
+			#test.u[test.x] = 2
+			#test.u[test.y] = 10
+			#test.u[test.sum] = sum
+		#""", input = [], output = ['sum'])
+		#print 'ret',prettyquery(ret)
 	
 	#def test_compile1(self):
 		## in this case the compiler should come up with the paths required to 
 		## evalutate it, but not actually evaluate it
-		#ret = compiler.compile([
-			#'test.u[test.x] = 1',
-			#'test.u[test.x] = 10',
-			#'test.u[test.y] = 2',
-			#'test.u[test.y] = 20',
-			#'test.u[test.z] = 100',
-			#'test.u[test.div] = div',
-		#], input = [], output = ['div'])
+		#ret = compiler.new_compile("""
+			#test.u[test.x] = 1
+			#test.u[test.y] = 2
+			#test.u[test.sum] = sum
+			#test.u[test.z] = 100
+			#test.u[test.div] = div
+		#""", input = [], output = ['sum', 'div'])
 		#print 'ret',prettyquery(ret)
 	
-	def test_compile2(self):
-		ret = compiler.new_compile([
-			'test.u[test.x] = _x',
-			'test.u[test.x] = 10',
-			'test.u[test.y] = 2',
-			'test.u[test.y] = 20',
-			'test.u[test.z] = 100',
-			'test.u[test.div] = div',
-		], input = ['x'], output = ['div'])
-		print 'ret',prettyquery(ret)
+	#def test_compile2(self):
+		#ret = compiler.new_compile("""
+			#test.u[test.x] = _x
+			#test.u[test.x] = 10
+			#test.u[test.y] = 2
+			#test.u[test.y] = 20
+			#test.u[test.z] = 100
+			#test.u[test.div] = div
+		#""", input = ['x'], output = ['div'])
+		#print 'ret',prettyquery(ret)
 	
 	def test_compile3(self):
-		ret = compiler.new_compile([
-			'image[file.filename] = "/home/dwiel/AMOSvid/1065/20080821_083129.jpg"',
-			'thumb = image.thumbnail(image, 4, 4)',
-		])
+		ret = compiler.new_compile("""
+			image[file.filename] = "/home/dwiel/AMOSvid/1065/20080821_083129.jpg"
+			thumb = image.thumbnail(image, 4, 4)
+			thumb_image = thumb[pil.image]
+		""", ['image', 'thumb', 'thumb_image'])
 		print 'ret',prettyquery(ret)
 
 if __name__ == "__main__" :
 	unittest.main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

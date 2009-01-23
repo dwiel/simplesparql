@@ -65,7 +65,8 @@ def load(translator, n) :
 		n.meta.output : [
 			'uri[test.prod] = _prod',
 		],
-		n.meta.function : prod
+		n.meta.function : prod,
+		n.meta.constant_vars : ['uri'],
 	})
 	
 	def div(vars) :
@@ -79,7 +80,8 @@ def load(translator, n) :
 		n.meta.output : [
 			'uri[test.div] = _div',
 		],
-		n.meta.function : div
+		n.meta.function : div,
+		n.meta.constant_vars : ['uri'],
 	})
 
 	translator.register_translation({
@@ -236,6 +238,7 @@ def load(translator, n) :
 			'image[pil.image] = _pil_image'
 		],
 		n.meta.function : load_image,
+		n.meta.constant_vars : ['image'],
 	})
 		
 	def image_thumbnail(vars) :
@@ -247,12 +250,13 @@ def load(translator, n) :
 		n.meta.name : 'image thumbnail',
 		n.meta.input : [
 			'image[pil.image] = _pil_image',
-			'?thumb = image.thumbnail(image, _x, _y)',
+			'thumb = image.thumbnail(image, _x, _y)',
 		],
 		n.meta.output : [
-			'?thumb[pil.image] = _thumb_image',
+			'thumb[pil.image] = _thumb_image',
 		],
 		n.meta.function : image_thumbnail,
+		n.meta.constant_vars : ['image', 'thumb'],
 	})
 
 
@@ -274,6 +278,7 @@ def load(translator, n) :
 		n.meta.output : [
 		],
 		n.meta.function : playlist_enuque,
+		n.meta.side_effect : True,
 	})
 	
 	

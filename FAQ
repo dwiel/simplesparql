@@ -13,3 +13,11 @@ A: Thats kinda what it is ... if the objects don't ever have to be explicitly
 	defined.
 
 
+technical questions about the language and how it works
+
+Q: What is the difference between a read translate and a write translate query?
+A: A read translate will try to find all bindings that match the query you
+	provide.  A write translate will find all translations with side-effects, and
+	evaluate all trasnlations required to get to those side-effects.  translations
+	which match, but are not side-effects or do not lead to side-effects will not
+	be evaluated.

@@ -999,7 +999,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		
 		# if this is a list of lists, then it is a jsparql query
 		if type(query) == list and type(query[0]) == list :
-			return self.write_tirpleslist(query, where, varnamespace)
+			return self.write_tripleslist(query, where, varnamespace)
 		
 		sparql = self.n.sparql
 		
@@ -1103,7 +1103,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		
 		return {'result' : 'ok', 'query' : query}
 	
-	def write_tirpleslist(self, query, where, varnamespace) :
+	def write_tripleslist(self, query, where, varnamespace) :
 		self._reset_SPARQL_variables()
 		self.reset_py_to_SPARQL_bnode()
 		query_str = self.triplelist_to_sparql(query, varnamespace)
