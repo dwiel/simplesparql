@@ -71,6 +71,9 @@ class Namespaces() :
 			return self.namespaces == obj.namespaces
 		else :
 			return False
+	
+	def __nonzero__(self) :
+		return True
 
 
 

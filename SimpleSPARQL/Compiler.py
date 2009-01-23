@@ -14,7 +14,7 @@ import copy, time, random
 class Compiler :
 	MAYBE = 'maybe'
 	
-	def __init__(self, cache, n = None) :
+	def __init__(self, n = None) :
 		if n :
 			self.n = n
 		else :
@@ -24,7 +24,6 @@ class Compiler :
 		#self.n.bind('bnode', '<http://dwiel.net/axpress/bnode/0.1/>')
 		#self.n.bind('meta', '<http://dwiel.net/axpress/meta/0.1/>')
 		
-		self.cache = cache
 		self.parser = Parser(self.n)
 
 		self.translations = []

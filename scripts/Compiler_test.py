@@ -24,9 +24,7 @@ n.bind('bound_var', '<http://dwiel.net/axpress/bound_var/0.1/>')
 
 a = n.rdfs.type
 
-cache_sparql = SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwiel.net/axpress/cache")
-cache = Cache(cache_sparql)
-compiler = Compiler(cache)
+compiler = Compiler(n)
 
 import loadTranslations
 loadTranslations.load(compiler, n)

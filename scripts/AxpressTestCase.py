@@ -30,9 +30,7 @@ a = n.rdfs.type
 
 class AxpressTestCase(unittest.TestCase):
 	def setUp(self):
-		cache_sparql = SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwiel.net/axpress/cache")
-		cache = Cache(cache_sparql)
-		self.compiler = Compiler(cache)
+		self.compiler = Compiler(n)
 		
 		import loadTranslations
 		loadTranslations.load(self.compiler, n)
@@ -65,23 +63,14 @@ class AxpressTestCase(unittest.TestCase):
 		#""", bindings_set = bindings_set)
 		#print 'ret',prettyquery(ret)
 	
-	def test2(self):
-		# facts, history, bindings_set = self.parser.translator.
-		ret = self.axpress.read_translate("""
-			image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
-			thumb = image.thumbnail(image, 4, 4, image.antialias)
-			thumb[pil.image]= _thumb_image
-		""", reqd_bound_vars = ['thumb_image'])
-		print 'ret',prettyquery(ret)
-		#assert self.parser.parse("""
-			#where translate
-				#image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
-				#thumb = image.thumbnail(image, 4, 4, image.antialias)
-				#thumb[pil.image]= _thumb_image
-			#write sparql
-				#image[amos.thumb] = thumb
-				#thumb[pil.image] = thumb_image
-		#""") == 'hello'
+	#def test2(self):
+		## facts, history, bindings_set = self.parser.translator.
+		#ret = self.axpress.read_translate("""
+			#image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
+			#thumb = image.thumbnail(image, 4, 4, image.antialias)
+			#thumb[pil.image]= _thumb_image
+		#""", reqd_bound_vars = ['thumb_image'])
+		#print 'ret',prettyquery(ret)
 	
 	"""
 """
