@@ -1,4 +1,5 @@
 from SimpleSPARQL import SimpleSPARQL
+from Axpress import Axpress
 from Translator import Translator
 from Compiler import Compiler
 from Evaluator import Evaluator

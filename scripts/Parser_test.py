@@ -139,7 +139,19 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			[ n.var.bnode2, n.image.thumbnail, n.var.thumb, ],
 			[ n.var.thumb, n.pil.image, n.var.thumb_image, ],
 		]
-
+	
+	def test_parseQuery4(self):
+		query = """
+			uri[test.sum] = sum
+			uri[test.x] = uri2[test.x]
+			uri[test.x] = 1
+		"""
+		assert self.parser.parse_query(query) == [
+			[n.var.uri, n.test.sum, n.var.sum],
+			[n.var.uri, n.test.x, n.var.bnode1],
+			[n.var.uri2, n.test.x, n.var.bnode1],
+			[n.var.uri, n.test.x, 1],
+		]
 	
 	
 if __name__ == "__main__" :

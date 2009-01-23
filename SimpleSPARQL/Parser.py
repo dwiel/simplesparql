@@ -88,7 +88,19 @@ class Parser() :
 			res.extend(item)
 		return res
 	
+	def break_multiline_string(self, string) :
+		"""
+		given a string with multiple lines, split it up, remove any leading or 
+		trailing space, and remove any blank lines
+		"""
+		for line in string.strip().split('\n') :
+			line = line.strip()
+			if line is not '' :
+				yield line
+	
 	def parse_query(self, query) :
+		if isinstance(query, basestring) :
+			query = self.break_multiline_string(query)
 		self.reset_bnode()
 		return self.flatten([isinstance(expression, basestring) and self.parse_expression(expression) or [expression] for expression in query])
 	

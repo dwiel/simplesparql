@@ -95,7 +95,7 @@ where translate
 	color.distance(color.green, image) = distance
 	sparql.order_ascending = distance
 
-supper sussinct:
+supper sussinct: (this didn't help much)
 	user{
 		delicious.user = 'dwiel'
 		delicious.bookmark[html.image] = image
@@ -206,6 +206,8 @@ read translate
 write translate
 	rss_reader[rss_reader.contains] = rss_url
 """, given = facts)
+
+
 
 
 
