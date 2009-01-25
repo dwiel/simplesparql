@@ -133,6 +133,35 @@ where translate
 
 
 
+??? english: newest version of each page in the wiki
+
+where sparql
+	page[wiki.pagename] = pagename
+	page[wiki.body] = body
+	page[wiki.datetime] = datetime
+for each pagename :
+	query.query[query.sort_descending] = datetime
+	query.query[query.limit] = 1
+
+
+
+english: newest page in the wiki
+
+where sparql
+	page[wiki.pagename] = pagename
+	page[wiki.body] = body
+	page[wiki.datetime] = datetime
+	query.query[query.sort_descending] = datetime
+	query.query[query.limit] = 1
+
+
+
+
+
+
+
+
+
 
 
 
@@ -206,6 +235,24 @@ read translate
 write translate
 	rss_reader[rss_reader.contains] = rss_url
 """, given = facts)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

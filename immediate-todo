@@ -29,3 +29,17 @@ immidiate todo:
 		disallow input variables like bnode1
 				...
 		make optional parts of a query and part of a translation work
+
+		method to quickly create triple information and put it into the store.
+		(for example, who Matt is and what his bookmark sites/email/etc is)
+		low level, like:
+
+		query (save with name)
+
+		bindings
+
+		create
+
+
+
+		also allow saving just a long query.  (how to escape it in the database?)

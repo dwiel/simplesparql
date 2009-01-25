@@ -21,3 +21,26 @@ A: A read translate will try to find all bindings that match the query you
 	evaluate all trasnlations required to get to those side-effects.  translations
 	which match, but are not side-effects or do not lead to side-effects will not
 	be evaluated.
+
+
+
+
+
+Q: How is axpress different? (than other web 3.0 tools?)
+A: makes it easy to use.
+	Freebase is for data
+	axpress is for everything else (the applications) (though this is what Acre is for ...)
+
+
+
+
+
+
+
+
+
+
+
+
+
+

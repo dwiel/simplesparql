@@ -63,7 +63,7 @@ class Expression() :
 
 class Parser() :
 	def __init__(self, n = None) :
-		if n == None :
+		if not n:
 			n = Namespaces.Namespaces()
 		
 		n.bind('meta_var', '<http://dwiel.net/express/meta_var/0.1/>')

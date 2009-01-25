@@ -20,6 +20,7 @@ from RDFObject import RDFObject
 from QueryException import QueryException
 from PrettyQuery import prettyquery
 from Cache import Cache
+from Utils import var_name
 
 # from parseMatchOutput import construct
 
@@ -34,6 +35,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 			self.n = n
 		else :
 			self.n = Namespaces.Namespaces()
+		self.n.bind('query', '<http://dwiel.net/axpress/query/0.1/>')
 		self.n.bind('var', '<http://dwiel.net/axpress/var/0.1/>')
 		self.n.bind('tvar', '<http://dwiel.net/axpress/translation/var/0.1/>')
 		self.n.bind('bnode', '<http://dwiel.net/axpress/bnode/0.1/>')
@@ -601,10 +603,19 @@ class SimpleSPARQL (SPARQLWrapper) :
 		return self.verify_restrictions_helper(bindings, vars, [], root_var, explicit_vars.keys())
 	
 	def read(self, query) :
-		if type(query) == list and type(query[0]) == list :
-			return self.new_read(query)
-		query = copy.deepcopy(query)
 		n = self.n
+		if type(query) == list :
+			if len(query) > 0 :
+				if type(query[0]) == list :
+					return self.new_read(query)
+			else :
+				return {
+					n.sparql.status : n.sparql.error,
+					n.sparql.query : query,
+					n.sparql.error_path : '',
+					n.sparql.error_message : 'empty query',
+				}
+		query = copy.deepcopy(query)
 		# try a raw_read which returns exceptions.  If it works, return a status ok;
 		# if it doesn't catch the exception and return the infromation associated 
 		# with that.
@@ -1229,11 +1240,36 @@ class SimpleSPARQL (SPARQLWrapper) :
 		#   be some other class to do each translation?
 		if varnamespace == None :
 			varnamespace = self.n.var
+		
+		# for now, these need to come in the triples set in the same order as 
+		# required by SPARQL.  LIMIT after ORDER and OFFSET after LIMIT
+		modifiers = []
+		new_query = []
+		for triple in query :
+			modified = False
+			if triple[0] == self.n.query.query :
+				if triple[1] == self.n.query.limit :
+					modifiers.append('LIMIT %d' % int(triple[2]))
+					modified = True
+				if triple[1] == self.n.query.offset :
+					modifiers.append('OFFSET %d' % int(triple[2]))
+					modified = True
+				if triple[1] == self.n.query.sort_ascending :
+					modifiers.append('ORDER BY ?%s' % var_name(triple[2]))
+					modified = True
+				if triple[1] == self.n.query.sort_descending :
+					modifiers.append('ORDER BY DESC(?%s)' % var_name(triple[2]))
+					modified = True
+			
+			if not modified :
+				new_query.append(triple)
+		query = new_query
+		
 		self.reset_py_to_SPARQL_bnode()
 		self._reset_SPARQL_variables()
 		query_str = self.triplelist_to_sparql(query, varnamespace)
-		print 'query_str',query_str
-		ret = self.doQuery("SELECT * WHERE { %s }" % self.wrapGraph(query_str))
+		query = "SELECT * WHERE { %s } %s" % (self.wrapGraph(query_str), '\n'.join(modifiers))
+		ret = self.doQuery(query)
 		for binding in ret['results']['bindings'] :
 			newbinding = {}
 			for var, value in binding.iteritems() :

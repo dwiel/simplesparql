@@ -23,7 +23,7 @@ class Axpress() :
 		"""
 		read from the sparql database
 		@arg query the query in one long string, a list of string or triples_set
-		@return a set of bindings
+		@return a generator yielding sets of bindings
 		"""
 		query_triples = self.parser.parse(query)
 		for triples in sub_var_bindings(query_triples, bindings_set) :
