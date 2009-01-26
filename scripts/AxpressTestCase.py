@@ -31,12 +31,17 @@ a = n.rdfs.type
 class AxpressTestCase(unittest.TestCase):
 	def setUp(self):
 		self.compiler = Compiler(n)
+		self.evaluator = Evaluator(n)
 		
 		import loadTranslations
 		loadTranslations.load(self.compiler, n)
 		
 		#self.parser = MultilineParser(n, sparql = sparql, translator = self.translator)
-		self.axpress = Axpress(sparql = sparql, compiler = self.compiler)
+		self.axpress = Axpress(
+			sparql = sparql,
+			compiler = self.compiler,
+			evaluator = self.evaluator
+		)
 	
 	#def test1(self):
 		#def is_num(x):
@@ -60,7 +65,7 @@ class AxpressTestCase(unittest.TestCase):
 			#foo[test.x] = x
 			#foo[test.y] = y
 			#foo[test.sum] = _sum
-		#""", bindings_set = bindings_set)
+		#""", reqd_bound_vars = ['sum'], bindings_set = bindings_set)
 		#print 'ret',prettyquery(ret)
 	
 	def test2(self):

@@ -75,6 +75,13 @@ class Compiler :
 					# return qvalue.find(self.n.var) != 0 and qvalue.find(self.n.lit_var) != 0
 				else :
 					return True
+			if is_out_var(value) :
+				if is_lit_var(qvalue) :
+					return True
+				elif is_var(qvalue) :
+					return False
+				else :
+					return True
 		if value == qvalue :
 			return True
 	
@@ -105,14 +112,12 @@ class Compiler :
 		return binding
 	
 	def find_bindings_for_triple(self, triple, query) :
-		# return [x for x in [get_binding(triple, qtriple) for qtriple in query] if x]
 		bindings = []
 		for qtriple in query :
 			binding = self.get_binding(triple, qtriple)
 			if binding and binding not in bindings :
 				bindings.append(binding)
 		
-#		bindings = [binding for binding in bindings if binding]
 		return bindings
 	
 	def conflicting_bindings(self, a, b) :
@@ -208,19 +213,11 @@ class Compiler :
 		# check that all of the translation inputs match part of the query
 		for triple in pattern :
 			if not self.find_triple_match(triple, data) :
-				#print 'no match for',prettyquery(triple)
+				print 'no match for',prettyquery(triple)
 				return False, None
 		
 		# find all possible bindings for the vars if any exist
 		matches, bindings_set = self.bind_vars(pattern, data)
-		
-		#bindings_set = [bindings for bindings in bindings_set if not bindings_contain_output_var(bindings)]
-			#for bindings in bindings_set :
-				## not allowed to bind an output variable as a value to the input of a
-				## translation
-				#if bindings_contain_output_var(bindings) :
-					#print 'fail!!!',translation[n.meta.name],'fail!!!'
-					#continue
 		
 		return matches, bindings_set
 	
@@ -467,6 +464,41 @@ class Compiler :
 			elif not self.values_match(self.n.lit_var[key], obtained[key]) :
 				return False
 		return True
+		
+	def find_solution_values_match(self, tv, qv) :
+		if is_var(tv) :
+			if is_out_var(qv) :
+				return False
+			if is_var(qv) :
+				return var_name(tv) == var_name(qv)
+			return False
+		else :
+			return tv == qv
+	
+	def find_solution_triples_match(self, triple, qtriple) :
+		for tv, qv in izip(triple, qtriple) :
+			if not self.find_solution_values_match(tv, qv) :
+				return False
+		return True
+	
+	def find_solution_triple(self, triple, query) :
+		for qtriple in query :
+			if self.find_solution_triples_match(triple, qtriple) :
+				return True
+		return False
+		
+	def find_solution(self, var_triples, query) :
+		"""
+		returns True if a solution for var_triples can be found in query
+		@arg var_triples is the set of triples which need to be bound in query for
+			a solution to exist
+		@arg query is the query to find a solution satisfying var_triples in
+		@returns True iff a solution exists
+		"""
+		for triple in var_triples :
+			if not self.find_solution_triple(triple, query) :
+				return False
+		return True
 	
 	def follow_guarenteed(self, query, possible_stack, history, output_vars) :
 		"""
@@ -500,18 +532,22 @@ class Compiler :
 			# if the new information at this point is enough to fulfil the query, done
 			# otherwise, recursively continue searching
 			found_solution = False
-			print 'original_query',prettyquery(self.original_query)
-			matches, bindings = self.find_bindings(step['new_query'], self.original_query)
-			print 'matches',matches
-			if bindings is not None :
-				for binding in bindings :
-					#print '... testing ...'
-					#print 'self.vars',prettyquery(self.vars)
-					print 'binding',prettyquery(binding)
-					if self.contains_all_bindings(self.vars, binding) :
-						print '-------------------------------------------------'
-						print 'found solution:',prettyquery(binding)
-						found_solution = True
+			print 'var_triples',prettyquery(self.var_triples)
+			found_solution = self.find_solution(self.var_triples, step['new_query'])
+			print 'matches/found_solution',found_solution			
+			#print 'original_query',prettyquery(self.original_query)
+			#matches, bindings = self.find_bindings(step['new_query'], self.original_query)
+			#print 'matches',matches
+			#print 'bindings',prettyquery(bindings)
+			#if bindings is not None :
+				#for binding in bindings :
+					##print '... testing ...'
+					##print 'self.vars',prettyquery(self.vars)
+					##print 'binding',prettyquery(binding)
+					#if self.contains_all_bindings(self.vars, binding) :
+						#print '-------------------------------------------------'
+						#print 'found solution:',prettyquery(binding)
+						#found_solution = True
 			if not found_solution :
 				print 'recuring'
 				child_steps = self.follow_guarenteed(step['new_query'], possible_stack, history, output_vars)
@@ -583,6 +619,7 @@ class Compiler :
 		
 		# self.original_query = var_triples
 		self.original_query = query
+		self.var_triples = var_triples
 		# print 'var_triples',prettyquery(var_triples)
 		# self.vars = find_vars(query)
 		self.vars = reqd_bound_vars

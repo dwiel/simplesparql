@@ -3,18 +3,23 @@ from Utils import sub_var_bindings, find_vars, UniqueURIGenerator
 from PrettyQuery import prettyquery
 
 class Axpress() :
-	def __init__(self, sparql, compiler) :
+	def __init__(self, sparql, compiler, evaluator) :
 		self.sparql = sparql
 		# self.translator = translator
 		self.compiler = compiler
+		self.evaluator = evaluator
 		self.parser = Parser.Parser(sparql.n)
 	
 	def read_translate(self, query, bindings_set = [{}], reqd_bound_vars = []) :
 		query_triples = self.parser.parse(query)
-		rets = []
+		ret_comps = []
+		ret_evals = []
 		for triples in sub_var_bindings(query_triples, bindings_set) :
-			rets.append(self.compiler.new_compile(triples, reqd_bound_vars))
-		return rets
+			ret_comp = self.compiler.new_compile(triples, reqd_bound_vars)
+			ret_eval = self.evaluator.evaluate(ret_comp)
+			ret_comps.append(ret_comp)
+			ret_evals.append(ret_eval)
+		return [ret_comps, ret_evals]
 	
 	def write_translate(self, query, bindings_set = [{}]) :
 		pass
