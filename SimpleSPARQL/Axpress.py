@@ -1,5 +1,5 @@
 import Parser
-from Utils import sub_var_bindings
+from Utils import sub_var_bindings, find_vars, UniqueURIGenerator
 from PrettyQuery import prettyquery
 
 class Axpress() :
@@ -16,7 +16,7 @@ class Axpress() :
 			rets.append(self.compiler.new_compile(triples, reqd_bound_vars))
 		return rets
 	
-	def write_translate(self, query) :
+	def write_translate(self, query, bindings_set = [{}]) :
 		pass
 	
 	def read_sparql(self, query, bindings_set = [{}]) :
@@ -31,5 +31,27 @@ class Axpress() :
 			for result in self.sparql.read(triples) :
 				yield result
 
-	def write_sparql(self, query) :
-		pass
+	def write_sparql(self, query, bindings_set = [{}]) :
+		query_triples = self.parser.parse(query)
+		for triples in sub_var_bindings(query_triples, bindings_set) :
+			missing_vars = find_vars(triples)
+			if len(missing_vars) is not 0 :
+				urigen = UniqueURIGenerator()
+				new_bindings = [dict([(var, urigen()) for var in missing_vars])]
+				triples = sub_var_bindings(triples, new_bindings).next()
+			self.sparql.write(triples)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

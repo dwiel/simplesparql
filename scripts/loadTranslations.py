@@ -95,13 +95,15 @@ def load(translator, n) :
 		n.meta.expected_time : 0,
 	})
 	
+	# note: this doesn't actually work ...
+	# how could it?
 	def is_num(vars) :
 		vars['is_num'] = isinstance(vars['x'], (int, long, float))
 		print 'is_num:',vars['is_num']
 	translator.register_translation({
 		n.meta.name : 'is_num',
 		n.meta.input : """
-			type.is_num(_x) = is_num
+			type.is_num(_x) = ?is_num
 		""",
 		n.meta.output : """
 			type.is_num(_x) = _is_num
@@ -185,6 +187,7 @@ def load(translator, n) :
 		n.meta.scale : 100,
 		n.meta.expected_time : 1,
 		n.cache.expiration_length : 2678400, # 1 month in seconds
+		n.meta.constant_vars : ['artist'],
 	})
 	"""
 	artist[music.artist_name] = artist_name
@@ -233,7 +236,8 @@ def load(translator, n) :
 		],
 		n.meta.function : flickr_photos_search,
 		n.cache.expiration_length : 2678400,
-		n.meta.requires : 'flickrapi' # TODO: make this work
+		n.meta.requires : 'flickrapi', # TODO: make this work
+		n.meta.constant_vars : ['image'],
 	})
 	
 	def load_image(vars) :
@@ -384,6 +388,7 @@ def load(translator, n) :
 			'_pattern[glob.glob] = _filename'
 		],
 		n.meta.function : glob_glob,
+		n.meta.constant_vars : ['pattern'],
 	})
 	
 	

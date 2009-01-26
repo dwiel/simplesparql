@@ -24,13 +24,13 @@ def prettyquery_helper(query, tabs = '', indent = '  ', namespaces = n) :
 	return a pretty string of the query
 	"""
 	s = ""
-	if type(query) == dict :
+	if isinstance(query, dict) :
 		s += '{\n'
 		prettykeys = [(prettyquery_helper(k, tabs+indent, indent), k) for k in query]
 		for prettyk, k in sorted(prettykeys) :
 			s += tabs + indent + prettyk + ' : ' + prettyquery_helper(query[k], tabs + indent, indent) + ',\n'
 		s += tabs + '}'
-	elif type(query) == list :
+	elif isinstance(query, list) :
 		if len(query) == 0 :
 			s += '[]\n'
 		else :

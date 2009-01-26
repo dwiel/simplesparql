@@ -154,7 +154,13 @@ where sparql
 	query.query[query.sort_descending] = datetime
 	query.query[query.limit] = 1
 
-
+note: this doesn't scale well ... every access requires the lookup of every
+item in the database and then a sort.  Theoretically, the pattern here should
+be detectable.  The pattern being that this data is often/only accessed by the
+most frequent, so this meta-information should be kept up to date as it is 
+created.  There should be a 'pointer' to the top of the stack to jump to right 
+away if there is a descending, limit 1 query.  Where does this use-case pattern
+matching fit?
 
 
 

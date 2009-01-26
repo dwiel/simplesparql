@@ -63,17 +63,17 @@ class AxpressTestCase(unittest.TestCase):
 		#""", bindings_set = bindings_set)
 		#print 'ret',prettyquery(ret)
 	
-	#def test2(self):
-		## facts, history, bindings_set = self.parser.translator.
-		#ret = self.axpress.read_translate("""
-			#image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
-			#thumb = image.thumbnail(image, 4, 4, image.antialias)
-			#thumb[pil.image]= _thumb_image
-		#""", reqd_bound_vars = ['thumb_image'])
-		#print 'ret',prettyquery(ret)
+	def test2(self):
+		# facts, history, bindings_set = self.parser.translator.
+		ret = self.axpress.read_translate("""
+			image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
+			thumb = image.thumbnail(image, 4, 4, image.antialias)
+			thumb[pil.image] = _thumb_image
+		""", reqd_bound_vars = ['thumb_image'])
+		print 'ret',prettyquery(ret)
 	
 	"""
-"""
+	"""
 	
 if __name__ == "__main__" :
 	unittest.main()
