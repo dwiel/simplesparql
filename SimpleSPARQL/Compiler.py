@@ -248,115 +248,6 @@ class Compiler :
 	def find_specific_var_triples(self, query, vars) :
 		return [triple for triple in query if any(map(lambda x:is_var(x) and var_name(x) in vars, triple))]
 
-	def apply_translation_binding(self, translation, bindings, history) :
-		"""
-		apply a translation to a set of bindings if it hasn't already been applied
-		before.
-		@return a set of triplelists which are to be added to the query for
-		the next iteration of search.
-		"""
-		n = self.n
-		translation_bindings = []
-		for binding in bindings :
-			# print 'history',prettyquery([[t[0][n.meta.name], t[1]] for t in history]),
-			# print 'now',prettyquery([translation[n.meta.name], binding]),
-			if [translation, binding] not in history :
-				#print 'applying',translation[n.meta.name]
-				#print 'binding',prettyquery(binding)
-				history.append([translation, copy.copy(binding)])
-				
-				# instead of calling the function, just replace all of the bindings with
-				# new output vars
-				# or maybe, rather than that, only replace the output bindings which are
-				# constant with whatever they were bound to. OK
-				
-				# the only bindings to replace 
-				print 'binding',prettyquery(binding)
-				print 'constants',prettyquery(translation[n.meta.constant_vars])
-				output_bindings = Bindings(possible = binding.possible)
-				for var, value in binding.iteritems() :
-					if var in translation[n.meta.constant_vars] :
-						output_bindings[var] = value
-				print 'output_bindings',prettyquery(output_bindings)
-				
-				output_bindings_list = [output_bindings]
-				
-				outtriple_sets = sub_var_bindings(translation[n.meta.output], output_bindings_list)
-				
-				#outtriple_sets = [x for x in outtriple_sets]
-				#print 'outtriple_sets',prettyquery(outtriple_sets)
-				translation_bindings.extend(outtriple_sets)
-		print 'translation_bindings',prettyquery(translation_bindings)
-		return translation_bindings
-	
-	def read_translations_helper(self, query, var_triples, bound_var_triples = [], history = []) :
-		n = self.n		
-		
-		# updated once at the end of each iteration.  This will have more than one
-		# set of bindings if one translation has multiple possible bindings or if
-		# a translation binds a variable to a list (not a tuple) of values
-		final_bindings = [query]
-		
-		translation_list = []
-		
-		found_match = True
-		while found_match :
-#			print '--- new iteration ---'
-			all_new_final_bindings = []
-			for query in final_bindings :
-				new_final_bindings = [query]
-				all_bindings  = [(translation, self.testtranslation(translation, query)) for translation in self.translations]
-				found_match = False
-				for (translation, (matches, bindings)) in all_bindings :
-					if matches :
-						this_translation_bindings = self.apply_translation_binding(translation, bindings, history)
-#						print 'translation', translation[n.meta.name]
-#						print 'this_translation_bindings', prettyquery(this_translation_bindings),
-						# 'multiply' each new binding with each previously existing binding
-						if len(this_translation_bindings) != 0 :
-							#print translation[n.meta.name], len(this_translation_bindings), prettyquery(this_translation_bindings),
-							found_match = True
-							
-							print 'bindings', translation[n.meta.name], prettyquery(this_translation_bindings)
-							translation_list.append([translation[n.meta.name], this_translation_bindings])
-							
-							tmp_new_final_bindings = []
-							for binding in new_final_bindings :
-								for new_binding in this_translation_bindings :
-									tmp_new_final_bindings.append(binding + new_binding)
-							new_final_bindings = tmp_new_final_bindings
-							#print 'new_final_bindings',prettyquery(new_final_bindings)
-							
-				all_new_final_bindings.extend(new_final_bindings)
-			
-			final_bindings = all_new_final_bindings
-			#print 'final_bindings', prettyquery(final_bindings)
-		
-		# print 'final_bindings',prettyquery(final_bindings),
-		return [final_bindings, translation_list]
-		#exit()
-	
-	def compile(self, query, find_vars = [], input = [], output = []) :
-		if find_vars == [] :
-			var_triples = self.find_var_triples(query)
-		else :
-			var_triples = self.find_specific_var_triples(query, find_vars)
-		
-		query = self.parser.parse_query(query)
-		
-		#print '----------------------------------------------'
-		#print 'parsed query'
-		#print prettyquery(query)
-		#print '/'
-		#print
-		
-		return self.read_translations_helper(query, var_triples, [], [])
-
-
-
-
-	# new code
-
 
 
 
@@ -430,7 +321,7 @@ class Compiler :
 							possible_steps.append({
 								'query' : query,
 								'bindings' : bindings,
-								'translation' : translation[n.meta.name],
+								'translation' : translation,
 								'new_triples' : new_triples,
 								'new_query' : new_query,
 								'guarenteed' : [],
@@ -448,7 +339,7 @@ class Compiler :
 							#}),')'
 							guarenteed_steps.append({
 								'bindings' : bindings,
-								'translation' : translation[n.meta.name],
+								'translation' : translation,
 								'new_triples' : new_triples,
 								'new_query' : new_query,
 								'guarenteed' : [],
@@ -553,7 +444,8 @@ class Compiler :
 				child_steps = self.follow_guarenteed(step['new_query'], possible_stack, history, output_vars)
 				if child_steps :
 					found_solution = True
-					step['guarenteed'].append(child_steps)
+					step['guarenteed'].extend(child_steps['guarenteed'])
+					step['possible'].extend(child_steps['possible'])
 			
 			if found_solution :
 				compile_node['guarenteed'].append(step)

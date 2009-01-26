@@ -377,7 +377,6 @@ def load(translator, n) :
 	
 	def glob_glob(vars):
 		import glob
-		print 'vars',vars
 		vars['filename'] = glob.glob(vars['pattern'])
 	translator.register_translation({
 		n.meta.name : 'glob glob',

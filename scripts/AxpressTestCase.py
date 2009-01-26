@@ -75,7 +75,7 @@ class AxpressTestCase(unittest.TestCase):
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
 			thumb[pil.image] = _thumb_image
 		""", reqd_bound_vars = ['thumb_image'])
-		print 'ret',prettyquery(ret)
+		# print 'ret',prettyquery(ret)
 	
 	"""
 	"""

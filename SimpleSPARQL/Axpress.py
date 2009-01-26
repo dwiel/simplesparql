@@ -16,6 +16,7 @@ class Axpress() :
 		ret_evals = []
 		for triples in sub_var_bindings(query_triples, bindings_set) :
 			ret_comp = self.compiler.new_compile(triples, reqd_bound_vars)
+			print 'ret_comp',prettyquery(ret_comp)
 			ret_eval = self.evaluator.evaluate(ret_comp)
 			ret_comps.append(ret_comp)
 			ret_evals.append(ret_eval)
