@@ -12,15 +12,12 @@ class Axpress() :
 	
 	def read_translate(self, query, bindings_set = [{}], reqd_bound_vars = []) :
 		query_triples = self.parser.parse(query)
-		ret_comps = []
 		ret_evals = []
 		for triples in sub_var_bindings(query_triples, bindings_set) :
-			ret_comp = self.compiler.new_compile(triples, reqd_bound_vars)
-			print 'ret_comp',prettyquery(ret_comp)
+			ret_comp = self.compiler.compile(triples, reqd_bound_vars)
 			ret_eval = self.evaluator.evaluate(ret_comp)
-			ret_comps.append(ret_comp)
-			ret_evals.append(ret_eval)
-		return [ret_comps, ret_evals]
+			ret_evals.extend(ret_eval)
+		return ret_evals
 	
 	def write_translate(self, query, bindings_set = [{}]) :
 		pass

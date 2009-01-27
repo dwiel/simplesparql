@@ -386,6 +386,13 @@ class Compiler :
 		
 	def find_solution_values_match(self, tv, qv) :
 		if is_var(tv) :
+			if is_out_var(tv) :
+				if is_lit_var(qv) :
+					return {tv : qv}
+				elif is_var(qv) :
+					return False
+				else :
+					return {tv : qv}
 			if is_out_var(qv) :
 				return False
 			elif is_lit_var(tv) and is_lit_var(qv) :
@@ -397,16 +404,21 @@ class Compiler :
 			return tv == qv
 	
 	def find_solution_triples_match(self, triple, qtriple) :
+		bindings = {}
 		for tv, qv in izip(triple, qtriple) :
 			# print prettyquery(tv), prettyquery(qv), self.find_solution_values_match(tv, qv)
-			if not self.find_solution_values_match(tv, qv) :
+			ret = self.find_solution_values_match(tv, qv)
+			if not ret :
 				return False
-		return True
+			elif isinstance(ret, dict) :
+				bindings.update(ret)
+		return bindings or True
 	
 	def find_solution_triple(self, triple, query) :
 		for qtriple in query :
-			if self.find_solution_triples_match(triple, qtriple) :
-				return True
+			bindings = self.find_solution_triples_match(triple, qtriple)
+			if bindings :
+				return bindings or True
 		return False
 		
 	def find_solution(self, var_triples, query) :
@@ -417,10 +429,13 @@ class Compiler :
 		@arg query is the query to find a solution satisfying var_triples in
 		@returns True iff a solution exists
 		"""
+		bindings = {}
 		for triple in var_triples :
-			if not self.find_solution_triple(triple, query) :
+			new_bindings = self.find_solution_triple(triple, query)
+			if not new_bindings :
 				return False
-		return True
+			bindings.update(new_bindings)
+		return bindings or True
 	
 	def follow_guarenteed(self, query, possible_stack, history, output_vars) :
 		"""
@@ -470,7 +485,9 @@ class Compiler :
 						#print '-------------------------------------------------'
 						#print 'found solution:',prettyquery(binding)
 						#found_solution = True
-			if not found_solution :
+			if found_solution :
+				step['solution'] = found_solution
+			else :
 				print 'recuring'
 				child_steps = self.follow_guarenteed(step['new_query'], possible_stack, history, output_vars)
 				if child_steps :
@@ -519,23 +536,25 @@ class Compiler :
 				if is_var(value) and var_name(value) in reqd_bound_vars :
 					triple[j] = self.n.out_var[var_name(value)]
 	
-	def new_compile(self, query, reqd_bound_vars = [], input = [], output = []) :
+	def compile(self, query, reqd_bound_vars = [], input = [], output = []) :
 		if isinstance(query, basestring) :
 			query = [line.strip() for line in query.split('\n')]
 			query = [line for line in query if line is not ""]
 		query = self.parser.parse(query)
 		
+		self.make_vars_out_vars(query, reqd_bound_vars)
+		
 		if reqd_bound_vars == [] :
 			var_triples = self.find_var_triples(query)
 		else :
 			var_triples = self.find_specific_var_triples(query, reqd_bound_vars)
+			if var_triples == [] :
+				raise Exception("Waring, required bound triples were provided, but not found in the query")
 		
 		print 'var_triples',prettyquery(var_triples)
-		bindings = dict([(var, self.n.lit_var[var]) for var in reqd_bound_vars])
+		bindings = dict([(var, self.n.out_var[var]) for var in reqd_bound_vars])
 		print 'bindings',prettyquery(bindings)
 		var_triples = [x for x in sub_var_bindings(var_triples, [bindings])][0]
-		
-		self.make_vars_out_vars(query, reqd_bound_vars)
 		
 		print 'query',prettyquery(query)
 		print 'var_triples',prettyquery(var_triples)

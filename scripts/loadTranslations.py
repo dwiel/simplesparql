@@ -211,7 +211,7 @@ def load(translator, n) :
 		# 'http://farm{farm-id}.static.flickr.com/{server-id}/{id}_{secret}.jpg'
 		# 'http://farm{farm-id}.static.flickr.com/{server-id}/{id}_{secret}_[mstb].jpg'
 		return 'http://farm%s.static.flickr.com/%s/%s_%s_%s.jpg' % \
-		        (photo.farm, photo.server, photo.id, photo.secret, 'b')
+						(photo.attrib['farm'], photo.attrib['server'], photo.attrib['id'], photo.attrib['secret'], 'b')
 	
 	def flickr_photos_search(vars) :
 		import flickrapi

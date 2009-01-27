@@ -28,6 +28,10 @@ n.bind('flickr', '<http://dwiel.net/axpress/flickr/0.1/>')
 n.bind('amos', '<http://dwiel.net/axpress/amos/0.1/>')
 a = n.rdfs.type
 
+# for easy basic stupid matching type instance
+class X():pass
+type_instance = type(X())
+
 class AxpressTestCase(unittest.TestCase):
 	def setUp(self):
 		self.compiler = Compiler(n)
@@ -68,16 +72,28 @@ class AxpressTestCase(unittest.TestCase):
 		#""", reqd_bound_vars = ['sum'], bindings_set = bindings_set)
 		#print 'ret',prettyquery(ret)
 	
-	def test2(self):
-		# facts, history, bindings_set = self.parser.translator.
-			#image[file.filename] = glob.glob("/home/dwiel/pictures/stitt blanket/*.jpg")
+	#def test2(self):
+		#ret = self.axpress.read_translate("""
+			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			#thumb = image.thumbnail(image, 4, 4, image.antialias)
+			#thumb[pil.image] = _thumb_image
+		#""", reqd_bound_vars = ['thumb_image'])
+		#print 'ret',prettyquery(ret)
+		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		#assert ret == [
+			#{
+				#'thumb_image' : type_instance,
+			#}, {
+				#'thumb_image' : type_instance,
+			#}
+		#]
+	
+	def test3(self) :
 		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			thumb = image.thumbnail(image, 4, 4, image.antialias)
-			thumb[pil.image] = _thumb_image
-		""", reqd_bound_vars = ['thumb_image'])
+			image[flickr.tag] = 'floor'
+			image[file.url] = _url
+		""", reqd_bound_vars = ['url'])
 		print 'ret',prettyquery(ret)
-		# print 'ret',prettyquery([x for x in ret])
 	
 	"""
 	"""

@@ -155,7 +155,7 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 	#def test_compile0(self):
 		## in this case the compiler should come up with the paths required to 
 		## evalutate it, but not actually evaluate it
-		#ret = compiler.new_compile("""
+		#ret = compiler.compile("""
 			#test.u[test.x] = 1
 			#test.u[test.x] = 2
 			#test.u[test.y] = 10
@@ -166,7 +166,7 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 	#def test_compile1(self):
 		## in this case the compiler should come up with the paths required to 
 		## evalutate it, but not actually evaluate it
-		#ret = compiler.new_compile("""
+		#ret = compiler.compile("""
 			#test.u[test.x] = 1
 			#test.u[test.y] = 2
 			#test.u[test.sum] = sum
@@ -176,7 +176,7 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 		#print 'ret',prettyquery(ret)
 	
 	#def test_compile2(self):
-		#ret = compiler.new_compile("""
+		#ret = compiler.compile("""
 			#test.u[test.x] = _x
 			#test.u[test.x] = 10
 			#test.u[test.y] = 2
@@ -187,7 +187,7 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 		#print 'ret',prettyquery(ret)
 	
 	def test_compile3(self):
-		ret = compiler.new_compile("""
+		ret = compiler.compile("""
 			image[file.filename] = "/home/dwiel/AMOSvid/1065/20080821_083129.jpg"
 			thumb = image.thumbnail(image, 4, 4)
 			thumb_image = thumb[pil.image]
