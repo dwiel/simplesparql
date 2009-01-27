@@ -28,6 +28,7 @@ class Compiler :
 
 		self.translations = []
 		#self.sparql = sparql
+		self._next_num = 0
 	
 	def register_translation(self, translation) :
 		n = self.n
@@ -249,7 +250,9 @@ class Compiler :
 		return [triple for triple in query if any(map(lambda x:is_var(x) and var_name(x) in vars, triple))]
 
 
-
+	def next_num(self) :
+		self._next_num += 1
+		return self._next_num
 
 
 	def next_translations(self, query, history, output_vars) :
@@ -286,6 +289,7 @@ class Compiler :
 					
 					if [translation, bindings] not in history :
 						print translation[n.meta.name],'matches!!!'
+						#print 'history',history
 						history.append([translation, copy.copy(bindings)])
 						#print '---'
 						#print 'bindings',prettyquery(bindings)
@@ -304,14 +308,35 @@ class Compiler :
 							if var in translation[n.meta.constant_vars] :
 								new_bindings[var] = value
 							elif is_var(value) :
-								new_lit_vars[var_name(value)] = n.lit_var[var_name(value)]
-								new_bindings[var] = n.lit_var[var_name(value)]
+								new_var = n.lit_var[var_name(value)+'_'+str(self.next_num())]
+								new_lit_vars[var_name(value)] = new_var
+								new_bindings[var] = new_var
+								#new_lit_vars[var_name(value)] = n.lit_var[var_name(value)]
+								#new_bindings[var] = n.lit_var[var_name(value)]
 						
-						# print 'new_bindings',prettyquery(new_bindings)
-						new_triples = sub_var_bindings(translation[n.meta.output], [new_bindings]).next()
-						new_query = sub_var_bindings(query, [new_lit_vars]).next()
+						input_bindings = bindings
+						output_bindings = {}
+						
+						for var in find_vars(translation[n.meta.output]) :
+							if var not in translation[n.meta.constant_vars] :
+								output_bindings[var] = n.lit_var[var+'_out_'+str(self.next_num())]
+							else :
+								output_bindings[var] = input_bindings[var]
+						
+						print 'input_bindings',prettyquery(input_bindings)
+						print 'output_bindings',prettyquery(output_bindings)
+						#print 'new_bindings',prettyquery(new_bindings)
+						#print 'new_lit_vars',prettyquery(new_lit_vars)
+						
+						new_triples = sub_var_bindings(translation[n.meta.output], [output_bindings]).next()
+						new_query = copy.copy(query)
+						#new_triples = sub_var_bindings(translation[n.meta.output], [new_bindings]).next()
+						#new_query = sub_var_bindings(query, [new_lit_vars]).next()
 						
 						new_query.extend(new_triples)
+						
+						print 'new_query',prettyquery(new_query)
+						print 'query',prettyquery(query)
 						
 						# print 'new_query',prettyquery(new_query)
 												
@@ -320,7 +345,8 @@ class Compiler :
 							
 							possible_steps.append({
 								'query' : query,
-								'bindings' : bindings,
+								'input_bindings' : input_bindings,
+								'output_bindings' : output_bindings,
 								'translation' : translation,
 								'new_triples' : new_triples,
 								'new_query' : new_query,
@@ -330,7 +356,8 @@ class Compiler :
 						elif matches == True :
 							#print 'new_triples',prettyquery(new_triples)
 							#print 'guarenteed_steps.append(',prettyquery({
-								#'bindings' : bindings,
+								#'input_bindings' : input_bindings,
+								#'output_bindings' : output_bindings,
 								#'translation' : translation,
 								#'new_triples' : new_triples,
 								#'new_query' : new_query
@@ -338,7 +365,8 @@ class Compiler :
 								#'possible' : [],
 							#}),')'
 							guarenteed_steps.append({
-								'bindings' : bindings,
+								'input_bindings' : input_bindings,
+								'output_bindings' : output_bindings,
 								'translation' : translation,
 								'new_triples' : new_triples,
 								'new_query' : new_query,
@@ -360,7 +388,9 @@ class Compiler :
 		if is_var(tv) :
 			if is_out_var(qv) :
 				return False
-			if is_var(qv) :
+			elif is_lit_var(tv) and is_lit_var(qv) :
+				return True
+			elif is_var(qv) :
 				return var_name(tv) == var_name(qv)
 			return False
 		else :
@@ -368,6 +398,7 @@ class Compiler :
 	
 	def find_solution_triples_match(self, triple, qtriple) :
 		for tv, qv in izip(triple, qtriple) :
+			# print prettyquery(tv), prettyquery(qv), self.find_solution_values_match(tv, qv)
 			if not self.find_solution_values_match(tv, qv) :
 				return False
 		return True
@@ -425,7 +456,7 @@ class Compiler :
 			found_solution = False
 			print 'var_triples',prettyquery(self.var_triples)
 			found_solution = self.find_solution(self.var_triples, step['new_query'])
-			print 'matches/found_solution',found_solution			
+			print 'matches/found_solution',found_solution
 			#print 'original_query',prettyquery(self.original_query)
 			#matches, bindings = self.find_bindings(step['new_query'], self.original_query)
 			#print 'matches',matches

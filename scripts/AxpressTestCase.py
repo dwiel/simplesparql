@@ -70,12 +70,14 @@ class AxpressTestCase(unittest.TestCase):
 	
 	def test2(self):
 		# facts, history, bindings_set = self.parser.translator.
+			#image[file.filename] = glob.glob("/home/dwiel/pictures/stitt blanket/*.jpg")
 		ret = self.axpress.read_translate("""
-			image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
+			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
 			thumb[pil.image] = _thumb_image
 		""", reqd_bound_vars = ['thumb_image'])
-		# print 'ret',prettyquery(ret)
+		print 'ret',prettyquery(ret)
+		# print 'ret',prettyquery([x for x in ret])
 	
 	"""
 	"""

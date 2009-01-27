@@ -336,7 +336,7 @@ class Translator :
 				#outtriple_sets = [x for x in outtriple_sets]
 				#print 'outtriple_sets',prettyquery(outtriple_sets)
 				translation_bindings.extend(outtriple_sets)
-				#print 'translation_bindings',prettyquery(translation_bindings)
+				print 'translation_bindings',prettyquery(translation_bindings)
 		return translation_bindings
 	
 	def read_translations_helper(self, query, var_triples, bound_var_triples = [], history = []) :

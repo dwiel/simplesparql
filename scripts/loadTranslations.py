@@ -375,22 +375,45 @@ def load(translator, n) :
 	a meta-data like above to the translation syntax
 	"""
 	
+	
 	def glob_glob(vars):
 		import glob
-		vars['filename'] = glob.glob(vars['pattern'])
+		vars['out_filename'] = glob.glob(vars['pattern'])
 	translator.register_translation({
 		n.meta.name : 'glob glob',
+		# This doesn't work!
+		#n.meta.input : [
+			#'_pattern[glob.glob] = ?filename'
+		#],
+		#n.meta.output : [
+			#'_pattern[glob.glob] = _out_filename'
+		#],
+		# this does ?
 		n.meta.input : [
-			'_pattern[glob.glob] = ?filename'
+			'glob[glob.glob] = _pattern'
 		],
 		n.meta.output : [
-			'_pattern[glob.glob] = _filename'
+			'glob[file.filename] = _out_filename'
 		],
 		n.meta.function : glob_glob,
-		n.meta.constant_vars : ['pattern'],
+		n.meta.constant_vars : ['glob'],
 	})
 	
 	
+	def glob_glob(vars):
+		import glob
+		vars['out_filename'] = glob.glob(vars['pattern'])
+	translator.register_translation({
+		n.meta.name : 'glob glob',
+		n.meta.input : [
+			'glob.glob(_pattern) = foo[file.filename]'
+		],
+		n.meta.output : [
+			'foo[file.filename] = _out_filename'
+		],
+		n.meta.function : glob_glob,
+		n.meta.constant_vars : ['glob'],
+	})
 	#def foo(vars):
 		#pass
 	#translator.register_translation({
