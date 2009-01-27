@@ -15,6 +15,8 @@ class Axpress() :
 		ret_evals = []
 		for triples in sub_var_bindings(query_triples, bindings_set) :
 			ret_comp = self.compiler.compile(triples, reqd_bound_vars)
+			if ret_comp == False :
+				raise Exception("Couldn't compile ... sorry I don't have more here")
 			ret_eval = self.evaluator.evaluate(ret_comp)
 			ret_evals.extend(ret_eval)
 		return ret_evals
