@@ -72,29 +72,86 @@ class AxpressTestCase(unittest.TestCase):
 		#""", reqd_bound_vars = ['sum'], bindings_set = bindings_set)
 		#print 'ret',prettyquery(ret)
 	
-	#def test2(self):
-		#ret = self.axpress.read_translate("""
-			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			#thumb = image.thumbnail(image, 4, 4, image.antialias)
-			#thumb[pil.image] = _thumb_image
-		#""", reqd_bound_vars = ['thumb_image'])
-		#print 'ret',prettyquery(ret)
-		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
-		#assert ret == [
-			#{
-				#'thumb_image' : type_instance,
-			#}, {
-				#'thumb_image' : type_instance,
-			#}
-		#]
-	
-	def test3(self) :
+	def test2(self):
 		ret = self.axpress.read_translate("""
-			image[flickr.tag] = 'wall'
+			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
 			thumb[pil.image] = _thumb_image
 		""", reqd_bound_vars = ['thumb_image'])
 		print 'ret',prettyquery(ret)
+		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		assert ret == [
+			{
+				'thumb_image' : type_instance,
+			}, {
+				'thumb_image' : type_instance,
+			}
+		]
+	
+	def test2_1(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			thumb = image.thumbnail(image, 4, 4, image.antialias)
+			thumb[pil.image] = _thumb_image
+			query.query[query.limit] = 1
+		""", reqd_bound_vars = ['thumb_image'])
+		print 'ret',prettyquery(ret)
+		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		assert ret == [
+			{
+				'thumb_image' : type_instance,
+			}
+		]
+	
+	def test2_2(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			thumb = image.thumbnail(image, 4, 4, image.antialias)
+			thumb[pil.image] = _thumb_image
+			query.query[query.limit] = 2
+		""", reqd_bound_vars = ['thumb_image'])
+		print 'ret',prettyquery(ret)
+		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		assert ret == [
+			{
+				'thumb_image' : type_instance,
+			}, {
+				'thumb_image' : type_instance,
+			}
+		]
+	
+	def test2_3(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			thumb = image.thumbnail(image, 4, 4, image.antialias)
+			thumb[pil.image] = _thumb_image
+			query.query[query.limit] = 3
+		""", reqd_bound_vars = ['thumb_image'])
+		print 'ret',prettyquery(ret)
+		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		assert ret == [
+			{
+				'thumb_image' : type_instance,
+			}, {
+				'thumb_image' : type_instance,
+			}
+		]
+	
+	#def test3(self) :
+		#ret = self.axpress.read_translate("""
+			#image[flickr.tag] = 'floor'
+			#image[file.url] = _url
+		#""", reqd_bound_vars = ['url'])
+		#print 'ret',prettyquery(ret)
+	
+	#def test4(self) :
+		#ret = self.axpress.read_translate("""
+			#image[flickr.tag] = 'wall'
+			#thumb = image.thumbnail(image, 4, 4, image.antialias)
+			#thumb[pil.image] = _thumb_image
+			#query.query[query.limit] = 5
+		#""", reqd_bound_vars = ['thumb_image'])
+		#print 'ret',prettyquery(ret)
 	
 	"""
 	"""

@@ -11,11 +11,12 @@ class Evaluator :
 		else :
 			self.n = Namespaces()
 	
-	def evaluate(self, compile_node, incoming_bindings_set = [{}]) :
+	def evaluate_helper(self, compile_node, incoming_bindings_set, modifiers) :
 		"""
 		@arg compile_node is the compiled version of the graph traversal
 		@returns the result of the query which was compiled
 		"""
+		
 		n = self.n
 		#print 'ahhhh!'
 		rets = []
@@ -69,9 +70,22 @@ class Evaluator :
 				#print '4.5 new_bindings',prettyquery(new_bindings)
 				
 				# recur
-				rets.extend(self.evaluate(step, new_bindings))
+				rets.extend(self.evaluate_helper(step, new_bindings, modifiers))
+				if len(rets) >= modifiers['limit'] :
+					return rets[:modifiers['limit']]
 		#print 'rets',prettyquery(rets)
 		return rets
+		
+	def evaluate(self, compile_node, incoming_bindings_set = [{}]) :
+		modifiers = {}
+		if 'limit' in compile_node['modifiers'] :
+			modifiers['limit'] = compile_node['modifiers']['limit']
+		else :
+			# TODO: be more smarter
+			modifiers['limit'] = 99999999
+		
+		return self.evaluate_helper(compile_node, incoming_bindings_set, modifiers)
+
 
 
 

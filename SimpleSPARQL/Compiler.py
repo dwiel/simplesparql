@@ -126,9 +126,12 @@ class Compiler :
 		a and b are dictionaries.  Returns True if there are keys which are in 
 		both a and b, but have different values.  Used in unification
 		"""
+#		print 'a',prettyquery(a)
+#		print 'b',prettyquery(b)
 		for k, v in a.iteritems() :
 			if k in b and b[k] != v :
 				if self.values_match(b[k], v) or self.values_match(v, b[k]):
+					print 'maybe',prettyquery(b[k]), prettyquery(v)
 					return self.MAYBE
 				return True
 		return False
@@ -160,7 +163,11 @@ class Compiler :
 				# if there are no values in bindings that already have some other 
 				# value in bindings 
 				for binding in bindings :
+					print 'ttriple',prettyquery(ttriple)
 					conflicting = self.conflicting_bindings(binding, pbinding)
+					print 'binding',prettyquery(binding)
+					print 'pbinding',prettyquery(pbinding)
+					print 'conflicting',prettyquery(conflicting)
 					if not conflicting :
 						# WARNING: this isn't going to copy the values of the bindings!!!
 						new_binding = copy.copy(binding)
@@ -181,6 +188,7 @@ class Compiler :
 							new_bindings.append(new_binding)
 						print 'maybe ... this will work'
 						matches = self.MAYBE
+					print
 			if len(new_bindings) > 0 :
 				bindings = new_bindings
 		
@@ -197,6 +205,9 @@ class Compiler :
 		# if there are no bindings (and there are vars), failed to find a match
 		if len(bindings) == 0 :
 			return False, []
+		
+		print 'matches',prettyquery(matches)
+		print 'bindings',prettyquery(bindings)
 		
 		return matches, bindings
 	
@@ -342,7 +353,7 @@ class Compiler :
 												
 						if matches == self.MAYBE :
 							#print 'new_triples',prettyquery(new_triples)
-							
+							print 'its possible ...'
 							possible_steps.append({
 								'query' : query,
 								'input_bindings' : input_bindings,
@@ -364,6 +375,7 @@ class Compiler :
 								#'guarenteed' : [],
 								#'possible' : [],
 							#}),')'
+							print 'it is'
 							guarenteed_steps.append({
 								'input_bindings' : input_bindings,
 								'output_bindings' : output_bindings,
@@ -536,11 +548,38 @@ class Compiler :
 				if is_var(value) and var_name(value) in reqd_bound_vars :
 					triple[j] = self.n.out_var[var_name(value)]
 	
+	def extract_query_modifiers(self, query) :
+		modifiers = {}
+		new_query = []
+		for triple in query :
+			modified = False
+			if triple[0] == self.n.query.query :
+				if triple[1] == self.n.query.limit :
+					modifiers.update({'limit' : int(triple[2])})
+					modified = True
+				#if triple[1] == self.n.query.offset :
+					#modifiers.append('OFFSET %d' % int(triple[2]))
+					#modified = True
+				#if triple[1] == self.n.query.sort_ascending :
+					#modifiers.append('ORDER BY ?%s' % var_name(triple[2]))
+					#modified = True
+				#if triple[1] == self.n.query.sort_descending :
+					#modifiers.append('ORDER BY DESC(?%s)' % var_name(triple[2]))
+					#modified = True
+			
+			if not modified :
+				new_query.append(triple)
+		new_query
+		
+		return new_query, modifiers
+	
 	def compile(self, query, reqd_bound_vars = [], input = [], output = []) :
 		if isinstance(query, basestring) :
 			query = [line.strip() for line in query.split('\n')]
 			query = [line for line in query if line is not ""]
 		query = self.parser.parse(query)
+		
+		query, modifiers = self.extract_query_modifiers(query)
 		
 		self.make_vars_out_vars(query, reqd_bound_vars)
 		
@@ -575,6 +614,10 @@ class Compiler :
 		
 		# TODO: make this work
 		# self.follow_possible(query, possible_stack)
+		
+		compile_root_node['modifiers'] = modifiers
+		
+		print 'modifiers',prettyquery(modifiers)
 			
 		return compile_root_node
 

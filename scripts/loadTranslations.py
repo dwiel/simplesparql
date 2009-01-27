@@ -423,6 +423,7 @@ def load(translator, n) :
 		#n.meta.output : """
 		#""",
 		#n.meta.function : foo,
+		#n.meta.constant_vars : [],
 	#})
 
 
@@ -439,6 +440,7 @@ def load(translator, n) :
 			file[file.filename] = _filename
 		""",
 		n.meta.function : download_tmp_file,
+		n.meta.constant_vars : ['file'],
 	})
 	
 
