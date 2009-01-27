@@ -90,9 +90,10 @@ class AxpressTestCase(unittest.TestCase):
 	
 	def test3(self) :
 		ret = self.axpress.read_translate("""
-			image[flickr.tag] = 'floor'
-			image[file.url] = _url
-		""", reqd_bound_vars = ['url'])
+			image[flickr.tag] = 'wall'
+			thumb = image.thumbnail(image, 4, 4, image.antialias)
+			thumb[pil.image] = _thumb_image
+		""", reqd_bound_vars = ['thumb_image'])
 		print 'ret',prettyquery(ret)
 	
 	"""

@@ -1,5 +1,5 @@
 from SimpleSPARQL import *
-import os
+import os, random
 
 def load(translator, n) :	
 	n.bind('math', '<http://dwiel.net/express/math/0.1/>')
@@ -418,14 +418,29 @@ def load(translator, n) :
 		#pass
 	#translator.register_translation({
 		#n.meta.name : '',
-		#n.meta.input : [
-		#],
-		#n.meta.output : [
-		#],
+		#n.meta.input : """
+		#""",
+		#n.meta.output : """
+		#""",
 		#n.meta.function : foo,
 	#})
 
 
+	def download_tmp_file(vars):
+		#TODO don't depend on wget ...
+		vars['filename'] = 'axpress.tmp%s' % str(random.random()).replace('.','')
+		os.system('wget %s -O %s' % (vars['url'], vars['filename']))
+	translator.register_translation({
+		n.meta.name : 'download_tmp_file',
+		n.meta.input : """
+			file[file.url] = _url
+		""",
+		n.meta.output : """
+			file[file.filename] = _filename
+		""",
+		n.meta.function : download_tmp_file,
+	})
+	
 
 
 
