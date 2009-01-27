@@ -131,8 +131,9 @@ class Compiler :
 		for k, v in a.iteritems() :
 			if k in b and b[k] != v :
 				if self.values_match(b[k], v) or self.values_match(v, b[k]):
-					print 'maybe',prettyquery(b[k]), prettyquery(v)
-					return self.MAYBE
+					#print 'maybe',prettyquery(b[k]), prettyquery(v)
+					#return self.MAYBE
+					return True
 				return True
 		return False
 	
@@ -483,7 +484,7 @@ class Compiler :
 			found_solution = False
 			print 'var_triples',prettyquery(self.var_triples)
 			found_solution = self.find_solution(self.var_triples, step['new_query'])
-			print 'matches/found_solution',found_solution
+			print 'matches/found_solution',prettyquery(found_solution)
 			#print 'original_query',prettyquery(self.original_query)
 			#matches, bindings = self.find_bindings(step['new_query'], self.original_query)
 			#print 'matches',matches

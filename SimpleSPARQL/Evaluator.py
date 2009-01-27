@@ -1,6 +1,8 @@
 from Utils import var_name, is_var, explode_bindings_set
 from PrettyQuery import prettyquery
 
+import copy
+
 class Evaluator :
 	"""
 	evaluates 'programs' compiled by the compiler
@@ -24,6 +26,8 @@ class Evaluator :
 			if len(compile_node['guarenteed']) == 0 :
 				#return incoming_bindings
 				#print 'SOLUTION!!!',prettyquery(compile_node['solution'])
+				print 'solution'
+				print 'incoming_bindings', prettyquery(incoming_bindings)
 				solution = {}
 				for var, binding in compile_node['solution'].iteritems() :
 					solution[var_name(var)] = incoming_bindings[var_name(binding)]
@@ -57,7 +61,8 @@ class Evaluator :
 				#print '3 output_bindings',prettyquery(output_bindings)
 				
 				# bind the values resulting from the function call
-				new_bindings = {}
+				# new_bindings = {}
+				new_bindings = copy.copy(incoming_bindings)				
 				for var, value in result_bindings.iteritems() :
 					if var in output_bindings :
 						if is_var(output_bindings[var]) :

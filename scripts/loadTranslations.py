@@ -260,7 +260,6 @@ def load(translator, n) :
 	def image_thumbnail(vars) :
 		from PIL import Image
 		im = vars['pil_image']
-		# print 'im',prettyquery(im)
 		im.thumbnail((int(vars['x']), int(vars['y'])), Image.ANTIALIAS)
 		vars['thumb_image'] = im
 	translator.register_translation({
@@ -276,6 +275,23 @@ def load(translator, n) :
 		n.meta.constant_vars : ['image', 'thumb'],
 	})
 
+	def image_pixel(vars) :
+		from PIL import Image
+		im = vars['pil_image']
+		vars['color'] = im.getpixel((int(vars['x']), int(vars['y'])))
+		print 'color',prettyquery(vars['color'])
+	translator.register_translation({
+		n.meta.name : 'image pixel',
+		n.meta.input : [
+			'image[pil.image] = _pil_image',
+			'pixel = image.pixel(image, _x, _y)',
+		],
+		n.meta.output : [
+			'pixel[pil.color] = _color',
+		],
+		n.meta.function : image_pixel,
+		n.meta.constant_vars : ['image', 'pixel'],
+	})
 
 
 
