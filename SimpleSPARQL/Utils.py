@@ -10,9 +10,10 @@ n.bind('var', '<http://dwiel.net/express/var/0.1/>')
 n.bind('meta_var', '<http://dwiel.net/express/meta_var/0.1/>')
 n.bind('lit_var', '<http://dwiel.net/express/lit_var/0.1/>')
 n.bind('out_var', '<http://dwiel.net/express/out_var/0.1/>')
+n.bind('out_lit_var', '<http://dwiel.net/express/out_lit_var/0.1/>')
 n.bind('bnode', '<http://dwiel.net/axpress/bnode/0.1/>')
 
-def is_var(data) :
+def is_any_var(data) :
 	if type(data) == URIRef :
 		if data.find(n.var) == 0 :
 			return True
@@ -21,7 +22,15 @@ def is_var(data) :
 		elif data.find(n.lit_var) == 0 :
 			return True
 		elif data.find(n.out_var) == 0 :
-			return True		
+			return True
+		elif data.find(n.out_lit_var) == 0 :
+			return True
+	return False
+
+def is_var(data) :
+	if type(data) == URIRef :
+		if data.find(n.var) == 0 :
+			return True
 	return False
 
 def is_meta_var(data) :
@@ -40,7 +49,13 @@ def is_out_var(data) :
 	if type(data) == URIRef :
 		if data.find(n.out_var) == 0 :
 			return True
-	return False		
+	return False
+	
+def is_out_lit_var(data) :
+	if type(data) == URIRef :
+		if data.find(n.out_lit_var) == 0 :
+			return True
+	return False
 
 def var_name(uri) :
 	if uri.find(n.var) == 0 :
@@ -51,6 +66,8 @@ def var_name(uri) :
 		return uri[len(n.lit_var):]
 	elif uri.find(n.out_var) == 0 :
 		return uri[len(n.out_var):]
+	elif uri.find(n.out_lit_var) == 0 :
+		return uri[len(n.out_lit_var):]
 	else :
 		raise Exception('data is not a variable' % str(uri))
 
@@ -63,16 +80,18 @@ def var_type(uri) :
 		return n.lit_var
 	elif uri.find(n.out_var) == 0 :
 		return n.out_var
+	elif uri.find(n.out_lit_var) == 0 :
+		return n.out_lit_var
 	else :
 		raise Exception('data is not a variable' % str(uri))
 
 def var(data) :
-	if is_var(data) :
+	if is_any_var(data) :
 		return data[len(n.var):]
 	return None
 
 def sub_bindings_value(value, bindings) :
-	if is_var(value) and var_name(value) in bindings :
+	if is_any_var(value) and var_name(value) in bindings :
 		return bindings[var_name(value)]
 	return value
 	
@@ -156,7 +175,7 @@ def find_vars(query) :
 	try :
 		iter = query.__iter__()
 	except AttributeError :
-		if is_var(query) :
+		if is_any_var(query) :
 			return set([var_name(query)])
 		return set()
 	
@@ -217,9 +236,12 @@ def logger(f, name=None):
 		name = f.func_name
 	def wrapped(*args, **kwargs):
 		print '<%s>' % name
+		print '\targs:%s' % prettyquery(args)
+		print '\tkwargs:%s' % prettyquery(kwargs)
 		#logger.fhwr.write("***"+name+" "+str(f)+"\n"\
 						#+str(args)+str(kwargs)+"\n\n")
 		result = f(*args, **kwargs)
+		print '\nret:%s' % prettyquery(result)
 		print '</%s>' % name
 		return result
 	wrapped.__doc__ = f.__doc__

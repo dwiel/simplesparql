@@ -112,7 +112,7 @@ class MultilineParser() :
 		#triples = self.parser.parse(g.group(1))
 		for triples in sub_var_bindings(query, bindings_set) :
 			self.sparql.write(triples)
-		return bindings
+		return bindings_set
 	
 	re_read_translations = re.compile('^read translate(.*)', re.MULTILINE | re.S)
 	def fn_read_translations(self, g, query, bindings_set, reqd_bound_vars) :
@@ -120,13 +120,13 @@ class MultilineParser() :
 		#triples = self.string_to_triples(g.group(1))
 		ret = self.axpress.read_translate(query, bindings_set = bindings_set, reqd_bound_vars = reqd_bound_vars)
 		print 'translations read(', g.group(1),') =',prettyquery(ret)
-		return bindings
+		return bindings_set
 	
 	re_write_translations = re.compile('^write translate(.*)', re.MULTILINE | re.S)
 	def fn_write_translations(self, g, query, bindings_set, reqd_bound_vars) :
 		#return self.translator_default.write(g.group(1))
 		print 'translations write(', g.group(1),')'
-		return bindings
+		return bindings_set
 	
 	def parse(self, query) :
 		subquery_lines = []		
@@ -167,7 +167,7 @@ class MultilineParser() :
 			
 			cur_position = end_position
 		
-		debug('compiled',compiled)
+		#debug('compiled',compiled)
 		
 		reads = []
 		writes = []
@@ -184,9 +184,9 @@ class MultilineParser() :
 		compiled = reversed(new_compiled)
 		
 		compiled = list(compiled)
-		debug('compiled',compiled)
-		debug('reads',reads)
-		debug('writes',writes)
+		#debug('compiled',compiled)
+		#debug('reads',reads)
+		#debug('writes',writes)
 		
 		bindings_set = [{}]
 		for translator, g, bound_vars, query, reqd_bound_vars in compiled :			

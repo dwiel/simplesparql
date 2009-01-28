@@ -47,41 +47,77 @@ class AxpressTestCase(unittest.TestCase):
 			evaluator = self.evaluator
 		)
 	
-	#def test1(self):
-		#def is_num(x):
-			#return isinstance(x, (int, long, float))
+	def test1(self):
+		def is_num(x):
+			return isinstance(x, (int, long, float))
 		
-		#bindings_set = self.axpress.read_sparql("""
-			#foo[test.x] = x
-			#foo[test.y] = y
-		#""")
+		bindings_set = self.axpress.read_sparql("""
+			foo[test.x] = x
+			foo[test.y] = y
+		""")
 		
-		## reduce bindings to those whose x and y values are numbers
-		## I'd like this functionality to exist, but I don't think this is the right
-		## way to get at it, or think about it.  For one, the type should take care
-		## of most of this kind of thing - though I know that it shouldn't be relied
-		## on ...
+		# reduce bindings to those whose x and y values are numbers
+		# I'd like this functionality to exist, but I don't think this is the right
+		# way to get at it, or think about it.  For one, the type should take care
+		# of most of this kind of thing - though I know that it shouldn't be relied
+		# on ...
 		#bindings_set = [x for x in bindings_set]
-		#print 'bindings_set',prettyquery(bindings_set)
-		#new_bindings_set = []
-		#for bindings in bindings_set :
-			#if is_num(bindings['x']) and is_num(bindings['y']) :
-				#new_bindings_set.append(bindings)
-		#bindings_set = new_bindings_set
+		print 'bindings_set',prettyquery(bindings_set)
+		new_bindings_set = []
+		for bindings in bindings_set :
+			if is_num(bindings['x']) and is_num(bindings['y']) :
+				new_bindings_set.append(bindings)
+		bindings_set = new_bindings_set
 		#print 'bindings_set',prettyquery(bindings_set)
 		
-		#ret = self.axpress.read_translatmultiline querye("""
-			#foo[test.x] = x
-			#foo[test.y] = y
-			#foo[test.sum] = _sum
-		#""", reqd_bound_vars = ['sum'], bindings_set = bindings_set)
-		#print 'ret',prettyquery(ret)
+		ret = self.axpress.read_translate("""
+			foo[test.x] = x
+			foo[test.y] = y
+			foo[test.sum] = _sum
+		""", reqd_bound_vars = ['sum'], bindings_set = bindings_set)
+		assert ret == [
+			{
+				u'sum' : 3,
+			},
+		]
 	
 	def test2(self):
 		ret = self.axpress.read_translate("""
 			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
 			thumb[pil.image] = _thumb_image
+		""", reqd_bound_vars = ['thumb_image', 'thumb'])
+		print 'ret',prettyquery(ret)
+		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		assert ret == [
+			{
+				'thumb_image' : type_instance,
+			}, {
+				'thumb_image' : type_instance,
+			}
+		]
+	
+	def test2_1(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			thumb = image.thumbnail(image, 4, 4, image.antialias)
+			thumb[pil.image] = _thumb_image
+			query.query[query.limit] = 1
+		""", reqd_bound_vars = ['thumb_image'])
+		print 'ret',prettyquery(ret)
+		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		assert ret == [
+			{
+				'thumb_image' : type_instance,
+			}
+		]
+	
+	def test2_2(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			thumb = image.thumbnail(image, 4, 4, image.antialias)
+			thumb[pil.image] = _thumb_image
+			query.query[query.limit] = 2
 		""", reqd_bound_vars = ['thumb_image'])
 		print 'ret',prettyquery(ret)
 		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
@@ -93,55 +129,24 @@ class AxpressTestCase(unittest.TestCase):
 			}
 		]
 	
-	#def test2_1(self):
-		#ret = self.axpress.read_translate("""
-			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			#thumb = image.thumbnail(image, 4, 4, image.antialias)
-			#thumb[pil.image] = _thumb_image
-			#query.query[query.limit] = 1
-		#""", reqd_bound_vars = ['thumb_image'])
-		#print 'ret',prettyquery(ret)
-		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
-		#assert ret == [
-			#{
-				#'thumb_image' : type_instance,
-			#}
-		#]
+	def test2_3(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			thumb = image.thumbnail(image, 4, 4, image.antialias)
+			thumb[pil.image] = _thumb_image
+			query.query[query.limit] = 3
+		""", reqd_bound_vars = ['thumb_image'])
+		print 'ret',prettyquery(ret)
+		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		assert ret == [
+			{
+				'thumb_image' : type_instance,
+			}, {
+				'thumb_image' : type_instance,
+			}
+		]
 	
-	#def test2_2(self):
-		#ret = self.axpress.read_translate("""
-			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			#thumb = image.thumbnail(image, 4, 4, image.antialias)
-			#thumb[pil.image] = _thumb_image
-			#query.query[query.limit] = 2
-		#""", reqd_bound_vars = ['thumb_image'])
-		#print 'ret',prettyquery(ret)
-		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
-		#assert ret == [
-			#{
-				#'thumb_image' : type_instance,
-			#}, {
-				#'thumb_image' : type_instance,
-			#}
-		#]
-	
-	#def test2_3(self):
-		#ret = self.axpress.read_translate("""
-			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			#thumb = image.thumbnail(image, 4, 4, image.antialias)
-			#thumb[pil.image] = _thumb_image
-			#query.query[query.limit] = 3
-		#""", reqd_bound_vars = ['thumb_image'])
-		#print 'ret',prettyquery(ret)
-		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
-		#assert ret == [
-			#{
-				#'thumb_image' : type_instance,
-			#}, {
-				#'thumb_image' : type_instance,
-			#}
-		#]
-	
+	# warning this test requires the internet and will ping flickr.  Don't do alot
 	#def test3(self) :
 		#ret = self.axpress.read_translate("""
 			#image[flickr.tag] = 'floor'
@@ -149,6 +154,7 @@ class AxpressTestCase(unittest.TestCase):
 		#""", reqd_bound_vars = ['url'])
 		#print 'ret',prettyquery(ret)
 	
+	# warning this test requires the internet and will ping flickr.  Don't do alot
 	#def test4(self) :
 		#ret = self.axpress.read_translate("""
 			#image[flickr.tag] = 'wall'
@@ -158,26 +164,45 @@ class AxpressTestCase(unittest.TestCase):
 		#""", reqd_bound_vars = ['thumb_image'])
 		#print 'ret',prettyquery(ret)
 	
-	#def test5(self):
-		#ret = self.axpress.read_translate("""
-			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			#image[file.filename] = _filename
-			#thumb = image.thumbnail(image, 4, 4, image.antialias)
-			#pixel = image.pixel(thumb, 0, 0)
-			#pixel[pil.color] = _thumb_pixel_color
-		#""", reqd_bound_vars = ['filename','thumb_pixel_color'])
-		#print 'ret',prettyquery(ret)
+	def test5(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			image[file.filename] = _filename
+			thumb = image.thumbnail(image, 4, 4, image.antialias)
+			pixel = image.pixel(thumb, 0, 0)
+			pixel[pil.color] = _thumb_pixel_color
+		""", reqd_bound_vars = ['filename','thumb_pixel_color'])
+		# print 'ret',prettyquery(ret)
+		assert ret == [
+			{
+				u'filename' : '/home/dwiel/pictures/stitt blanket/00002.jpg',
+				u'thumb_pixel_color' : (141, 130, 100),
+			}, {
+				u'filename' : '/home/dwiel/pictures/stitt blanket/00001.jpg',
+				u'thumb_pixel_color' : (94, 48, 67),
+			},
+		]
 	
-	#def test6(self):
-		#ret = self.axpress.read_translate("""
-			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			#image[file.filename] = _filename
-			#thumb = image.thumbnail(image, 4, 4, image.antialias)
-			#pixel = image.pixel(thumb, 0, 0)
-			#dist[type.number] = color.distance(color.red, pixel)
-			#dist[type.number] = _distance
-		#""", reqd_bound_vars = ['filename','distance'])
+	def test6(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			image[file.filename] = _filename
+			thumb = image.thumbnail(image, 4, 4, image.antialias)
+			pixel = image.pixel(thumb, 0, 0)
+			dist[type.number] = color.distance(color.red, pixel)
+			dist[type.number] = _distance
+		""", reqd_bound_vars = ['filename','distance'])
 		#print 'ret',prettyquery(ret)
+		assert ret == [
+			{
+				u'distance' : 39896,
+				u'filename' : '/home/dwiel/pictures/stitt blanket/00002.jpg',
+			}, {
+				u'distance' : 32714,
+				u'filename' : '/home/dwiel/pictures/stitt blanket/00001.jpg',
+			},
+		]
+
 	
 	
 	

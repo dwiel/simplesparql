@@ -43,7 +43,7 @@ class Translator :
 		
 		self.translations.append(translation)
 		
-	def is_var(self, data) :
+	def is_any_var(self, data) :
 		if type(data) == URIRef :
 			if data.find(self.n.var) == 0 :
 				return True
@@ -74,7 +74,7 @@ class Translator :
 			raise Exception('data is not a variable' % str(uri))
 	
 	def var(self, data) :
-		if is_var(data) :
+		if is_any_var(data) :
 			return data[len(self.n.var):]
 		return None
 	
@@ -120,7 +120,7 @@ class Translator :
 	def get_binding(self, triple, qtriple) :
 		binding = {}
 		for t, q in izip(triple, qtriple) :
-			if self.is_var(t) and self.values_match(t, q):
+			if self.is_any_var(t) and self.values_match(t, q):
 				# if the same var is trying to be bound to two different values, 
 				# not a valid binding
 				if t in binding and binding[self.var_name(t)] != q :
@@ -164,7 +164,7 @@ class Translator :
 		try :
 			iter = query.__iter__()
 		except AttributeError :
-			if self.is_var(query) :
+			if self.is_any_var(query) :
 				return set([self.var_name(query)])
 			return set()
 		
@@ -237,7 +237,7 @@ class Translator :
 		return matches, bindings
 	
 	def sub_bindings_value(self, value, bindings) :
-		if self.is_var(value) and self.var_name(value) in bindings :
+		if self.is_any_var(value) and self.var_name(value) in bindings :
 			return bindings[self.var_name(value)]
 		return value
 	
@@ -296,7 +296,7 @@ class Translator :
 	
 	# return all triples which have at least one var
 	def find_var_triples(self, query) :
-		return [triple for triple in query if any(map(lambda x:self.is_var(x), triple))]
+		return [triple for triple in query if any(map(lambda x:self.is_any_var(x), triple))]
 	
 	# return all triples which have at least one var
 	def find_specific_var_triples(self, query, vars) :

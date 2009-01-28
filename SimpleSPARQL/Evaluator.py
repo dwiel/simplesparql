@@ -1,4 +1,4 @@
-from Utils import var_name, is_var, is_lit_var, explode_bindings_set, debug
+from Utils import var_name, is_any_var, is_lit_var, explode_bindings_set, debug
 from PrettyQuery import prettyquery
 
 import copy
@@ -42,7 +42,7 @@ class Evaluator :
 				# substitute any values in the incoming bindings into the input_bindings
 				new_input_bindings = {}
 				for var, value in input_bindings.iteritems() :
-					if is_var(value) and var_name(value) in incoming_bindings :
+					if is_any_var(value) and var_name(value) in incoming_bindings :
 						new_input_bindings[var] = incoming_bindings[var_name(value)]
 					else :
 						new_input_bindings[var] = input_bindings[var]
@@ -73,7 +73,7 @@ class Evaluator :
 				new_bindings = copy.copy(incoming_bindings)				
 				for var, value in result_bindings.iteritems() :
 					if var in output_bindings :
-						if is_var(output_bindings[var]) :
+						if is_any_var(output_bindings[var]) :
 							new_bindings[var_name(output_bindings[var])] = value
 						else :
 							print 'hmm should I do something?',output_bindings[var],value

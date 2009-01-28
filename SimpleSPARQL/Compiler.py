@@ -19,6 +19,7 @@ class Compiler :
 			self.n = n
 		else :
 			self.n = Namespaces()
+		self.n.bind('out_lit_var', '<http://dwiel.net/axpress/out_lit_var/0.1/>')
 		self.n.bind('out_var', '<http://dwiel.net/axpress/out_var/0.1/>')
 		#self.n.bind('tvar', '<http://dwiel.net/axpress/translation/var/0.1/>')
 		#self.n.bind('bnode', '<http://dwiel.net/axpress/bnode/0.1/>')
@@ -54,37 +55,38 @@ class Compiler :
 		
 		self.translations.append(translation)
 	
+	#@logger
 	def values_match(self, value, qvalue) :
-		# TODO: keep track of values of meta-vars to make sure they are consistant
-		# throughout.  This will actually require a backtracking search ...
-		# is this really not taken care of?
 		if type(value) == URIRef :
-			if value.find(self.n.var) == 0 :
+			#if is_out_var(value) or is_out_var(qvalue) :
+				#print '???',prettyquery(value),prettyquery(qvalue)
+			
+			if is_var(value) :
 				return True
-				#return not is_meta_var(qvalue)
-			if is_meta_var(value) :
+			elif is_meta_var(value) :
 				if type(qvalue) == URIRef :
-					# return qvalue.find(self.n.var) == 0
-					return is_var(qvalue) and not is_lit_var(qvalue)
-					# return is_var(qvalue) and not is_meta_var(qvalue)
+					return is_any_var(qvalue) and not is_lit_var(qvalue)
+					# return is_any_var(qvalue) and not is_meta_var(qvalue)
 				else :
 					return False
-			if is_lit_var(value) :
+			elif is_lit_var(value) :
 				if type(qvalue) == URIRef :
-					# return qvalue.find(self.n.var) != 0
-					return is_lit_var(qvalue) or not is_var(qvalue)
+					return is_lit_var(qvalue) or not is_any_var(qvalue)
 					# return qvalue.find(self.n.var) != 0 and qvalue.find(self.n.lit_var) != 0
 				else :
 					return True
-			if is_out_var(value) :
+			elif is_out_lit_var(value) :
+				#print 'does this happen?',prettyquery(value),prettyquery(qvalue)
+				# not often ... probably only in the if matches(q,v) or (v,q) ...
 				if is_lit_var(qvalue) :
 					return True
-				elif is_var(qvalue) :
+				elif is_any_var(qvalue) :
 					return False
 				else :
 					return True
 		if value == qvalue :
 			return True
+		#return False
 	
 	def triples_match(self, triple, qtriple) :
 		for tv, qv in izip(triple, qtriple) :
@@ -102,7 +104,7 @@ class Compiler :
 	def get_binding(self, triple, qtriple) :
 		binding = {}
 		for t, q in izip(triple, qtriple) :
-			if is_var(t) and self.values_match(t, q):
+			if is_any_var(t) and self.values_match(t, q):
 				# if the same var is trying to be bound to two different values, 
 				# not a valid binding
 				if t in binding and binding[var_name(t)] != q :
@@ -262,18 +264,18 @@ class Compiler :
 	
 	# return all triples which have at least one var
 	def find_var_triples(self, query) :
-		return [triple for triple in query if any(map(lambda x:is_var(x), triple))]
+		return [triple for triple in query if any(map(lambda x:is_any_var(x), triple))]
 	
 	# return all triples which have at least one var
 	def find_specific_var_triples(self, query, vars) :
-		return [triple for triple in query if any(map(lambda x:is_var(x) and var_name(x) in vars, triple))]
+		return [triple for triple in query if any(map(lambda x:is_any_var(x) and var_name(x) in vars, triple))]
 
 
 	def next_num(self) :
 		self._next_num += 1
 		return self._next_num
 
-
+	#@logger
 	def next_translations(self, query, history, output_vars) :
 		"""
 		@arg query the query in triples set form
@@ -289,16 +291,22 @@ class Compiler :
 		guarenteed_steps = []
 		possible_steps = []
 		
+		#debug('output_vars',output_vars)
+		
 		def bindings_contain_output_var(bindings) :
 			# check to see if any of the bindings are with output_variables which
 			# don't actually have a value yet
 			for var, value in bindings.iteritems() :
-				if is_var(value) and var_name(value) in output_vars :
+				#if is_any_var(value) and var_name(value) in output_vars :
+				if (is_lit_var(value) or is_out_lit_var(value)) and var_name(value) in output_vars :
+					print 'bcov',prettyquery(value),prettyquery(output_vars)
 					return True
 			return False
 		
 		for translation in self.translations :
 			matches, bindings_set = self.testtranslation(translation, query, output_vars)
+			#debug('match %s' % translation[n.meta.name], matches)
+			#debug('bindings_set', bindings_set)
 			if matches :
 				for bindings in bindings_set :
 					# not allowed to bind an output variable as a value to the input of a
@@ -317,6 +325,7 @@ class Compiler :
 						new_bindings = Bindings(possible = bindings.possible)
 						# replace the bindings which the translation defines as constant with
 						# the exact binding value
+				#print '???',prettyquery(value),prettyquery(q
 						# replace the other bindings which are variables, with variables with
 						# the name from the query and the type from the translation ...
 						# TODO?: keep the state of each of the variables in the triple set
@@ -326,7 +335,7 @@ class Compiler :
 						for var, value in bindings.iteritems() :
 							if var in translation[n.meta.constant_vars] :
 								new_bindings[var] = value
-							elif is_var(value) :
+							elif is_any_var(value) :
 								new_var = n.lit_var[var_name(value)+'_'+str(self.next_num())]
 								new_lit_vars[var_name(value)] = new_var
 								new_bindings[var] = new_var
@@ -389,25 +398,41 @@ class Compiler :
 		return True
 		
 	def find_solution_values_match(self, tv, qv) :
-		if is_var(tv) :
-			if is_out_var(tv) :
+		"""
+		does the pattern (value) in tv match the value of qv?
+		"""
+		if is_any_var(tv) :
+			if is_out_lit_var(tv) :
+				# if the pattern is an out_lit_var, qv must be a lit_var or a literal
 				if is_lit_var(qv) :
 					return {tv : qv}
-				elif is_var(qv) :
+				elif is_any_var(qv) :
 					return False
 				else :
 					return {tv : qv}
-			if is_out_var(qv) :
+			elif is_out_var(tv) :
+				# not sure if this is really right ...
+				if is_any_var(qv) :
+					if var_name(tv) == var_name(qv) :
+						print '! ! !',prettyquery(tv),prettyquery(qv)
+						return {tv : qv}
+				print '? ? ?',prettyquery(tv),prettyquery(qv)
+				return False
+			elif is_out_lit_var(qv) :
+				raise Exception("Does this really happen?")
 				return False
 			elif is_lit_var(tv) and is_lit_var(qv) :
 				return True
-			elif is_var(qv) :
+			elif is_any_var(qv) :
 				return var_name(tv) == var_name(qv)
 			return False
 		else :
 			return tv == qv
 	
 	def find_solution_triples_match(self, triple, qtriple) :
+		"""
+		does the pattern in triple match the qtriple?
+		"""
 		bindings = {}
 		for tv, qv in izip(triple, qtriple) :
 			# print prettyquery(tv), prettyquery(qv), self.find_solution_values_match(tv, qv)
@@ -419,6 +444,9 @@ class Compiler :
 		return bindings or True
 	
 	def find_solution_triple(self, triple, query) :
+		"""
+		does the pattern defined in triple have a match in query?
+		"""
 		for qtriple in query :
 			bindings = self.find_solution_triples_match(triple, qtriple)
 			if bindings :
@@ -438,6 +466,8 @@ class Compiler :
 			new_bindings = self.find_solution_triple(triple, query)
 			if not new_bindings :
 				return False
+			#if isinstance(new_bindings, dict) :
+				#bindings.update(new_bindings)
 			bindings.update(new_bindings)
 		return bindings or True
 	
@@ -521,13 +551,15 @@ class Compiler :
 	def make_vars_out_vars(self, query, reqd_bound_vars) :
 		"""
 		replaces all instances of variables in query whose name is in the 
-		reqd_bound_vars list with self.n.out_var variables of the same name
+		reqd_bound_vars list with self.n.out_lit_var variables of the same name
 		@arg query is a query to change
 		@arg reqd_bound_vars are variable to change
 		"""
 		for triple in query :
 			for j, value in enumerate(triple) :
-				if is_var(value) and var_name(value) in reqd_bound_vars :
+				if is_lit_var(value) and var_name(value) in reqd_bound_vars :
+					triple[j] = self.n.out_lit_var[var_name(value)]
+				elif is_any_var(value) and var_name(value) in reqd_bound_vars :
 					triple[j] = self.n.out_var[var_name(value)]
 	
 	def extract_query_modifiers(self, query) :
@@ -552,11 +584,11 @@ class Compiler :
 			query = [line for line in query if line is not ""]
 		query = self.parser.parse(query)
 		
-		debug('query',query)
-		
 		query, modifiers = self.extract_query_modifiers(query)
 		
 		self.make_vars_out_vars(query, reqd_bound_vars)
+		
+		debug('query',query)
 		
 		if reqd_bound_vars == [] :
 			var_triples = self.find_var_triples(query)
@@ -565,10 +597,13 @@ class Compiler :
 			if var_triples == [] :
 				raise Exception("Waring, required bound triples were provided, but not found in the query")
 		
+		# replace all reqd_bound_vars with out vars ... I think this is already done
+		# above.  I'm going to leave it incase there is some other thing going on
 		#debug('var_triples',var_triples)
-		bindings = dict([(var, self.n.out_var[var]) for var in reqd_bound_vars])
+		#bindings = dict([(var, self.n.out_lit_var[var]) for var in reqd_bound_vars])
 		#debug('bindings',bindings)
-		var_triples = [x for x in sub_var_bindings(var_triples, [bindings])][0]
+		#var_triples = [x for x in sub_var_bindings(var_triples, [bindings])][0]
+		#debug('var_triples',var_triples)
 		
 		#debug('query',query)
 		#debug('var_triples',var_triples)
