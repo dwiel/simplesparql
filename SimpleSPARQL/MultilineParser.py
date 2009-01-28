@@ -1,6 +1,6 @@
 import Namespaces
 import Parser
-from Utils import sub_var_bindings, find_vars
+from Utils import sub_var_bindings, find_vars, debug
 import re
 from PrettyQuery import prettyquery
 
@@ -54,13 +54,13 @@ class Translator() :
 		self.is_read = is_read
 
 class MultilineParser() :
-	def __init__(self, n = None, sparql = None, translator = None) :
+	def __init__(self, n = None, axpress = None, sparql = None) :
 		if n == None :
 			n = Namespaces.Namespaces()
 		
 		self.n = n
 		
-		self.translator = translator
+		self.axpress = axpress
 		self.sparql = sparql
 		
 		self.parser = Parser.Parser()
@@ -72,19 +72,19 @@ class MultilineParser() :
 			Translator(self.re_write_translations, self.fn_write_translations, self.bound_vars_general, False),
 		]
 
-	def string_to_multiline(self, string) :
-		lines = string.split('\n')
-		while lines[0].strip() == '' :
-			lines = lines[1:]
+	#def string_to_multiline(self, string) :
+		#lines = string.split('\n')
+		#while lines[0].strip() == '' :
+			#lines = lines[1:]
 		
-		while lines[-1].strip() == '' :
-			lines = lines[:-1]
+		#while lines[-1].strip() == '' :
+			#lines = lines[:-1]
 		
-		return lines
+		#return lines
 	
-	def string_to_triples(self, string) :
-		lines = self.string_to_multiline(string)
-		return self.parser.parse_query(lines)
+	#def string_to_triples(self, string) :
+		#lines = self.string_to_multiline(string)
+		#return self.parser.parse_query(lines, reset_bnodes = False)
 	
 	re_nop = re.compile('^$', re.MULTILINE | re.S)
 	def fn_nop(g, bindings, reqd_bound_vars):
@@ -94,36 +94,36 @@ class MultilineParser() :
 		return []
 	
 	re_read_sparql = re.compile('^read sparql(.*)', re.MULTILINE | re.S)
-	def fn_read_sparql(self, g, bindings, reqd_bound_vars) :
+	def fn_read_sparql(self, g, query, bindings_set, reqd_bound_vars) :
 		# this does the read, it doesn't connect to logic behind it. (connecting it
 		# with the rest of the query
-		triples = self.string_to_triples(g.group(1))
-		ret = self.sparql.read( triples )
+		#triples = self.parser.parse(g.group(1), reset_bnodes = False)
+		ret = self.sparql.read( query )
 		ret = [x for x in ret]
 		print 'sparql read(', g.group(1),') =',prettyquery(ret)
 		#return self.sparql.read(g.group(1))
 		return ret
 	def bound_vars_general(self, g):
-		triples = self.string_to_triples(g.group(1))
-		return find_vars(triples)
+		triples = self.parser.parse(g.group(1), reset_bnodes = False)
+		return find_vars(triples), triples
 	
 	re_write_sparql = re.compile('^write sparql(.*)', re.MULTILINE | re.S)
-	def fn_write_sparql(self, g, bindings, reqd_bound_vars) :
-		triples = self.string_to_triples(g.group(1))
-		for triples in sub_var_bindings(triples, bindings) :
+	def fn_write_sparql(self, g, query, bindings_set, reqd_bound_vars) :
+		#triples = self.parser.parse(g.group(1))
+		for triples in sub_var_bindings(query, bindings_set) :
 			self.sparql.write(triples)
 		return bindings
 	
-	re_read_translations = re.compile('^where translate(.*)', re.MULTILINE | re.S)
-	def fn_read_translations(self, g, bindings, reqd_bound_vars) :
-		triples = self.string_to_triples(g.group(1))
-		#return self.translator_default.read(g.group(1))
-		ret = self.translator.read_translations(triples)
+	re_read_translations = re.compile('^read translate(.*)', re.MULTILINE | re.S)
+	def fn_read_translations(self, g, query, bindings_set, reqd_bound_vars) :
+		#reqd_bound_vars = ['thumb_image']
+		#triples = self.string_to_triples(g.group(1))
+		ret = self.axpress.read_translate(query, bindings_set = bindings_set, reqd_bound_vars = reqd_bound_vars)
 		print 'translations read(', g.group(1),') =',prettyquery(ret)
 		return bindings
 	
 	re_write_translations = re.compile('^write translate(.*)', re.MULTILINE | re.S)
-	def fn_write_translations(self, g, bindings, reqd_bound_vars) :
+	def fn_write_translations(self, g, query, bindings_set, reqd_bound_vars) :
 		#return self.translator_default.write(g.group(1))
 		print 'translations write(', g.group(1),')'
 		return bindings
@@ -161,33 +161,41 @@ class MultilineParser() :
 			for translator in self.translators :
 				g = translator.re.match(sub_query)
 				if g is not None :
-					compiled.append((translator, g, translator.bound_vars(g)))
+					bound_vars, query = translator.bound_vars(g)
+					compiled.append((translator, g, bound_vars, query))
 					continue
 			
 			cur_position = end_position
 		
+		debug('compiled',compiled)
+		
 		reads = []
 		writes = []
-		compiled = []
+		new_compiled = []
 		all_bound_vars = set()
-		for translator, g, bound_vars in reversed(compiled) :
+		for translator, g, bound_vars, query in reversed(compiled) :
 			reqd_bound_vars = bound_vars.intersection(all_bound_vars)
 			all_bound_vars.update(bound_vars)
-			compiled.append((translator, g, bound_vars, reqd_bound_vars))
-			if translator.is_read :
-				reads.append((translator, g, bound_vars, reqd_bound_vars))
-			else :
-				writes.append((translator, g, bound_vars, reqd_bound_vars))
-		compiled = reversed(compiled)
+			new_compiled.append((translator, g, bound_vars, query, reqd_bound_vars))
+			#if translator.is_read :
+				#reads.append((translator, g, bound_vars, reqd_bound_vars))
+			#else :
+				#writes.append((translator, g, bound_vars, reqd_bound_vars))
+		compiled = reversed(new_compiled)
 		
-		bindings = [{}]
-		for translator, g, bound_vars, reqd_bound_vars in compiled :			
-			#print 'translator',translator
-			#print 'g',g
+		compiled = list(compiled)
+		debug('compiled',compiled)
+		debug('reads',reads)
+		debug('writes',writes)
+		
+		bindings_set = [{}]
+		for translator, g, bound_vars, query, reqd_bound_vars in compiled :			
+			print 'translator',translator
+			print 'g',g
 			print 'bound_vars', bound_vars
 			print 'reqd_bound_vars', reqd_bound_vars
-			bindings = translator.fn(g, bindings, reqd_bound_vars)
-			print 'bindings',prettyquery(bindings)
+			bindings_set = translator.fn(g, query, bindings_set, reqd_bound_vars)
+			print 'bindings_set',prettyquery(bindings_set)
 		
 		return 'hello'
 

@@ -1,5 +1,6 @@
 from SimpleSPARQL import *
 import os, random
+from itertools import izip
 
 def load(translator, n) :	
 	n.bind('math', '<http://dwiel.net/express/math/0.1/>')
@@ -30,8 +31,7 @@ def load(translator, n) :
 ##		n.meta.function : sum
 	#})
 
-	def sum(vars) :
-		print prettyquery(vars)
+	def _sum(vars) :
 		vars['sum'] = vars['x'] + vars['y']
 	translator.register_translation({
 		n.meta.name : 'sum',
@@ -42,7 +42,7 @@ def load(translator, n) :
 		n.meta.output : [
 			'foo[test.sum] = _sum',
 		],
-		n.meta.function : sum,
+		n.meta.function : _sum,
 		n.meta.constant_vars : ['foo'],
 	})
 	"""
@@ -247,12 +247,12 @@ def load(translator, n) :
 		vars['pil_image'] = im
 	translator.register_translation({
 		n.meta.name : 'load image',
-		n.meta.input : [
-			'image[file.filename] = _filename'
-		],
-		n.meta.output : [
-			'image[pil.image] = _pil_image'
-		],
+		n.meta.input : """
+			image[file.filename] = _filename
+		""",
+		n.meta.output : """
+			image[pil.image] = _pil_image
+		""",
 		n.meta.function : load_image,
 		n.meta.constant_vars : ['image'],
 	})
@@ -264,13 +264,13 @@ def load(translator, n) :
 		vars['thumb_image'] = im
 	translator.register_translation({
 		n.meta.name : 'image thumbnail',
-		n.meta.input : [
-			'image[pil.image] = _pil_image',
-			'thumb = image.thumbnail(image, _x, _y)',
-		],
-		n.meta.output : [
-			'thumb[pil.image] = _thumb_image',
-		],
+		n.meta.input : """
+			image[pil.image] = _pil_image
+			thumb = image.thumbnail(image, _x, _y)
+		""",
+		n.meta.output : """
+			thumb[pil.image] = _thumb_image
+		""",
 		n.meta.function : image_thumbnail,
 		n.meta.constant_vars : ['image', 'thumb'],
 	})
@@ -279,19 +279,54 @@ def load(translator, n) :
 		from PIL import Image
 		im = vars['pil_image']
 		vars['color'] = im.getpixel((int(vars['x']), int(vars['y'])))
-		print 'color',prettyquery(vars['color'])
 	translator.register_translation({
 		n.meta.name : 'image pixel',
-		n.meta.input : [
-			'image[pil.image] = _pil_image',
-			'pixel = image.pixel(image, _x, _y)',
-		],
-		n.meta.output : [
-			'pixel[pil.color] = _color',
-		],
+		n.meta.input : """
+			image[pil.image] = _pil_image
+			pixel = image.pixel(image, _x, _y)
+		""",
+		n.meta.output : """
+			pixel[pil.color] = _color
+		""",
 		n.meta.function : image_pixel,
 		n.meta.constant_vars : ['image', 'pixel'],
 	})
+	
+	
+	#def color_distance(vars):
+		#vars['color_diff'] = vars['pil_color1'] - vars['pil_color2']
+		#print 'color_diff',prettyquery(vars['color_diff'])
+	#translator.register_translation({
+		#n.meta.name : 'color distance',
+		#n.meta.input : """
+			#color1[pil.color] = _pil_color1
+			#color2[pil.color] = _pil_color2
+			#color.distance(color1, color2) = foo[type.number]
+		#""",
+		#n.meta.output : """
+			#foo[type.number] = distance
+		#""",
+		#n.meta.function : color_distance,
+		#n.meta.constant_vars : ['foo'],
+	#})
+	
+	def color_distance_red(vars):
+		diff = tuple([x-y for x,y in izip((255,0,0), vars['pil_color2'])])
+		vars['distance'] = sum([x*x for x in diff])
+	translator.register_translation({
+		n.meta.name : 'color distance',
+		n.meta.input : """
+			color2[pil.color] = _pil_color2
+			color.distance(color.red, color2) = foo[type.number]
+		""",
+		n.meta.output : """
+			foo[type.number] = _distance
+		""",
+		n.meta.function : color_distance_red,
+		n.meta.constant_vars : ['foo'],
+	})
+	
+
 
 
 
@@ -301,13 +336,13 @@ def load(translator, n) :
 		pass
 	translator.register_translation({
 		n.meta.name : 'playlist enqueue',
-		n.meta.input : [
-			'playlist.enqueue(playlist.playlist, album) = True',
-			'album[music.track] = track',
-			'track[file.url] = url',
-			'track[music.title] = title',
-			'track[music.track_number] = track_number',
-		],
+		n.meta.input : """
+			playlist.enqueue(playlist.playlist, album) = True
+			album[music.track] = track
+			track[file.url] = url
+			track[music.title] = title
+			track[music.track_number] = track_number
+		""",
 		n.meta.output : [
 		],
 		n.meta.function : playlist_enuque,
@@ -404,13 +439,13 @@ def load(translator, n) :
 		#n.meta.output : [
 			#'_pattern[glob.glob] = _out_filename'
 		#],
-		# this does ?
-		n.meta.input : [
-			'glob[glob.glob] = _pattern'
-		],
-		n.meta.output : [
-			'glob[file.filename] = _out_filename'
-		],
+		# do this instead: (or the next translation also works)
+		n.meta.input : """
+			glob[glob.glob] = _pattern
+		""",
+		n.meta.output : """
+			glob[file.filename] = _out_filename
+		""",
 		n.meta.function : glob_glob,
 		n.meta.constant_vars : ['glob'],
 	})
@@ -421,26 +456,16 @@ def load(translator, n) :
 		vars['out_filename'] = glob.glob(vars['pattern'])
 	translator.register_translation({
 		n.meta.name : 'glob glob',
-		n.meta.input : [
-			'glob.glob(_pattern) = foo[file.filename]'
-		],
-		n.meta.output : [
-			'foo[file.filename] = _out_filename'
-		],
+		n.meta.input : """
+			glob.glob(_pattern) = foo[file.filename]
+		""",
+		n.meta.output : """
+			foo[file.filename] = _out_filename
+		""",
 		n.meta.function : glob_glob,
-		n.meta.constant_vars : ['glob'],
+		n.meta.constant_vars : ['foo'],
 	})
-	#def foo(vars):
-		#pass
-	#translator.register_translation({
-		#n.meta.name : '',
-		#n.meta.input : """
-		#""",
-		#n.meta.output : """
-		#""",
-		#n.meta.function : foo,
-		#n.meta.constant_vars : [],
-	#})
+
 
 
 	def download_tmp_file(vars):
@@ -460,6 +485,26 @@ def load(translator, n) :
 	})
 	
 
+
+
+
+
+
+
+
+
+
+	#def foo(vars):
+		#pass
+	#translator.register_translation({
+		#n.meta.name : '',
+		#n.meta.input : """
+		#""",
+		#n.meta.output : """
+		#""",
+		#n.meta.function : foo,
+		#n.meta.constant_vars : [],
+	#})
 
 
 """

@@ -34,9 +34,14 @@ translator = Translator(cache)
 import loadTranslations
 loadTranslations.load(translator, n)
 
+compiler = Compiler(n)
+loadTranslations.load(compiler, n)
+
+axpress = Axpress(sparql = sparql, compiler = compiler, evaluator = Evaluator(n))
+
 class PassCompleteReadsTestCase(unittest.TestCase):
 	def setUp(self):
-		self.parser = MultilineParser(n, sparql = sparql, translator = translator)
+		self.parser = MultilineParser(n, axpress = axpress, sparql = sparql)
 		n.bind('flickr', '<http://dwiel.net/axpress/flickr/0.1/>')
 		n.bind('amos', '<http://dwiel.net/axpress/amos/0.1/>')
 	
@@ -51,10 +56,10 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 	
 	def test2(self):
 		assert self.parser.parse("""
-			where translate
-				image[file.filename] = "/home/dwiel/pictures/stitt blanket/*.jpg"[glob.glob]
+			read translate
+				image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
 				thumb = image.thumbnail(image, 4, 4, image.antialias)
-				thumb[pil.image]= _thumb_image
+				thumb[pil.image] = _thumb_image
 			write sparql
 				image[amos.thumb] = thumb
 				thumb[pil.image] = thumb_image

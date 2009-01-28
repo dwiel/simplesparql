@@ -153,22 +153,23 @@ class Compiler :
 		"""
 		bindings = []
 		matches = True
-		#print 'translation',prettyquery(translation)
+		#debug('translation',translation)
 		#print 'q',prettyquery(query)
 		bindings = [Bindings()]
 		for ttriple in translation :
 			possible_bindings = self.find_bindings_for_triple(ttriple, query)
 			new_bindings = []
 			# see if any of the next_bindings fit with the existing bindings
+			found_binding = False
 			for pbinding in possible_bindings :
 				# if there are no values in bindings that already have some other 
 				# value in bindings 
 				for binding in bindings :
-					print 'ttriple',prettyquery(ttriple)
+					#debug('ttriple',ttriple)
 					conflicting = self.conflicting_bindings(binding, pbinding)
-					print 'binding',prettyquery(binding)
-					print 'pbinding',prettyquery(pbinding)
-					print 'conflicting',prettyquery(conflicting)
+					#debug('binding',binding)
+					#debug('pbinding',pbinding)
+					#debug('conflicting',conflicting)
 					if not conflicting :
 						# WARNING: this isn't going to copy the values of the bindings!!!
 						new_binding = copy.copy(binding)
@@ -177,7 +178,9 @@ class Compiler :
 						#print
 						new_binding.update(pbinding)
 						if new_binding not in new_bindings :
+							#debug('new_binding',new_binding)
 							new_bindings.append(new_binding)
+							found_binding = True
 					elif conflicting == self.MAYBE :
 						# WARNING: this isn't going to copy the values of the bindings!!!
 						new_binding = Bindings(binding, possible = True)
@@ -186,12 +189,18 @@ class Compiler :
 						#print
 						new_binding.update(pbinding)
 						if new_binding not in new_bindings :
+							#debug('maybe_new_binding',new_binding)
 							new_bindings.append(new_binding)
-						print 'maybe ... this will work'
+							found_binding = True
+						#debug('maybe ... this will work')
 						matches = self.MAYBE
-					print
+			#debug('found_binding',found_binding)
+			if not found_binding :
+				return False, []
 			if len(new_bindings) > 0 :
 				bindings = new_bindings
+		
+		#debug('bindings',bindings)
 		
 		# get a set of all vars
 		vars = find_vars(translation)
@@ -207,8 +216,8 @@ class Compiler :
 		if len(bindings) == 0 :
 			return False, []
 		
-		print 'matches',prettyquery(matches)
-		print 'bindings',prettyquery(bindings)
+		#debug('matches',matches)
+		#debug('bindings',bindings)
 		
 		return matches, bindings
 	
@@ -226,12 +235,10 @@ class Compiler :
 		# check that all of the translation inputs match part of the query
 		for triple in pattern :
 			if not self.find_triple_match(triple, data) :
-				print 'no match for',prettyquery(triple)
 				return False, None
 		
 		# find all possible bindings for the vars if any exist
 		matches, bindings_set = self.bind_vars(pattern, data)
-		
 		return matches, bindings_set
 	
 	def testtranslation(self, translation, query, output_vars) :
@@ -243,7 +250,7 @@ class Compiler :
 			bindings is the set of bindings which allow this translation to match the
 				query
 		"""
-		#print translation[self.n.meta.name]
+		#debug('testing',translation[self.n.meta.name])
 		return self.find_bindings(query, translation[self.n.meta.input], output_vars)
 	
 	def next_bnode(self) :
@@ -300,7 +307,7 @@ class Compiler :
 						continue
 					
 					if [translation, bindings] not in history :
-						print translation[n.meta.name],'matches!!!'
+						#debug('match',translation[n.meta.name])
 						#print 'history',history
 						history.append([translation, copy.copy(bindings)])
 						#print '---'
@@ -323,8 +330,6 @@ class Compiler :
 								new_var = n.lit_var[var_name(value)+'_'+str(self.next_num())]
 								new_lit_vars[var_name(value)] = new_var
 								new_bindings[var] = new_var
-								#new_lit_vars[var_name(value)] = n.lit_var[var_name(value)]
-								#new_bindings[var] = n.lit_var[var_name(value)]
 						
 						input_bindings = bindings
 						output_bindings = {}
@@ -335,26 +340,23 @@ class Compiler :
 							else :
 								output_bindings[var] = input_bindings[var]
 						
-						print 'input_bindings',prettyquery(input_bindings)
-						print 'output_bindings',prettyquery(output_bindings)
+						#debug('input_bindings',input_bindings)
+						#debug('output_bindings',output_bindings)
 						#print 'new_bindings',prettyquery(new_bindings)
 						#print 'new_lit_vars',prettyquery(new_lit_vars)
 						
 						new_triples = sub_var_bindings(translation[n.meta.output], [output_bindings]).next()
 						new_query = copy.copy(query)
-						#new_triples = sub_var_bindings(translation[n.meta.output], [new_bindings]).next()
-						#new_query = sub_var_bindings(query, [new_lit_vars]).next()
 						
 						new_query.extend(new_triples)
 						
-						print 'new_query',prettyquery(new_query)
-						print 'query',prettyquery(query)
+						#debug('new_query',new_query)
+						#debug('query',query)
 						
 						# print 'new_query',prettyquery(new_query)
 												
 						if matches == self.MAYBE :
 							#print 'new_triples',prettyquery(new_triples)
-							print 'its possible ...'
 							possible_steps.append({
 								'query' : query,
 								'input_bindings' : input_bindings,
@@ -366,17 +368,6 @@ class Compiler :
 								'possible' : [],
 							})
 						elif matches == True :
-							#print 'new_triples',prettyquery(new_triples)
-							#print 'guarenteed_steps.append(',prettyquery({
-								#'input_bindings' : input_bindings,
-								#'output_bindings' : output_bindings,
-								#'translation' : translation,
-								#'new_triples' : new_triples,
-								#'new_query' : new_query
-								#'guarenteed' : [],
-								#'possible' : [],
-							#}),')'
-							print 'it is'
 							guarenteed_steps.append({
 								'input_bindings' : input_bindings,
 								'output_bindings' : output_bindings,
@@ -450,6 +441,7 @@ class Compiler :
 			bindings.update(new_bindings)
 		return bindings or True
 	
+	#@logger
 	def follow_guarenteed(self, query, possible_stack, history, output_vars) :
 		"""
 		follow guarenteed translations and add possible translations to the 
@@ -463,8 +455,7 @@ class Compiler :
 		@return the compiled guarenteed path (see thoughts for more info on this 
 			structure)
 		"""
-		print 'follow_guarenteed'
-		print 'query',prettyquery(query)
+		#debug('fg query',query)
 		#print 'history',prettyquery(history)
 		
 		compile_node = {
@@ -475,33 +466,23 @@ class Compiler :
 		
 		# recursively search through all possible guarenteed translations
 		guarenteed_steps, possible_steps = self.next_translations(query, history, output_vars)
-		print 'g p', len(guarenteed_steps), len(possible_steps)
+		#debug('len_guarenteed_steps',len(guarenteed_steps))
+		#debug('guarenteed_steps',guarenteed_steps)
+		#debug('possible_steps',possible_steps)
 		for step in guarenteed_steps :
-			print 'step',prettyquery(step)
+			#debug('step',step)
+			#debug('step',step['translation'][self.n.meta.name])
 			
 			# if the new information at this point is enough to fulfil the query, done
 			# otherwise, recursively continue searching
 			found_solution = False
-			print 'var_triples',prettyquery(self.var_triples)
+			#debug('var_triples',self.var_triples)
 			found_solution = self.find_solution(self.var_triples, step['new_query'])
-			print 'matches/found_solution',prettyquery(found_solution)
-			#print 'original_query',prettyquery(self.original_query)
-			#matches, bindings = self.find_bindings(step['new_query'], self.original_query)
-			#print 'matches',matches
-			#print 'bindings',prettyquery(bindings)
-			#if bindings is not None :
-				#for binding in bindings :
-					##print '... testing ...'
-					##print 'self.vars',prettyquery(self.vars)
-					##print 'binding',prettyquery(binding)
-					#if self.contains_all_bindings(self.vars, binding) :
-						#print '-------------------------------------------------'
-						#print 'found solution:',prettyquery(binding)
-						#found_solution = True
+			#debug('found_solution',found_solution)
 			if found_solution :
 				step['solution'] = found_solution
+				#debug('solution', step['solution'])
 			else :
-				print 'recuring'
 				child_steps = self.follow_guarenteed(step['new_query'], possible_stack, history, output_vars)
 				if child_steps :
 					found_solution = True
@@ -558,15 +539,6 @@ class Compiler :
 				if triple[1] == self.n.query.limit :
 					modifiers.update({'limit' : int(triple[2])})
 					modified = True
-				#if triple[1] == self.n.query.offset :
-					#modifiers.append('OFFSET %d' % int(triple[2]))
-					#modified = True
-				#if triple[1] == self.n.query.sort_ascending :
-					#modifiers.append('ORDER BY ?%s' % var_name(triple[2]))
-					#modified = True
-				#if triple[1] == self.n.query.sort_descending :
-					#modifiers.append('ORDER BY DESC(?%s)' % var_name(triple[2]))
-					#modified = True
 			
 			if not modified :
 				new_query.append(triple)
@@ -580,6 +552,8 @@ class Compiler :
 			query = [line for line in query if line is not ""]
 		query = self.parser.parse(query)
 		
+		debug('query',query)
+		
 		query, modifiers = self.extract_query_modifiers(query)
 		
 		self.make_vars_out_vars(query, reqd_bound_vars)
@@ -591,22 +565,20 @@ class Compiler :
 			if var_triples == [] :
 				raise Exception("Waring, required bound triples were provided, but not found in the query")
 		
-		print 'var_triples',prettyquery(var_triples)
+		#debug('var_triples',var_triples)
 		bindings = dict([(var, self.n.out_var[var]) for var in reqd_bound_vars])
-		print 'bindings',prettyquery(bindings)
+		#debug('bindings',bindings)
 		var_triples = [x for x in sub_var_bindings(var_triples, [bindings])][0]
 		
-		print 'query',prettyquery(query)
-		print 'var_triples',prettyquery(var_triples)
+		#debug('query',query)
+		#debug('var_triples',var_triples)
 		
-		# self.original_query = var_triples
 		self.original_query = query
 		self.var_triples = var_triples
 		# print 'var_triples',prettyquery(var_triples)
-		# self.vars = find_vars(query)
 		self.vars = reqd_bound_vars
 		self.vars = [var for var in self.vars if var.find('bnode') is not 0]
-		print 'self.vars',prettyquery(self.vars)
+		#debug('self.vars',self.vars)
 		
 		possible_stack = []
 		history = []
@@ -616,9 +588,10 @@ class Compiler :
 		# TODO: make this work
 		# self.follow_possible(query, possible_stack)
 		
-		compile_root_node['modifiers'] = modifiers
+		if compile_root_node :
+			compile_root_node['modifiers'] = modifiers
 		
-		print 'modifiers',prettyquery(modifiers)
+		#debug('modifiers',modifiers)
 			
 		return compile_root_node
 

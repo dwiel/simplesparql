@@ -57,6 +57,11 @@ class AxpressTestCase(unittest.TestCase):
 		#""")
 		
 		## reduce bindings to those whose x and y values are numbers
+		## I'd like this functionality to exist, but I don't think this is the right
+		## way to get at it, or think about it.  For one, the type should take care
+		## of most of this kind of thing - though I know that it shouldn't be relied
+		## on ...
+		#bindings_set = [x for x in bindings_set]
 		#print 'bindings_set',prettyquery(bindings_set)
 		#new_bindings_set = []
 		#for bindings in bindings_set :
@@ -65,28 +70,28 @@ class AxpressTestCase(unittest.TestCase):
 		#bindings_set = new_bindings_set
 		#print 'bindings_set',prettyquery(bindings_set)
 		
-		#ret = self.axpress.read_translate("""
+		#ret = self.axpress.read_translatmultiline querye("""
 			#foo[test.x] = x
 			#foo[test.y] = y
 			#foo[test.sum] = _sum
 		#""", reqd_bound_vars = ['sum'], bindings_set = bindings_set)
 		#print 'ret',prettyquery(ret)
 	
-	#def test2(self):
-		#ret = self.axpress.read_translate("""
-			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			#thumb = image.thumbnail(image, 4, 4, image.antialias)
-			#thumb[pil.image] = _thumb_image
-		#""", reqd_bound_vars = ['thumb_image'])
-		#print 'ret',prettyquery(ret)
-		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
-		#assert ret == [
-			#{
-				#'thumb_image' : type_instance,
-			#}, {
-				#'thumb_image' : type_instance,
-			#}
-		#]
+	def test2(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			thumb = image.thumbnail(image, 4, 4, image.antialias)
+			thumb[pil.image] = _thumb_image
+		""", reqd_bound_vars = ['thumb_image'])
+		print 'ret',prettyquery(ret)
+		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		assert ret == [
+			{
+				'thumb_image' : type_instance,
+			}, {
+				'thumb_image' : type_instance,
+			}
+		]
 	
 	#def test2_1(self):
 		#ret = self.axpress.read_translate("""
@@ -153,19 +158,39 @@ class AxpressTestCase(unittest.TestCase):
 		#""", reqd_bound_vars = ['thumb_image'])
 		#print 'ret',prettyquery(ret)
 	
-	def test5(self):
-		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			image[file.filename] = _filename
-			thumb = image.thumbnail(image, 4, 4, image.antialias)
-			pixel = image.pixel(thumb, 0, 0)
-			pixel[pil.color] = _thumb_pixel_color
-		""", reqd_bound_vars = ['filename','thumb_pixel_color'])
-		print 'ret',prettyquery(ret)
+	#def test5(self):
+		#ret = self.axpress.read_translate("""
+			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			#image[file.filename] = _filename
+			#thumb = image.thumbnail(image, 4, 4, image.antialias)
+			#pixel = image.pixel(thumb, 0, 0)
+			#pixel[pil.color] = _thumb_pixel_color
+		#""", reqd_bound_vars = ['filename','thumb_pixel_color'])
+		#print 'ret',prettyquery(ret)
+	
+	#def test6(self):
+		#ret = self.axpress.read_translate("""
+			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			#image[file.filename] = _filename
+			#thumb = image.thumbnail(image, 4, 4, image.antialias)
+			#pixel = image.pixel(thumb, 0, 0)
+			#dist[type.number] = color.distance(color.red, pixel)
+			#dist[type.number] = _distance
+		#""", reqd_bound_vars = ['filename','distance'])
+		#print 'ret',prettyquery(ret)
+	
+	
+	
+	
+	
+	
+	
 	"""
 	"""
 	
 if __name__ == "__main__" :
+	#print '<root>'
 	unittest.main()
+	#print '</root>'
 
 

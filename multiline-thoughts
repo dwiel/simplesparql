@@ -20,22 +20,6 @@ write translate
 	
 or
 
-read translate
-	user[delicious.user] = 'nate'
-	user[delicious.page] = page
-	page[delicious.tag] = 'gardening'
-	page[file.url] = page_url
-read translate
-	rss_feed[rss.element] = page_urls
-write translate
-	rss_feed_generate(rss_feed)
-read translate
-	rss_feed[file.url] = rss_url
-write translate
-	rss_reader[rss_reader.contains] = rss_url
-
-or
-
 # python
 facts, history, bindings_set = axpress("""
 read translate
@@ -66,4 +50,53 @@ read translate
 write translate
 	rss_reader[rss_reader.contains] = rss_url
 """, given = facts)
+
+
+
+or
+
+read translate
+	user[delicious.user] = 'nate'
+	user[delicious.page] = page
+	page[delicious.tag] = 'gardening'
+	page[file.url] = _page_url
+let
+	rss_feed[rss.element] = page_urls
+write translate
+	rss_feed_generate(rss_feed)
+read translate
+	rss_feed[file.url] = rss_url
+write translate
+	rss_reader[rss_reader.contains] = rss_url
+
+
+
+or (if you really want to - without the auto pluralize vars functionality)
+
+
+
+read translate
+	user[delicious.user] = 'nate'
+	user[delicious.page] = page
+	page[delicious.tag] = 'gardening'
+	page[file.url] = _page_url
+python all # compared to python each which would run the code for each bindings
+	bindings_set = [
+		{
+			'page_urls' : [bindings['page_url'] for bindings in bindings_set]
+		}
+	]
+let
+	rss_feed[rss.element] = page_urls
+write translate
+	rss_feed_generate(rss_feed)
+read translate
+	rss_feed[file.url] = rss_url
+write translate
+	rss_reader[rss_reader.contains] = rss_url
+
+
+
+
+
 

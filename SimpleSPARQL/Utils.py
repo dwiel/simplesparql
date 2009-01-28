@@ -188,5 +188,52 @@ class UniqueURIGenerator() :
 
 
 
+import string
+
+# Load dictionary of entities (HTML 2.0 only...)
+#from htmlentitydefs import entitydefs
+# Here you could easily add more entities if needed...
+entitydefs = {
+	'gt' : '>',
+	'lt' : '<',
+}
+
+def html_encode(s):
+	s = string.replace(s,"&","&amp;")  # replace "&" first
+	
+	#runs one replace for each entity except "&"
+	for (ent,char) in entitydefs.items():
+		if char != "&": 
+			s = string.replace(s,char,"&"+ent+";")
+	return s
+
+
+def debug(name, obj=None) :
+	name = name.replace(' ','_')
+	print '<%s>%s</%s>' % (name, html_encode(prettyquery(obj)), name)
+
+def logger(f, name=None):
+	if name is None:
+		name = f.func_name
+	def wrapped(*args, **kwargs):
+		print '<%s>' % name
+		#logger.fhwr.write("***"+name+" "+str(f)+"\n"\
+						#+str(args)+str(kwargs)+"\n\n")
+		result = f(*args, **kwargs)
+		print '</%s>' % name
+		return result
+	wrapped.__doc__ = f.__doc__
+	return wrapped
+
+
+
+
+
+
+
+
+
+
+
 
 

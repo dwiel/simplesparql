@@ -2,6 +2,8 @@ import Parser
 from Utils import sub_var_bindings, find_vars, UniqueURIGenerator
 from PrettyQuery import prettyquery
 
+import time
+
 class Axpress() :
 	def __init__(self, sparql, compiler, evaluator) :
 		self.sparql = sparql
@@ -14,11 +16,18 @@ class Axpress() :
 		query_triples = self.parser.parse(query)
 		ret_evals = []
 		for triples in sub_var_bindings(query_triples, bindings_set) :
+			begin_compile = time.time()
 			ret_comp = self.compiler.compile(triples, reqd_bound_vars)
+			end_compile = time.time()
 			if ret_comp == False :
 				raise Exception("Couldn't compile ... sorry I don't have more here")
+			begin_eval = time.time()
 			ret_eval = self.evaluator.evaluate(ret_comp)
+			end_eval = time.time()
 			ret_evals.extend(ret_eval)
+			
+			print 'compile time:',end_compile-begin_compile
+			print 'eval time:',end_eval-begin_eval
 		return ret_evals
 	
 	def write_translate(self, query, bindings_set = [{}]) :

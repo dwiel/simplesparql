@@ -98,16 +98,25 @@ class Parser() :
 			if line is not '' :
 				yield line
 	
-	def parse(self, query) :
-		return self.parse_query(query)
+	def parse(self, query, reset_bnodes = True) :
+		return self.parse_query(query, reset_bnodes)
 	
-	def parse_query(self, query) :
+	def parse_query(self, query, reset_bnodes = True) :
+		"""
+		parse a string query into a list of triples
+		@arg query the string or list of strings to parse
+		@arg reset_bnode when True, will reset the bnode counter.  Change to false
+			if you want to parse multiple queries which will all act as one query (you
+			want to be able to use the results from one in the other, without bnode 
+			name conflicts
+		"""
 		if isinstance(query, basestring) :
 			query = self.break_multiline_string(query)
-		self.reset_bnode()
+		if reset_bnodes :
+			self._reset_bnode()
 		return self.flatten([isinstance(expression, basestring) and self.parse_expression(expression) or [expression] for expression in query])
 	
-	def reset_bnode(self) :
+	def _reset_bnode(self) :
 		self.var = 0
 	
 	def next_bnode(self) :

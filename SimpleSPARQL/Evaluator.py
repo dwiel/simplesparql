@@ -1,4 +1,4 @@
-from Utils import var_name, is_var, explode_bindings_set
+from Utils import var_name, is_var, is_lit_var, explode_bindings_set, debug
 from PrettyQuery import prettyquery
 
 import copy
@@ -26,8 +26,8 @@ class Evaluator :
 			if len(compile_node['guarenteed']) == 0 :
 				#return incoming_bindings
 				#print 'SOLUTION!!!',prettyquery(compile_node['solution'])
-				print 'solution'
-				print 'incoming_bindings', prettyquery(incoming_bindings)
+				#print 'solution'
+				#print 'incoming_bindings', prettyquery(incoming_bindings)
 				solution = {}
 				for var, binding in compile_node['solution'].iteritems() :
 					solution[var_name(var)] = incoming_bindings[var_name(binding)]
@@ -60,8 +60,16 @@ class Evaluator :
 				#print '2 result_bindings',prettyquery(result_bindings)
 				#print '3 output_bindings',prettyquery(output_bindings)
 				
+				# helpful warning (remove if you are hard core)
+				# if a varialbe was expected to be bound, but was not, warn us
+				missing_vars = [var for var, value in output_bindings.iteritems() if is_lit_var(value) and var not in result_bindings]
+				if missing_vars :
+					raise Exception('Error: Expected translation "%s" to bind variables: %s' % (step['translation'][n.meta.name], ', '.join(missing_vars)))
+				
 				# bind the values resulting from the function call
 				# new_bindings = {}
+				#debug('result_bindings',result_bindings)
+				#debug('output_bindings',output_bindings)
 				new_bindings = copy.copy(incoming_bindings)				
 				for var, value in result_bindings.iteritems() :
 					if var in output_bindings :
