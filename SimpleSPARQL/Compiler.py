@@ -414,9 +414,9 @@ class Compiler :
 				# not sure if this is really right ...
 				if is_any_var(qv) :
 					if var_name(tv) == var_name(qv) :
-						print '! ! !',prettyquery(tv),prettyquery(qv)
+						#print '! ! !',prettyquery(tv),prettyquery(qv)
 						return {tv : qv}
-				print '? ? ?',prettyquery(tv),prettyquery(qv)
+				#print '? ? ?',prettyquery(tv),prettyquery(qv)
 				return False
 			elif is_out_lit_var(qv) :
 				raise Exception("Does this really happen?")

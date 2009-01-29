@@ -58,9 +58,11 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 		assert self.parser.parse("""
 			read translate
 				image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+				image[file.filename] = _filename
 				thumb = image.thumbnail(image, 4, 4, image.antialias)
 				thumb[pil.image] = _thumb_image
 			write sparql
+				image[file.filename] = filename
 				image[amos.thumb] = thumb
 				thumb[pil.image] = thumb_image
 		""") == 'hello'

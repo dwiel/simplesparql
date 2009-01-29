@@ -194,6 +194,7 @@ class UniqueURIGenerator() :
 	def __init__(self, namespace = n.bnode, prefix = 'bnode') :
 		self.namespace = namespace
 		self.prefix = prefix
+		self.i = 0
 	
 	def __call__(self, namespace = None, prefix = None) :
 		if namespace == None :
@@ -201,8 +202,11 @@ class UniqueURIGenerator() :
 		if prefix == None :
 			prefix = self.prefix
 		
+		# incase multiple calls happen in the same time.time()
+		self.i += 1
+		
 		postfix = str(time.time()).replace('.','')
-		return namespace[prefix+postfix]
+		return namespace[prefix+postfix+str(self.i)]
 	
 
 

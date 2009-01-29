@@ -110,16 +110,20 @@ class MultilineParser() :
 	re_write_sparql = re.compile('^write sparql(.*)', re.MULTILINE | re.S)
 	def fn_write_sparql(self, g, query, bindings_set, reqd_bound_vars) :
 		#triples = self.parser.parse(g.group(1))
-		for triples in sub_var_bindings(query, bindings_set) :
-			self.sparql.write(triples)
+		debug('write sparql')
+		debug('query', query)
+		debug('bindings_set', bindings_set)
+		#for triples in sub_var_bindings(query, bindings_set) :
+		#	self.sparql.write(triples)
+		self.axpress.write_sparql(query, bindings_set)
 		return bindings_set
 	
 	re_read_translations = re.compile('^read translate(.*)', re.MULTILINE | re.S)
 	def fn_read_translations(self, g, query, bindings_set, reqd_bound_vars) :
 		#reqd_bound_vars = ['thumb_image']
 		#triples = self.string_to_triples(g.group(1))
-		ret = self.axpress.read_translate(query, bindings_set = bindings_set, reqd_bound_vars = reqd_bound_vars)
-		print 'translations read(', g.group(1),') =',prettyquery(ret)
+		bindings_set = self.axpress.read_translate(query, bindings_set = bindings_set, reqd_bound_vars = reqd_bound_vars)
+		#print 'translations read(', g.group(1),') =',prettyquery(bindings_set)
 		return bindings_set
 	
 	re_write_translations = re.compile('^write translate(.*)', re.MULTILINE | re.S)

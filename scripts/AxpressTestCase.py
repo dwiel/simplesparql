@@ -87,12 +87,17 @@ class AxpressTestCase(unittest.TestCase):
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
 			thumb[pil.image] = _thumb_image
 		""", reqd_bound_vars = ['thumb_image', 'thumb'])
+		print '-----------------------------'
 		print 'ret',prettyquery(ret)
-		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		for i, bindings in enumerate(ret) :
+			ret[i]['thumb_image'] = type(bindings['thumb_image'])
+		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
 		assert ret == [
 			{
+				'thumb' : n.out_var.thumb,
 				'thumb_image' : type_instance,
 			}, {
+				'thumb' : n.out_var.thumb,
 				'thumb_image' : type_instance,
 			}
 		]

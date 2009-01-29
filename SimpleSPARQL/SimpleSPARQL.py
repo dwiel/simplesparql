@@ -38,7 +38,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		self.n.bind('query', '<http://dwiel.net/axpress/query/0.1/>')
 		self.n.bind('var', '<http://dwiel.net/axpress/var/0.1/>')
 		self.n.bind('tvar', '<http://dwiel.net/axpress/translation/var/0.1/>')
-		self.n.bind('bnode', '<http://dwiel.net/axpress/bnode/0.1/>')
+		self.n.bind('bnode', '<http://dwiel.net/simplesparql/bnode/0.1/>')
 		self.n.bind('meta', '<http://dwiel.net/axpress/meta/0.1/>')
 		#self.n.bind('meta_var', '<http://dwiel.net/axpress/meta_var/0.1/>')
 		self.lang = 'en'
@@ -242,7 +242,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 		elif type(data) == list :
 			return u', '.join(map(lambda x:self.python_to_n3_helper(x, long_format, self.flatten([path, list]), bound_vars), data))
 		else :
-			print type(data),'not supported as n3', data
+			#print type(data),'can not be translated to n3', data
+			raise Exception('%s can not be translated to n3' % data.__class__.__name__)
 	
 	remove_square_brackets_from_dict = re.compile('\[ (.*) \]')
 	def python_to_n3(self, data, object_uri = ":new", long_format = False) :
@@ -1130,7 +1131,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		print sparql_str
 		print
 		print
-		return self.doQuery(sparql_str)
+		#return self.doQuery(sparql_str)
 	
 	def insert(self, data, language = 'N3') :
 		"""this isn't supported by all sparul endpoints.  converts data to N3 and 

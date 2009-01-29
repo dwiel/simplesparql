@@ -1,5 +1,5 @@
 import Parser
-from Utils import sub_var_bindings, find_vars, UniqueURIGenerator
+from Utils import sub_var_bindings, find_vars, UniqueURIGenerator, debug
 from PrettyQuery import prettyquery
 
 import time
@@ -11,6 +11,7 @@ class Axpress() :
 		self.compiler = compiler
 		self.evaluator = evaluator
 		self.parser = Parser.Parser(sparql.n)
+		self.urigen = UniqueURIGenerator()
 	
 	def read_translate(self, query, bindings_set = [{}], reqd_bound_vars = []) :
 		query_triples = self.parser.parse(query)
@@ -46,12 +47,15 @@ class Axpress() :
 				yield result
 
 	def write_sparql(self, query, bindings_set = [{}]) :
+		"""
+		write triples into sparql database.
+		NOTE: any URI which is_var will be converted to a fresh bnode URI
+		"""
 		query_triples = self.parser.parse(query)
 		for triples in sub_var_bindings(query_triples, bindings_set) :
 			missing_vars = find_vars(triples)
 			if len(missing_vars) is not 0 :
-				urigen = UniqueURIGenerator()
-				new_bindings = [dict([(var, urigen()) for var in missing_vars])]
+				new_bindings = [dict([(var, self.urigen()) for var in missing_vars])]
 				triples = sub_var_bindings(triples, new_bindings).next()
 			self.sparql.write(triples)
 
