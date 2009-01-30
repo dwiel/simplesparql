@@ -242,8 +242,12 @@ class SimpleSPARQL (SPARQLWrapper) :
 		elif type(data) == list :
 			return u', '.join(map(lambda x:self.python_to_n3_helper(x, long_format, self.flatten([path, list]), bound_vars), data))
 		else :
-			#print type(data),'can not be translated to n3', data
-			raise Exception('%s can not be translated to n3' % data.__class__.__name__)
+			import cPickle
+			try :
+				pickled = cPickle.dumps(data, -1)
+				raise Exception('%s can not be translated to n3 (but it could be pickled if it were implemented)' % data.__class__.__name__)
+			except :
+				raise Exception('%s can not be translated to n3' % data.__class__.__name__)
 	
 	remove_square_brackets_from_dict = re.compile('\[ (.*) \]')
 	def python_to_n3(self, data, object_uri = ":new", long_format = False) :
@@ -1131,7 +1135,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		print sparql_str
 		print
 		print
-		#return self.doQuery(sparql_str)
+		return self.doQuery(sparql_str)
 	
 	def insert(self, data, language = 'N3') :
 		"""this isn't supported by all sparul endpoints.  converts data to N3 and 
@@ -1188,7 +1192,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		var = 0
 		while True :
 			yield self.next_bnode().n3()
-	
+			
 	def triplelist_value_to_sparql(self, object, extra_triple_strs, varnamespace = None) :
 		"""
 		@arg object is the python object to convert to sparql

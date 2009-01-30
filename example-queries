@@ -49,7 +49,7 @@ read sparql
 
 
 
-english: render the first 10 artists sorted by play count using a font color for each corresponding to their play count
+english: render the first 10 artists in my library sorted by play count using a font color for each corresponding to their play count
 
 read sparql
 	artist[music.artist_name] = artist_name

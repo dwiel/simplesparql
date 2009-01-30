@@ -1,17 +1,23 @@
-import Parser
-from Utils import sub_var_bindings, find_vars, UniqueURIGenerator, debug
+import Parser, Evaluator, MultilineParser
+from Utils import sub_var_bindings, find_vars, UniqueURIGenerator, debug, is_any_var, var_name
 from PrettyQuery import prettyquery
 
 import time
 
 class Axpress() :
-	def __init__(self, sparql, compiler, evaluator) :
+	def __init__(self, sparql, compiler, evaluator = None, multiline_parser = None) :
 		self.sparql = sparql
+		self.n = sparql.n
 		# self.translator = translator
 		self.compiler = compiler
+		if evaluator == None :
+			evaluator = Evaluator.Evaluator(self.n)
 		self.evaluator = evaluator
-		self.parser = Parser.Parser(sparql.n)
+		self.parser = Parser.Parser(self.n)
 		self.urigen = UniqueURIGenerator()
+		if multiline_parser == None :
+			multiline_parser = MultilineParser.MultilineParser(self.n, self)
+		
 	
 	def read_translate(self, query, bindings_set = [{}], reqd_bound_vars = []) :
 		query_triples = self.parser.parse(query)
@@ -34,17 +40,28 @@ class Axpress() :
 	def write_translate(self, query, bindings_set = [{}]) :
 		pass
 	
+	def sanitize_vars(self, triples) :
+		for triple in triples :
+			for j, value in enumerate(triple) :
+				print 'v',prettyquery(value)
+				if is_any_var(value) :
+					print "HERE"
+					triple[j] = self.n.var[var_name(value)]
+	
 	def read_sparql(self, query, bindings_set = [{}]) :
 		"""
 		read from the sparql database
 		@arg query the query in one long string, a list of string or triples_set
-		@return a generator yielding sets of bindings
+		@return a sets of bindings
 		"""
+		results = []
 		query_triples = self.parser.parse(query)
 		for triples in sub_var_bindings(query_triples, bindings_set) :
 			print 'triples',prettyquery(triples)
-			for result in self.sparql.read(triples) :
-				yield result
+			self.sanitize_vars(triples)
+			print 'triples',prettyquery(triples)
+			results.extend(self.sparql.read(triples))
+		return results
 
 	def write_sparql(self, query, bindings_set = [{}]) :
 		"""

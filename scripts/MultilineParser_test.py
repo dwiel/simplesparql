@@ -41,31 +41,43 @@ axpress = Axpress(sparql = sparql, compiler = compiler, evaluator = Evaluator(n)
 
 class PassCompleteReadsTestCase(unittest.TestCase):
 	def setUp(self):
-		self.parser = MultilineParser(n, axpress = axpress, sparql = sparql)
+		self.parser = MultilineParser(n, axpress = axpress)
 		n.bind('flickr', '<http://dwiel.net/axpress/flickr/0.1/>')
 		n.bind('amos', '<http://dwiel.net/axpress/amos/0.1/>')
 	
 	#def test1(self):
 		#assert self.parser.parse("""
 			#read sparql
-				#test.object2[test.x] = x
-				#test.object2[test.y] = y
-			#write sparql
+				#test.object2[test.x] = _x
+				#test.object2[test.y] = _y
+			#write sparql unless exists
 				#test.object2[test.yyy] = y
 		#""") == 'hello'
 	
-	def test2(self):
-		assert self.parser.parse("""
+	#def test2(self):
+		#assert self.parser.parse("""
+			#read translate
+				#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+				#image[file.filename] = _filename
+				#thumb = image.thumbnail(image, 4, 4, image.antialias)
+				#thumb[pil.image] = _thumb_image
+			#write sparql
+				#image[file.filename] = filename
+				#image[amos.thumb] = thumb
+				#thumb[pil.image] = thumb_image
+		#""") == 'hello'
+	
+	def test3(self):
+		ret = self.parser.parse("""
 			read translate
-				image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-				image[file.filename] = _filename
-				thumb = image.thumbnail(image, 4, 4, image.antialias)
-				thumb[pil.image] = _thumb_image
-			write sparql
-				image[file.filename] = filename
-				image[amos.thumb] = thumb
-				thumb[pil.image] = thumb_image
-		""") == 'hello'
+					image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+					image[file.filename] = _filename
+			write sparql unless exists
+					_image[file.filename] = _filename
+			write sparql unless exists
+					image[meta.tag] = 'stitt'
+		""")
+		print 'ret',prettyquery(ret)
 	
 	"""
 """

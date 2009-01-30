@@ -54,20 +54,20 @@ class Translator() :
 		self.is_read = is_read
 
 class MultilineParser() :
-	def __init__(self, n = None, axpress = None, sparql = None) :
+	def __init__(self, n = None, axpress = None) :
 		if n == None :
 			n = Namespaces.Namespaces()
 		
 		self.n = n
 		
 		self.axpress = axpress
-		self.sparql = sparql
 		
 		self.parser = Parser.Parser()
 		self.translators = [
 			Translator(self.re_nop, self.fn_nop, self.bound_vars_nop, True),
 			Translator(self.re_read_sparql, self.fn_read_sparql, self.bound_vars_general, True),
 			Translator(self.re_write_sparql, self.fn_write_sparql, self.bound_vars_general, False),
+			Translator(self.re_write_sparql_unless_exists, self.fn_write_sparql_unless_exists, self.bound_vars_general, False),
 			Translator(self.re_read_translations, self.fn_read_translations, self.bound_vars_general, True),
 			Translator(self.re_write_translations, self.fn_write_translations, self.bound_vars_general, False),
 		]
@@ -93,29 +93,32 @@ class MultilineParser() :
 	def bound_vars_nop(g):
 		return []
 	
-	re_read_sparql = re.compile('^read sparql(.*)', re.MULTILINE | re.S)
-	def fn_read_sparql(self, g, query, bindings_set, reqd_bound_vars) :
-		# this does the read, it doesn't connect to logic behind it. (connecting it
-		# with the rest of the query
-		#triples = self.parser.parse(g.group(1), reset_bnodes = False)
-		ret = self.sparql.read( query )
-		ret = [x for x in ret]
-		print 'sparql read(', g.group(1),') =',prettyquery(ret)
-		#return self.sparql.read(g.group(1))
-		return ret
 	def bound_vars_general(self, g):
 		triples = self.parser.parse(g.group(1), reset_bnodes = False)
 		return find_vars(triples), triples
 	
-	re_write_sparql = re.compile('^write sparql(.*)', re.MULTILINE | re.S)
+	re_read_sparql = re.compile('^read sparql(.*)', re.MULTILINE | re.S)
+	def fn_read_sparql(self, g, query, bindings_set, reqd_bound_vars) :
+		# TODO: change to use axpress
+		bindings_set = self.axpress.read_sparql(query, bindings_set)
+		return bindings_set
+	
+	re_write_sparql = re.compile('^write sparql(\s*)\n(.*)', re.MULTILINE | re.S)
 	def fn_write_sparql(self, g, query, bindings_set, reqd_bound_vars) :
-		#triples = self.parser.parse(g.group(1))
-		debug('write sparql')
-		debug('query', query)
-		debug('bindings_set', bindings_set)
-		#for triples in sub_var_bindings(query, bindings_set) :
-		#	self.sparql.write(triples)
 		self.axpress.write_sparql(query, bindings_set)
+		return bindings_set
+	
+	re_write_sparql_unless_exists = re.compile('^write sparql unless exists(.*)', re.MULTILINE | re.S)
+	def fn_write_sparql_unless_exists(self, g, query, bindings_set, reqd_bound_vars) :
+		read_bindings_set = self.axpress.read_sparql(query, bindings_set)
+		# only write if 
+		if len(read_bindings_set) is 0 :
+			# TODO get bound variables out of the write query
+			print 'didnt find anything', prettyquery(query), prettyquery(bindings_set)
+			self.axpress.write_sparql(query, bindings_set)
+		else :
+			print 'they already exist!', prettyquery(bindings_set)
+			bindings_set = read_bindings_set
 		return bindings_set
 	
 	re_read_translations = re.compile('^read translate(.*)', re.MULTILINE | re.S)
@@ -131,6 +134,8 @@ class MultilineParser() :
 		#return self.translator_default.write(g.group(1))
 		print 'translations write(', g.group(1),')'
 		return bindings_set
+	
+	
 	
 	def parse(self, query) :
 		subquery_lines = []		
