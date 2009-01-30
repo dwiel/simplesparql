@@ -1,14 +1,15 @@
-from SimpleSPARQL import *
+#from SimpleSPARQL import *
 import os, random
 from itertools import izip
 
-def load(translator, n) :	
+def loadTranslations(translator, n) :	
 	n.bind('math', '<http://dwiel.net/express/math/0.1/>')
 	n.bind('type', '<http://dwiel.net/express/type/0.1/>')
 	n.bind('flickr', '<http://dwiel.net/express/flickr/0.1/>')
 	n.bind('file', '<http://dwiel.net/express/file/0.1/>')
 	n.bind('playlist', '<http://dwiel.net/express/playlist/0.1/>')
 	n.bind('image', '<http://dwiel.net/express/image/0.1/>')
+	n.bind('color', '<http://dwiel.net/express/color/0.1/>')
 	n.bind('pil', '<http://dwiel.net/express/python/pil/0.1/>')
 	n.bind('glob', '<http://dwiel.net/express/python/glob/0.1/>')
 	n.bind('call', '<http://dwiel.net/express/call/0.1/>')

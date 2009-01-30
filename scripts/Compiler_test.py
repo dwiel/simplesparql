@@ -26,8 +26,7 @@ a = n.rdfs.type
 
 compiler = Compiler(n)
 
-import loadTranslations
-loadTranslations.load(compiler, n)
+loadTranslations(compiler, n)
 
 # for easy basic stupid matching type instance
 class X():pass

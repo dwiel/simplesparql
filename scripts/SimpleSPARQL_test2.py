@@ -21,8 +21,7 @@ cache_sparql = SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwie
 cache = Cache(cache_sparql)
 translator = Translator(cache)
 
-import loadTranslations
-loadTranslations.load(translator, n)
+loadTranslations(translator, n)
 
 
 

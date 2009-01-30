@@ -7,6 +7,8 @@ import time, urllib
 from rdflib import *
 from SimpleSPARQL import *
 
+from SimpleSPARQL.Utils import sub_var_bindings
+
 sparql = SimpleSPARQL("http://localhost:2020/sparql")
 sparql.setGraph("http://dwiel.net/axpress/testing")
 
@@ -26,8 +28,7 @@ cache_sparql = SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwie
 cache = Cache(cache_sparql)
 translator = Translator(cache)
 
-import loadTranslations
-loadTranslations.load(translator, n)
+loadTranslations(translator, n)
 
 # for easy basic stupid matching type instance
 class X():pass
@@ -35,7 +36,7 @@ type_instance = type(X())
 
 class PassCompleteReadsTestCase(unittest.TestCase):
 	def test1(self) :
-		ret = translator.sub_var_bindings_new([
+		ret = sub_var_bindings([
  			[ n.var.uri, n.test.div, n.lit_var.div, ],
 		], [
 			{
@@ -53,7 +54,7 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 		]
 
 	def test2(self) :
-		ret = translator.sub_var_bindings_new([
+		ret = sub_var_bindings([
  			[ n.var.uri, n.test.div, n.lit_var.div, ],
 			[ n.var.uri, n.test.sum, n.lit_var.sum, ],
 		], [
@@ -73,7 +74,7 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 		]
 
 	def test3(self) :
-		ret = translator.sub_var_bindings_new([
+		ret = sub_var_bindings([
  			[ n.var.uri, n.test.div, n.lit_var.div, ],
 			[ n.var.uri, n.test.sum, n.lit_var.sum, ],
 		], [
@@ -85,7 +86,7 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			},
 		])
 		ret = [x for x in ret]
-		print 'ret',prettyquery(ret)
+		#print 'ret',prettyquery(ret)
 		assert ret == [
 			[
 				[ n.test.u, n.test.div, 0.20999999999999999, ],

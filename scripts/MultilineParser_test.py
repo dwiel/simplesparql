@@ -31,11 +31,10 @@ cache_sparql = SimpleSPARQL("http://localhost:2020/sparql", graph = "http://dwie
 cache = Cache(cache_sparql)
 translator = Translator(cache)
 
-import loadTranslations
-loadTranslations.load(translator, n)
+loadTranslations(translator, n)
 
 compiler = Compiler(n)
-loadTranslations.load(compiler, n)
+loadTranslations(compiler, n)
 
 axpress = Axpress(sparql = sparql, compiler = compiler, evaluator = Evaluator(n))
 

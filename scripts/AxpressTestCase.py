@@ -37,8 +37,7 @@ class AxpressTestCase(unittest.TestCase):
 		self.compiler = Compiler(n)
 		self.evaluator = Evaluator(n)
 		
-		import loadTranslations
-		loadTranslations.load(self.compiler, n)
+		loadTranslations(self.compiler, n)
 		
 		#self.parser = MultilineParser(n, sparql = sparql, translator = self.translator)
 		self.axpress = Axpress(

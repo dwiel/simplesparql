@@ -8,6 +8,7 @@ from Namespaces import Namespaces, globalNamespaces, uri_could_be_from_namespace
 from RDFObject import RDFObject
 from Parser import Parser
 from MultilineParser import MultilineParser
+from loadTranslations import loadTranslations
 
 from PrettyQuery import prettyquery
 

@@ -17,7 +17,10 @@ class Axpress() :
 		self.urigen = UniqueURIGenerator()
 		if multiline_parser == None :
 			multiline_parser = MultilineParser.MultilineParser(self.n, self)
+		self.multiline_parser = multiline_parser
 		
+	def do(self, query) :
+		self.multiline_parser.parse(query)
 	
 	def read_translate(self, query, bindings_set = [{}], reqd_bound_vars = []) :
 		query_triples = self.parser.parse(query)
