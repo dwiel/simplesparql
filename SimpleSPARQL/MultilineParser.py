@@ -206,7 +206,7 @@ class MultilineParser() :
 			bindings_set = translator.fn(g, query, bindings_set, reqd_bound_vars)
 			print 'bindings_set',prettyquery(bindings_set)
 		
-		return 'hello'
+		return bindings_set
 
 
 

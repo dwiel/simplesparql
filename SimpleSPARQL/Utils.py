@@ -168,20 +168,20 @@ def sub_var_bindings(triples, bindings_set) :
 
 
 
-def find_vars(query) :
+def find_vars(query, is_a_var = is_any_var) :
 	"""
 	given a query, find the set of names of all vars, meta_vars and lit_vars
 	"""
 	try :
 		iter = query.__iter__()
 	except AttributeError :
-		if is_any_var(query) :
+		if is_a_var(query) :
 			return set([var_name(query)])
 		return set()
 	
 	vars = set()
 	for i in iter :
-		vars.update(find_vars(i))
+		vars.update(find_vars(i, is_a_var))
 	return vars
 
 
@@ -230,23 +230,30 @@ def html_encode(s):
 			s = string.replace(s,char,"&"+ent+";")
 	return s
 
+spaces = ''
+
+def p(*args) :
+	print '%s%s' % (spaces, ' '.join([prettyquery(arg) for arg in args]))
 
 def debug(name, obj=None) :
 	name = name.replace(' ','_')
-	print '<%s>%s</%s>' % (name, html_encode(prettyquery(obj)), name)
+	print '%s<%s>%s</%s>' % (spaces, name, html_encode(prettyquery(obj)), name)
 
 def logger(f, name=None):
 	if name is None:
 		name = f.func_name
 	def wrapped(*args, **kwargs):
-		print '<%s>' % name
-		print '\targs:%s' % prettyquery(args)
-		print '\tkwargs:%s' % prettyquery(kwargs)
+		global spaces
+		print '%s<%s>' % (spaces, name)
+		spaces += ' '
+		#print '\targs:%s' % prettyquery(args)
+		#print '\tkwargs:%s' % prettyquery(kwargs)
 		#logger.fhwr.write("***"+name+" "+str(f)+"\n"\
 						#+str(args)+str(kwargs)+"\n\n")
 		result = f(*args, **kwargs)
-		print '\nret:%s' % prettyquery(result)
-		print '</%s>' % name
+		#print '\nret:%s' % prettyquery(result)
+		spaces = spaces[:-1]
+		print '%s</%s>' % (spaces, name)
 		return result
 	wrapped.__doc__ = f.__doc__
 	return wrapped

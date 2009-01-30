@@ -47,6 +47,8 @@ def prettyquery_helper(query, tabs = '', indent = '  ', namespaces = n) :
 				s += tabs + ']\n'
 	elif isinstance(query, tuple) :
 		s += '(%s)' % prettyquery_helper(list(query), tabs, indent, namespaces)
+	elif isinstance(query, set) :
+		s += 'set(%s)' % prettyquery_helper(list(query), tabs, indent, namespaces)
 	elif isinstance(query, URIRef) :
 		return unicode(namespaces.shortenForN(query))
 	elif isinstance(query, Literal) :

@@ -3,6 +3,7 @@ import os, random
 from itertools import izip
 
 def loadTranslations(translator, n) :	
+	n.bind('rdfs', '<http://www.w3.org/2000/01/rdf-schema#>')
 	n.bind('math', '<http://dwiel.net/express/math/0.1/>')
 	n.bind('type', '<http://dwiel.net/express/type/0.1/>')
 	n.bind('flickr', '<http://dwiel.net/express/flickr/0.1/>')
@@ -10,11 +11,15 @@ def loadTranslations(translator, n) :
 	n.bind('playlist', '<http://dwiel.net/express/playlist/0.1/>')
 	n.bind('image', '<http://dwiel.net/express/image/0.1/>')
 	n.bind('color', '<http://dwiel.net/express/color/0.1/>')
+	n.bind('html', '<http://dwiel.net/express/html/0.1/>')
 	n.bind('pil', '<http://dwiel.net/express/python/pil/0.1/>')
 	n.bind('glob', '<http://dwiel.net/express/python/glob/0.1/>')
 	n.bind('call', '<http://dwiel.net/express/call/0.1/>')
 	
-	## TODO: allow a 'function' to accept a variable number of arguments?
+	n.bind('music', '<http://dwiel.net/axpress/music/0.1/>')
+	n.bind('lastfm', '<http://dwiel.net/axpress/lastfm/0.1/>')
+	
+## TODO: allow a 'function' to accept a variable number of arguments?
 	#def sum(vars) :
 		#if type(vars[n.var.number1]) == int and type(vars[n.var.number2]) == int :
 			#vars[n.var.sum] = vars[n.var.number1] + vars[n.var.number2]
@@ -488,6 +493,20 @@ def loadTranslations(translator, n) :
 
 
 
+
+	def html_img(vars):
+		vars['html'] = '<img src="%s">' % vars['filename']
+	translator.register_translation({
+		n.meta.name : 'html img link',
+		n.meta.input : """
+			image[file.filename] = _filename
+		""",
+		n.meta.output : """
+			image[html.html] = _html
+		""",
+		n.meta.function : html_img,
+		n.meta.constant_vars : ['image'],
+	})
 
 
 

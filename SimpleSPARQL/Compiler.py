@@ -263,8 +263,8 @@ class Compiler :
 			something = find_paths(possible_translation, find_vars)
 	
 	# return all triples which have at least one var
-	def find_var_triples(self, query) :
-		return [triple for triple in query if any(map(lambda x:is_any_var(x), triple))]
+	def find_var_triples(self, query, is_a_var = is_any_var) :
+		return [triple for triple in query if any(map(lambda x:is_a_var(x), triple))]
 	
 	# return all triples which have at least one var
 	def find_specific_var_triples(self, query, vars) :
@@ -314,78 +314,75 @@ class Compiler :
 					if bindings_contain_output_var(bindings) :
 						continue
 					
-					if [translation, bindings] not in history :
-						#debug('match',translation[n.meta.name])
-						#print 'history',history
-						history.append([translation, copy.copy(bindings)])
-						#print '---'
-						#print 'bindings',prettyquery(bindings)
-						#print 'translation',prettyquery(translation)
-						# keep the possible property
-						new_bindings = Bindings(possible = bindings.possible)
-						# replace the bindings which the translation defines as constant with
-						# the exact binding value
-				#print '???',prettyquery(value),prettyquery(q
-						# replace the other bindings which are variables, with variables with
-						# the name from the query and the type from the translation ...
-						# TODO?: keep the state of each of the variables in the triple set
-						# rather than as the namespace so it can be changed and checked 
-						# easily.  Also, it should be consistant throughout the query anyway
-						new_lit_vars = {}
-						for var, value in bindings.iteritems() :
-							if var in translation[n.meta.constant_vars] :
-								new_bindings[var] = value
-							elif is_any_var(value) :
-								new_var = n.lit_var[var_name(value)+'_'+str(self.next_num())]
-								new_lit_vars[var_name(value)] = new_var
-								new_bindings[var] = new_var
-						
-						input_bindings = bindings
-						output_bindings = {}
-						
-						for var in find_vars(translation[n.meta.output]) :
-							if var not in translation[n.meta.constant_vars] :
-								output_bindings[var] = n.lit_var[var+'_out_'+str(self.next_num())]
-							else :
-								output_bindings[var] = input_bindings[var]
-						
-						#debug('input_bindings',input_bindings)
-						#debug('output_bindings',output_bindings)
-						#print 'new_bindings',prettyquery(new_bindings)
-						#print 'new_lit_vars',prettyquery(new_lit_vars)
-						
-						new_triples = sub_var_bindings(translation[n.meta.output], [output_bindings]).next()
-						new_query = copy.copy(query)
-						
-						new_query.extend(new_triples)
-						
-						#debug('new_query',new_query)
-						#debug('query',query)
-						
-						# print 'new_query',prettyquery(new_query)
-												
-						if matches == self.MAYBE :
-							#print 'new_triples',prettyquery(new_triples)
-							possible_steps.append({
-								'query' : query,
-								'input_bindings' : input_bindings,
-								'output_bindings' : output_bindings,
-								'translation' : translation,
-								'new_triples' : new_triples,
-								'new_query' : new_query,
-								'guarenteed' : [],
-								'possible' : [],
-							})
-						elif matches == True :
-							guarenteed_steps.append({
-								'input_bindings' : input_bindings,
-								'output_bindings' : output_bindings,
-								'translation' : translation,
-								'new_triples' : new_triples,
-								'new_query' : new_query,
-								'guarenteed' : [],
-								'possible' : [],
-							})
+					#print '---'
+					#print 'bindings',prettyquery(bindings)
+					#print 'translation',prettyquery(translation)
+					# keep the possible property
+					new_bindings = Bindings(possible = bindings.possible)
+					# replace the bindings which the translation defines as constant with
+					# the exact binding value
+					#print '???',prettyquery(value),prettyquery(q
+					# replace the other bindings which are variables, with variables with
+					# the name from the query and the type from the translation ...
+					# TODO?: keep the state of each of the variables in the triple set
+					# rather than as the namespace so it can be changed and checked 
+					# easily.  Also, it should be consistant throughout the query anyway
+					new_lit_vars = {}
+					for var, value in bindings.iteritems() :
+						if var in translation[n.meta.constant_vars] :
+							new_bindings[var] = value
+						elif is_any_var(value) :
+							new_var = n.lit_var[var_name(value)+'_'+str(self.next_num())]
+							new_lit_vars[var_name(value)] = new_var
+							new_bindings[var] = new_var
+					
+					#input_bindings = dict([(var, binding) for (var, binding) in bindings.iteritems() if not is_var(binding)])
+					input_bindings = bindings
+					output_bindings = {}
+					
+					for var in find_vars(translation[n.meta.output]) :
+						if var not in translation[n.meta.constant_vars] :
+							output_bindings[var] = n.lit_var[var+'_out_'+str(self.next_num())]
+						else :
+							output_bindings[var] = input_bindings[var]
+					
+					#debug('input_bindings',input_bindings)
+					#debug('output_bindings',output_bindings)
+					#print 'new_bindings',prettyquery(new_bindings)
+					#print 'new_lit_vars',prettyquery(new_lit_vars)
+					
+					new_triples = sub_var_bindings(translation[n.meta.output], [output_bindings]).next()
+					new_query = copy.copy(query)
+					
+					new_query.extend(new_triples)
+					
+					#debug('new_query',new_query)
+					#debug('query',query)
+					
+					# print 'new_query',prettyquery(new_query)
+											
+					if matches == self.MAYBE :
+						#print 'new_triples',prettyquery(new_triples)
+						possible_steps.append({
+							'query' : query,
+							'input_bindings' : input_bindings,
+							'output_bindings' : output_bindings,
+							'translation' : translation,
+							'new_triples' : new_triples,
+							'new_query' : new_query,
+							'guarenteed' : [],
+							'possible' : [],
+						})
+					elif matches == True :
+						guarenteed_steps.append({
+							'input_bindings' : input_bindings,
+							'output_bindings' : output_bindings,
+							'translation' : translation,
+							'new_triples' : new_triples,
+							'new_query' : new_query,
+							'guarenteed' : [],
+							'possible' : [],
+						})
 		
 		return guarenteed_steps, possible_steps
 	
@@ -435,7 +432,7 @@ class Compiler :
 		"""
 		bindings = {}
 		for tv, qv in izip(triple, qtriple) :
-			# print prettyquery(tv), prettyquery(qv), self.find_solution_values_match(tv, qv)
+			#p(tv, qv, self.find_solution_values_match(tv, qv))
 			ret = self.find_solution_values_match(tv, qv)
 			if not ret :
 				return False
@@ -449,6 +446,10 @@ class Compiler :
 		"""
 		for qtriple in query :
 			bindings = self.find_solution_triples_match(triple, qtriple)
+			#p(triple)
+			#p(qtriple)
+			#p(bindings)
+			#p()
 			if bindings :
 				return bindings or True
 		return False
@@ -471,7 +472,7 @@ class Compiler :
 			bindings.update(new_bindings)
 		return bindings or True
 	
-	#@logger
+	@logger
 	def follow_guarenteed(self, query, possible_stack, history, output_vars) :
 		"""
 		follow guarenteed translations and add possible translations to the 
@@ -500,28 +501,40 @@ class Compiler :
 		#debug('guarenteed_steps',guarenteed_steps)
 		#debug('possible_steps',possible_steps)
 		for step in guarenteed_steps :
-			#debug('step',step)
-			#debug('step',step['translation'][self.n.meta.name])
-			
-			# if the new information at this point is enough to fulfil the query, done
-			# otherwise, recursively continue searching
-			found_solution = False
-			#debug('var_triples',self.var_triples)
-			found_solution = self.find_solution(self.var_triples, step['new_query'])
-			#debug('found_solution',found_solution)
-			if found_solution :
-				step['solution'] = found_solution
-				#debug('solution', step['solution'])
-			else :
-				child_steps = self.follow_guarenteed(step['new_query'], possible_stack, history, output_vars)
-				if child_steps :
-					found_solution = True
-					step['guarenteed'].extend(child_steps['guarenteed'])
-					step['possible'].extend(child_steps['possible'])
-			
-			if found_solution :
-				compile_node['guarenteed'].append(step)
-				compile_node_found_solution = True
+			debug('?match',step['translation'][n.meta.name])
+			if [step['translation'], step['input_bindings']] not in history :
+				debug('+match',step['translation'][n.meta.name])
+				#print 'history',history
+				# if there is only one next step, don't worry about copying the history
+				if len(guarenteed_steps) > 1 :
+					new_history = copy.copy(history)
+				else :
+					new_history = history
+				new_history.append([step['translation'], copy.copy(step['input_bindings'])])
+				#debug('step',step)
+				#debug('step',step['translation'][self.n.meta.name])
+				
+				# if the new information at this point is enough to fulfil the query, done
+				# otherwise, recursively continue searching
+				#debug('var_triples',self.var_triples)
+				#debug('step',step.keys())
+				debug('step',step['translation'][self.n.meta.name])
+				debug("step['new_query']",step['new_query'])
+				found_solution = self.find_solution(self.var_triples, step['new_query'])
+				debug('found_solution',found_solution)
+				if found_solution :
+					step['solution'] = found_solution
+					#debug('solution', step['solution'])
+				else :
+					child_steps = self.follow_guarenteed(step['new_query'], possible_stack, new_history, output_vars)
+					if child_steps :
+						found_solution = True
+						step['guarenteed'].extend(child_steps['guarenteed'])
+						step['possible'].extend(child_steps['possible'])
+				
+				if found_solution :
+					compile_node['guarenteed'].append(step)
+					compile_node_found_solution = True
 		
 		# don't follow the possible translations yet, just add then to a stack to
 		# follow once all guarenteed translations have been found
@@ -586,20 +599,22 @@ class Compiler :
 		
 		query, modifiers = self.extract_query_modifiers(query)
 		
+		if len(reqd_bound_vars) == 0 :
+			#var_triples = self.find_var_triples(query, is_lit_var)
+			reqd_bound_vars = find_vars(query, is_lit_var)
+			print 'new reqd_bound_vars',reqd_bound_vars
+		
 		self.make_vars_out_vars(query, reqd_bound_vars)
 		
 		debug('query',query)
 		
-		if reqd_bound_vars == [] :
-			var_triples = self.find_var_triples(query)
-		else :
-			var_triples = self.find_specific_var_triples(query, reqd_bound_vars)
-			if var_triples == [] :
-				raise Exception("Waring, required bound triples were provided, but not found in the query")
+		var_triples = self.find_specific_var_triples(query, reqd_bound_vars)
+		if var_triples == [] :
+			raise Exception("Waring, required bound triples were provided, but not found in the query")
 		
 		# replace all reqd_bound_vars with out vars ... I think this is already done
 		# above.  I'm going to leave it incase there is some other thing going on
-		#debug('var_triples',var_triples)
+		debug('var_triples',var_triples)
 		#bindings = dict([(var, self.n.out_lit_var[var]) for var in reqd_bound_vars])
 		#debug('bindings',bindings)
 		#var_triples = [x for x in sub_var_bindings(var_triples, [bindings])][0]
@@ -619,6 +634,72 @@ class Compiler :
 		history = []
 		
 		compile_root_node = self.follow_guarenteed(query, possible_stack, history, reqd_bound_vars)
+		
+		p('compile_root_node',compile_root_node)
+		#@logger
+		def print_compiled(node, l = []) :
+			for step in node['guarenteed'] :
+				#p('\\',step['translation'][n.meta.name])
+				instruction = [
+					step['translation'][n.meta.name], {
+						'input_bindings' : step['input_bindings'],
+						'output_bindings' : step['output_bindings'],
+					}
+				]
+				print_compiled(step, l + [instruction])
+				#p('/',step['translation'][n.meta.name])
+			if not node['guarenteed'] :
+				p(l+[node['solution']])
+		print_compiled(compile_root_node)
+		
+		
+		# prune any paths which are not necessary:
+		def mark_unnecessary_translations_helper(node) :
+			"""
+			returns variables which need to be bound for the children (next) 
+			translations to be able to work.  If a translation doesn't provide any of
+			those variables as output, than it is unecessary.
+			correlary: if a translation provides an output binding that is never used
+			remove it.
+			"""
+			if 'solution' in node :
+				required_variables = set(node['solution'].values())
+			else :
+				required_variables = set()
+			
+			for step in node['guarenteed'] :
+				required_variables.update(mark_unnecessary_translations_helper(step))
+			
+			for var, binding in node['output_bindings'].items() :
+				if binding not in required_variables :
+					del node['output_bindings'][var]
+			
+			if node['output_bindings'] :
+				node['input_bindings'] = dict([(var, binding) for (var, binding) in node['input_bindings'].iteritems() if not is_var(binding)])
+				required_variables.update(node['input_bindings'].values())
+			
+			return required_variables
+		
+		for node in compile_root_node['guarenteed'] :
+			p('---')
+			mark_unnecessary_translations_helper(node)
+			
+		p('///')
+		print_compiled(compile_root_node)
+		
+		def remove_unnecessary_translations(node) :
+			"""
+			returns a list to replace
+			"""
+			node['guarenteed'] = [step for step in node['guarenteed'] if step['output_bindings']]
+			for step in node['guarenteed'] :
+				remove_unnecessary_translations(step)
+			
+		remove_unnecessary_translations(compile_root_node)
+		
+		print_compiled(compile_root_node)
+		
+		#p(compile_root_node['guarenteed'][0]['translation'][n.meta.name])
 		
 		# TODO: make this work
 		# self.follow_possible(query, possible_stack)

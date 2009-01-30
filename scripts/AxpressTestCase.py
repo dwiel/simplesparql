@@ -207,15 +207,24 @@ class AxpressTestCase(unittest.TestCase):
 			},
 		]
 
+	def test7(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = "/home/dwiel/AMOSvid/1065/*.jpg"
+			thumb = image.thumbnail(image, 1, 1)
+			pix = image.pixel(thumb, 0, 0)
+			pix[pil.color] = _color
+			query.query[query.limit] = 10
+			image[file.filename] = _filename
+			image[html.html] = _html
+		""")
+		print 'ret',prettyquery(ret)
+		#assert len(ret) == 10
 	
 	
 	
 	
 	
 	
-	
-	"""
-	"""
 	
 if __name__ == "__main__" :
 	#print '<root>'

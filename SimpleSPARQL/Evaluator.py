@@ -1,4 +1,4 @@
-from Utils import var_name, is_any_var, is_lit_var, explode_bindings_set, debug
+from Utils import var_name, is_any_var, is_var, is_lit_var, explode_bindings_set, debug, p
 from PrettyQuery import prettyquery
 
 import copy
@@ -30,7 +30,10 @@ class Evaluator :
 				#print 'incoming_bindings', prettyquery(incoming_bindings)
 				solution = {}
 				for var, binding in compile_node['solution'].iteritems() :
-					solution[var_name(var)] = incoming_bindings[var_name(binding)]
+					if is_var(binding) :
+						solution[var_name(var)] = binding
+					else :
+						solution[var_name(var)] = incoming_bindings[var_name(binding)]
 				rets.append(solution)
 			for step in compile_node['guarenteed'] :
 				input_bindings = step['input_bindings']

@@ -20,7 +20,7 @@ class Axpress() :
 		self.multiline_parser = multiline_parser
 		
 	def do(self, query) :
-		self.multiline_parser.parse(query)
+		return self.multiline_parser.parse(query)
 	
 	def read_translate(self, query, bindings_set = [{}], reqd_bound_vars = []) :
 		query_triples = self.parser.parse(query)
