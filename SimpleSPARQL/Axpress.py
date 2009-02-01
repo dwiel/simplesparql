@@ -32,6 +32,7 @@ class Axpress() :
 			if ret_comp == False :
 				raise Exception("Couldn't compile ... sorry I don't have more here")
 			begin_eval = time.time()
+			#for i in range(100) :
 			ret_eval = self.evaluator.evaluate(ret_comp)
 			end_eval = time.time()
 			ret_evals.extend(ret_eval)
@@ -46,9 +47,7 @@ class Axpress() :
 	def sanitize_vars(self, triples) :
 		for triple in triples :
 			for j, value in enumerate(triple) :
-				print 'v',prettyquery(value)
 				if is_any_var(value) :
-					print "HERE"
 					triple[j] = self.n.var[var_name(value)]
 	
 	def read_sparql(self, query, bindings_set = [{}]) :

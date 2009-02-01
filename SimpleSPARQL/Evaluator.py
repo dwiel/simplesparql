@@ -23,7 +23,7 @@ class Evaluator :
 		#print 'ahhhh!'
 		rets = []
 		for incoming_bindings in incoming_bindings_set :
-			if len(compile_node['guarenteed']) == 0 :
+			if len(compile_node['guaranteed']) == 0 :
 				#return incoming_bindings
 				#print 'SOLUTION!!!',prettyquery(compile_node['solution'])
 				#print 'solution'
@@ -35,7 +35,7 @@ class Evaluator :
 					else :
 						solution[var_name(var)] = incoming_bindings[var_name(binding)]
 				rets.append(solution)
-			for step in compile_node['guarenteed'] :
+			for step in compile_node['guaranteed'] :
 				input_bindings = step['input_bindings']
 				output_bindings = step['output_bindings']
 				

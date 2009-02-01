@@ -119,8 +119,8 @@ english: images on flickr tagged sunet sorted by average distance from the color
 
 read translate
 	image[flickr.tag] = 'sunset'
-	image[image.average_color] = color
-	color.distance(color.red, color) = distance
+	image[image.average_color] = _color
+	color.distance(color.red, color) = _distance
 	sparql.order_ascending = distance
 
 or (same as above)

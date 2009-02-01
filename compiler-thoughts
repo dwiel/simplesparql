@@ -56,7 +56,7 @@ how is the compiler matching different from the evaluation matching?
 * compiler doesn't worry about case where there are multiple bindings returned
 	by a translation.
 * does the compiler need to worry about the cases where there are mutliple ways
-	a translation could be bound?  Yes, they are all *possible* or *guarenteed*
+	a translation could be bound?  Yes, they are all *possible* or *guaranteed*
 	translations, like any other.  No need for explosions of sets though
 * two variable could be the same or different ...
 	situation in the middle of compiling:
@@ -120,7 +120,7 @@ note: the output is going to be piped into code which evaluates it, so it
 	so it should be human readable
 
 {
-	'guarenteed' : [<step>],
+	'guaranteed' : [<step>],
 	'possible' : [<step>]
 }
 
@@ -129,7 +129,7 @@ step := {
 	'triplelist' : <triplelist>,
 	'input-bindings' : <bindings>,
 	'output-bindings' : <bindings>,
-	'guarenteed' : [<step>],
+	'guaranteed' : [<step>],
 	'possible' : [<step>],
 }
 
@@ -138,7 +138,7 @@ triplelist : [<triple>]
 
 What is needed to execute a compiled path?
 
-follow guarenteed paths first
+follow guaranteed paths first
 
 for translation :
 	translation(vars = translation['input-bindings']
@@ -189,7 +189,7 @@ check out the results right now:
 [ n.test.u, n.test.sum, n.var.sum, ] is the triple from the input query that is
 being searched for
 [ n.test.u, n.test.sum, n.lit_var.sum, ] is the triple generated after following
-one iteration of guarenteed translations.
+one iteration of guaranteed translations.
 these match? how to tell the two apart?  Does there need to be a different input
 variable namespace for the initial var.sum?
 

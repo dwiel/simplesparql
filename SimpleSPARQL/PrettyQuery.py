@@ -46,7 +46,8 @@ def prettyquery_helper(query, tabs = '', indent = '  ', namespaces = n) :
 					s += tabs + indent + item + ',\n'
 				s += tabs + ']\n'
 	elif isinstance(query, tuple) :
-		s += '(%s)' % prettyquery_helper(list(query), tabs, indent, namespaces)
+		# [:-1] cuts off the \n at the end
+		s += '(%s)' % prettyquery_helper(list(query), tabs, indent, namespaces)[:-1]
 	elif isinstance(query, set) :
 		s += 'set(%s)' % prettyquery_helper(list(query), tabs, indent, namespaces)
 	elif isinstance(query, URIRef) :

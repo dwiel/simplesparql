@@ -246,9 +246,9 @@ class Compiler :
 	def testtranslation(self, translation, query, output_vars) :
 		"""
 		@returns matches, bindings
-			matches is True iff the translation is guarenteed to match the query.  It 
+			matches is True iff the translation is guaranteed to match the query.  It 
 				is self.MAYBE if the translation might match the query and False if it
-				is guarenteed to not match the query.
+				is guaranteed to not match the query.
 			bindings is the set of bindings which allow this translation to match the
 				query
 		"""
@@ -282,13 +282,13 @@ class Compiler :
 		@arg history the history of steps already followed
 		@arg output_vars is a set of variables which are not allowed to be bound as
 			an input to a translation
-		@returns the set of next guarenteed_steps and possible_steps.
+		@returns the set of next guaranteed_steps and possible_steps.
 			Ensures that this set of translation and bindings haven't already been 
 			searched.....
 		"""
 		n = self.n
 		
-		guarenteed_steps = []
+		guaranteed_steps = []
 		possible_steps = []
 		
 		#debug('output_vars',output_vars)
@@ -370,21 +370,21 @@ class Compiler :
 							'translation' : translation,
 							'new_triples' : new_triples,
 							'new_query' : new_query,
-							'guarenteed' : [],
+							'guaranteed' : [],
 							'possible' : [],
 						})
 					elif matches == True :
-						guarenteed_steps.append({
+						guaranteed_steps.append({
 							'input_bindings' : input_bindings,
 							'output_bindings' : output_bindings,
 							'translation' : translation,
 							'new_triples' : new_triples,
 							'new_query' : new_query,
-							'guarenteed' : [],
+							'guaranteed' : [],
 							'possible' : [],
 						})
 		
-		return guarenteed_steps, possible_steps
+		return guaranteed_steps, possible_steps
 	
 	def contains_all_bindings(self, required, obtained) :
 		for key in required :
@@ -472,41 +472,40 @@ class Compiler :
 			bindings.update(new_bindings)
 		return bindings or True
 	
-	@logger
-	def follow_guarenteed(self, query, possible_stack, history, output_vars) :
+	#@logger
+	def follow_guaranteed(self, query, possible_stack, history, output_vars) :
 		"""
-		follow guarenteed translations and add possible translations to the 
+		follow guaranteed translations and add possible translations to the 
 			possible_stack
 		@arg query is the query to start from
 		@arg possible_stack is a list which is filled in with next next possible 
-			translations to follow after the guarenteed translations have already been
+			translations to follow after the guaranteed translations have already been
 			followed completely
 		@arg output_vars is a set of variables which are not allowed to be bound as
 			an input to a translation
-		@return the compiled guarenteed path (see thoughts for more info on this 
+		@return the compiled guaranteed path (see thoughts for more info on this 
 			structure)
 		"""
 		#debug('fg query',query)
 		#print 'history',prettyquery(history)
 		
 		compile_node = {
-			'guarenteed' : [],
+			'guaranteed' : [],
 			'possible' : [],
 		}
 		compile_node_found_solution = False
 		
-		# recursively search through all possible guarenteed translations
-		guarenteed_steps, possible_steps = self.next_translations(query, history, output_vars)
-		#debug('len_guarenteed_steps',len(guarenteed_steps))
-		#debug('guarenteed_steps',guarenteed_steps)
+		# recursively search through all possible guaranteed translations
+		guaranteed_steps, possible_steps = self.next_translations(query, history, output_vars)
+		#debug('len_guaranteed_steps',len(guaranteed_steps))
+		#debug('guaranteed_steps',guaranteed_steps)
 		#debug('possible_steps',possible_steps)
-		for step in guarenteed_steps :
-			debug('?match',step['translation'][n.meta.name])
+		for step in guaranteed_steps :
+			#debug('?match',step['translation'][n.meta.name])
 			if [step['translation'], step['input_bindings']] not in history :
-				debug('+match',step['translation'][n.meta.name])
-				#print 'history',history
+				#debug('+match',step['translation'][n.meta.name])
 				# if there is only one next step, don't worry about copying the history
-				if len(guarenteed_steps) > 1 :
+				if len(guaranteed_steps) > 1 :
 					new_history = copy.copy(history)
 				else :
 					new_history = history
@@ -518,26 +517,26 @@ class Compiler :
 				# otherwise, recursively continue searching
 				#debug('var_triples',self.var_triples)
 				#debug('step',step.keys())
-				debug('step',step['translation'][self.n.meta.name])
-				debug("step['new_query']",step['new_query'])
+				#debug('step',step['translation'][self.n.meta.name])
+				#debug("step['new_query']",step['new_query'])
 				found_solution = self.find_solution(self.var_triples, step['new_query'])
-				debug('found_solution',found_solution)
+				#debug('found_solution',found_solution)
 				if found_solution :
 					step['solution'] = found_solution
 					#debug('solution', step['solution'])
 				else :
-					child_steps = self.follow_guarenteed(step['new_query'], possible_stack, new_history, output_vars)
+					child_steps = self.follow_guaranteed(step['new_query'], possible_stack, new_history, output_vars)
 					if child_steps :
 						found_solution = True
-						step['guarenteed'].extend(child_steps['guarenteed'])
+						step['guaranteed'].extend(child_steps['guaranteed'])
 						step['possible'].extend(child_steps['possible'])
 				
 				if found_solution :
-					compile_node['guarenteed'].append(step)
+					compile_node['guaranteed'].append(step)
 					compile_node_found_solution = True
 		
 		# don't follow the possible translations yet, just add then to a stack to
-		# follow once all guarenteed translations have been found
+		# follow once all guaranteed translations have been found
 		for step in possible_steps:
 			possible_stack.append({
 				'root' : compile_node,
@@ -558,7 +557,7 @@ class Compiler :
 			#compile_node = 
 			## next_query, input_bindings, output_bindings
 			#translation_step = self.follow_translation(query, translation)
-			#compile_node['guarenteed'].append(translation_step)
+			#compile_node['guaranteed'].append(translation_step)
 		
 		
 	def make_vars_out_vars(self, query, reqd_bound_vars) :
@@ -606,7 +605,7 @@ class Compiler :
 		
 		self.make_vars_out_vars(query, reqd_bound_vars)
 		
-		debug('query',query)
+		#debug('query',query)
 		
 		var_triples = self.find_specific_var_triples(query, reqd_bound_vars)
 		if var_triples == [] :
@@ -614,7 +613,7 @@ class Compiler :
 		
 		# replace all reqd_bound_vars with out vars ... I think this is already done
 		# above.  I'm going to leave it incase there is some other thing going on
-		debug('var_triples',var_triples)
+		#debug('var_triples',var_triples)
 		#bindings = dict([(var, self.n.out_lit_var[var]) for var in reqd_bound_vars])
 		#debug('bindings',bindings)
 		#var_triples = [x for x in sub_var_bindings(var_triples, [bindings])][0]
@@ -633,12 +632,12 @@ class Compiler :
 		possible_stack = []
 		history = []
 		
-		compile_root_node = self.follow_guarenteed(query, possible_stack, history, reqd_bound_vars)
+		compile_root_node = self.follow_guaranteed(query, possible_stack, history, reqd_bound_vars)
 		
-		p('compile_root_node',compile_root_node)
+		#p('compile_root_node',compile_root_node)
 		#@logger
 		def print_compiled(node, l = []) :
-			for step in node['guarenteed'] :
+			for step in node['guaranteed'] :
 				#p('\\',step['translation'][n.meta.name])
 				instruction = [
 					step['translation'][n.meta.name], {
@@ -648,9 +647,9 @@ class Compiler :
 				]
 				print_compiled(step, l + [instruction])
 				#p('/',step['translation'][n.meta.name])
-			if not node['guarenteed'] :
+			if not node['guaranteed'] :
 				p(l+[node['solution']])
-		print_compiled(compile_root_node)
+		#print_compiled(compile_root_node)
 		
 		
 		# prune any paths which are not necessary:
@@ -667,7 +666,7 @@ class Compiler :
 			else :
 				required_variables = set()
 			
-			for step in node['guarenteed'] :
+			for step in node['guaranteed'] :
 				required_variables.update(mark_unnecessary_translations_helper(step))
 			
 			for var, binding in node['output_bindings'].items() :
@@ -680,26 +679,26 @@ class Compiler :
 			
 			return required_variables
 		
-		for node in compile_root_node['guarenteed'] :
-			p('---')
+		for node in compile_root_node['guaranteed'] :
+			#p('---')
 			mark_unnecessary_translations_helper(node)
 			
-		p('///')
-		print_compiled(compile_root_node)
+		#p('///')
+		#print_compiled(compile_root_node)
 		
 		def remove_unnecessary_translations(node) :
 			"""
 			returns a list to replace
 			"""
-			node['guarenteed'] = [step for step in node['guarenteed'] if step['output_bindings']]
-			for step in node['guarenteed'] :
+			node['guaranteed'] = [step for step in node['guaranteed'] if step['output_bindings']]
+			for step in node['guaranteed'] :
 				remove_unnecessary_translations(step)
 			
 		remove_unnecessary_translations(compile_root_node)
 		
 		print_compiled(compile_root_node)
 		
-		#p(compile_root_node['guarenteed'][0]['translation'][n.meta.name])
+		#p(compile_root_node['guaranteed'][0]['translation'][n.meta.name])
 		
 		# TODO: make this work
 		# self.follow_possible(query, possible_stack)
