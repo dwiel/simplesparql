@@ -512,10 +512,13 @@ def loadTranslations(translator, n) :
 
 
 	def html_img(vars):
-		vars['html'] = '<img src="%s">' % vars['filename']
+		web_filename = vars['filename'].replace('/home/dwiel', '/home')
+		vars['html'] = '<img src="%s" width="%s" height="%s"/>' % (web_filename, vars['width'], vars['height'])
 	translator.register_translation({
 		n.meta.name : 'html img link',
 		n.meta.input : """
+			image[html.height] = _height
+			image[html.width] = _width
 			image[file.filename] = _filename
 		""",
 		n.meta.output : """
@@ -525,6 +528,22 @@ def loadTranslations(translator, n) :
 		n.meta.constant_vars : ['image'],
 	})
 
+	## this is starting to get silly.  I vote for a python/js code block in MultilineParser
+	#def div(vars):
+		#pass
+	#translator.register_translation({
+		#n.meta.name : 'div',
+		#n.meta.input : """
+			#div[html.background_color] = _color
+			#object[html.html] = _object_html
+			#div[html.contains] = object
+		#""",
+		#n.meta.output : """
+			#div[html.html] _div_html
+		#""",
+		#n.meta.function : foo,
+		#n.meta.constant_vars : [],
+	#})
 
 
 

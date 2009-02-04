@@ -70,6 +70,7 @@ class MultilineParser() :
 			Translator(self.re_write_sparql_unless_exists, self.fn_write_sparql_unless_exists, self.bound_vars_general, False),
 			Translator(self.re_read_translations, self.fn_read_translations, self.bound_vars_general, True),
 			Translator(self.re_write_translations, self.fn_write_translations, self.bound_vars_general, False),
+			Translator(self.re_python, self.fn_python, self.bound_vars_python, True),
 		]
 
 	#def string_to_multiline(self, string) :
@@ -97,13 +98,23 @@ class MultilineParser() :
 		triples = self.parser.parse(g.group(1), reset_bnodes = False)
 		return find_vars(triples), triples
 	
+	re_bound_vars_python = re.compile('\nin\s*(.*)\n(.*)', re.MULTILINE)
+	def bound_vars_python(self, g):
+		g2 = self.re_bound_vars_python.match(g.group(1))
+		if g2 :
+			in_vars = set(g2.group(1).split(' '))
+			code = g2.group(2)
+			return in_vars, code
+		else :
+			return set(), g.group(1)
+	
 	re_read_sparql = re.compile('^read sparql(.*)', re.MULTILINE | re.S)
 	def fn_read_sparql(self, g, query, bindings_set, reqd_bound_vars) :
 		# TODO: change to use axpress
 		bindings_set = self.axpress.read_sparql(query, bindings_set)
 		return bindings_set
 	
-	re_write_sparql = re.compile('^write sparql(\s*)\n(.*)', re.MULTILINE | re.S)
+	re_write_sparql = re.compile('^write sparql\s*\n(.*)', re.MULTILINE | re.S)
 	def fn_write_sparql(self, g, query, bindings_set, reqd_bound_vars) :
 		self.axpress.write_sparql(query, bindings_set)
 		return bindings_set
@@ -135,9 +146,12 @@ class MultilineParser() :
 		print 'translations write(', g.group(1),')'
 		return bindings_set
 	
+	re_python = re.compile('^python(.*)', re.MULTILINE | re.S)
+	def fn_python(self, g, query, bindings_set, reqd_bound_vars) :
+		bindings_set = self.axpress.python(query, bindings_set = bindings_set)
+		return bindings_set
 	
-	
-	def parse(self, query) :
+	def parse(self, query, bindings_set = [{}]) :
 		subquery_lines = []		
 		method = ''
 		
@@ -197,7 +211,6 @@ class MultilineParser() :
 		#debug('reads',reads)
 		#debug('writes',writes)
 		
-		bindings_set = [{}]
 		for translator, g, bound_vars, query, reqd_bound_vars in compiled :			
 			print 'translator',translator
 			print 'g',g

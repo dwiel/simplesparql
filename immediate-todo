@@ -11,17 +11,10 @@ immidiate todo:
 			well ... The set of triples isn't really important.  Its the set of 
 				bindings.
 		
-		!!! make compile !!! (is it really that hard?)
-			given a query (complete or partial), find possible paths through the 
-				set of translations.  Avoid doing any translation evaluation at this 
-				point.
-			The result should be a subgraph of sorts which is the new graph which 
-				needs to be searched through to find the answer.  Ideally, this subgraph
-				requires far less evaluation than the entire set of translations.
 			Keep in mind cached compilations ... basically the partial compilation
 		
 	x	make change to allow different kinds of variables?
-	-	make sure vars['x'] = [1,2,3] works as outlined in andandor
+	x	make sure vars['x'] = [1,2,3] works as outlined in andandor
 			its close enough. still left:
 				vars['x'] = (1,2,3)
 				vars['x'] = [1,2,(3,4),5]
