@@ -29,16 +29,16 @@ class Axpress() :
 			begin_compile = time.time()
 			ret_comp = self.compiler.compile(triples, reqd_bound_vars)
 			end_compile = time.time()
+			print 'compile time:',end_compile-begin_compile
 			if ret_comp == False :
 				raise Exception("Couldn't compile ... sorry I don't have more here")
 			begin_eval = time.time()
 			#for i in range(100) :
 			ret_eval = self.evaluator.evaluate(ret_comp)
 			end_eval = time.time()
+			print 'eval time:',end_eval-begin_eval
 			ret_evals.extend(ret_eval)
 			
-			print 'compile time:',end_compile-begin_compile
-			print 'eval time:',end_eval-begin_eval
 		return ret_evals
 	
 	def write_translate(self, query, bindings_set = [{}]) :
@@ -59,9 +59,9 @@ class Axpress() :
 		results = []
 		query_triples = self.parser.parse(query)
 		for triples in sub_var_bindings(query_triples, bindings_set) :
-			print 'triples',prettyquery(triples)
+			#print 'triples',prettyquery(triples)
 			self.sanitize_vars(triples)
-			print 'triples',prettyquery(triples)
+			#print 'triples',prettyquery(triples)
 			results.extend(self.sparql.read(triples))
 		return results
 

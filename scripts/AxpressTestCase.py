@@ -61,7 +61,7 @@ class AxpressTestCase(unittest.TestCase):
 		# of most of this kind of thing - though I know that it shouldn't be relied
 		# on ...
 		#bindings_set = [x for x in bindings_set]
-		print 'bindings_set',prettyquery(bindings_set)
+		#print 'bindings_set',prettyquery(bindings_set)
 		new_bindings_set = []
 		for bindings in bindings_set :
 			if is_num(bindings['x']) and is_num(bindings['y']) :
@@ -108,7 +108,7 @@ class AxpressTestCase(unittest.TestCase):
 			thumb[pil.image] = _thumb_image
 			query.query[query.limit] = 1
 		""", reqd_bound_vars = ['thumb_image'])
-		print 'ret',prettyquery(ret)
+		print 'ret test2_1',prettyquery(ret)
 		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
 		assert ret == [
 			{
@@ -207,18 +207,37 @@ class AxpressTestCase(unittest.TestCase):
 			},
 		]
 
-	def test7(self):
-		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/AMOSvid/1065/*.jpg"
-			thumb = image.thumbnail(image, 1, 1)
-			pix = image.pixel(thumb, 0, 0)
-			pix[pil.color] = _color
-			query.query[query.limit] = 10
-			image[file.filename] = _filename
-			image[html.html] = _html
-		""")
-		print 'ret',prettyquery(ret)
-		#assert len(ret) == 10
+	#def test7(self):
+		#ret = self.axpress.read_translate("""
+			#image[glob.glob] = "/home/dwiel/AMOSvid/*.jpg"
+			#thumb = image.thumbnail(image, 1, 1)
+			#pix = image.pixel(thumb, 0, 0)
+			#pix[pil.color] = _color
+			#query.query[query.limit] = 10
+			#image[file.filename] = _filename
+			#image[html.html] = _html
+		#""")
+		#print 'ret',prettyquery(ret)
+		#assert len(ret) == 2
+	
+	#def test8(self):
+		#ret = self.axpress.read_translate("""
+			#foo[test.x] = 1
+			#foo[test.y] = 10
+			#foo[test.sum] = _sum
+		#""")
+		#p('ret',ret)
+
+	#def test9(self):
+		#ret = self.axpress.read_translate("""
+			#image[file.filename] = "/home/dwiel/AMOSvid/20080804_080127.jpg"
+			#pix = image.pixel(image, 0, 0)
+			#pix[pil.color] = _color
+			#image[html.html] = _html
+		#""")
+		#p('ret',ret)
+
+
 	
 	
 	

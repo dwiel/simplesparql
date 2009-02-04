@@ -134,7 +134,21 @@ def explode_bindings_set(bindings_set) :
 	
 	return new_bindings_set
 	
-
+def new_explode_bindings_set(bindings_set) :
+	if isinstance(bindings_set, dict) :
+		bindings_set = [bindings_set]
+	
+	# explode the bindings_set which have multiple values into multiple
+	# bindings
+	new_bindings_set = []
+	for bindings in bindings_set :
+		new_bindings = explode_binding(bindings)
+		if len(new_bindings) == 1 :
+			new_bindings_set.extend(new_bindings)
+		else :
+			new_bindings_set.append(new_bindings)
+	return new_bindings_set
+	
 def sub_var_bindings(triples, bindings_set) :
 	"""
 	Substitutes each of the bindings into the set of triples.  bindings_set may

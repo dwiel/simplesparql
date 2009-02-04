@@ -262,6 +262,23 @@ def loadTranslations(translator, n) :
 		n.meta.function : load_image,
 		n.meta.constant_vars : ['image'],
 	})
+	
+	def load_image2(vars) :
+		from PIL import Image
+		im = Image.open(vars['filename'])
+		im.load() # force the data to be loaded (Image.open is lazy)
+		vars['pil_image'] = im
+	translator.register_translation({
+		n.meta.name : 'load image2',
+		n.meta.input : """
+			image[file.filename] = _filename
+		""",
+		n.meta.output : """
+			image[pil.image2] = _pil_image
+		""",
+		n.meta.function : load_image2,
+		n.meta.constant_vars : ['image'],
+	})
 		
 	def image_thumbnail(vars) :
 		from PIL import Image
