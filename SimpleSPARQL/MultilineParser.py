@@ -1,6 +1,6 @@
 import Namespaces
 import Parser
-from Utils import sub_var_bindings, find_vars, debug
+from Utils import sub_var_bindings, find_vars, debug, p
 import re
 from PrettyQuery import prettyquery
 
@@ -121,7 +121,10 @@ class MultilineParser() :
 	
 	re_write_sparql_unless_exists = re.compile('^write sparql unless exists(.*)', re.MULTILINE | re.S)
 	def fn_write_sparql_unless_exists(self, g, query, bindings_set, reqd_bound_vars) :
+		p('write_sparql_unless_exists')
+		p('bindings_set',bindings_set)
 		read_bindings_set = self.axpress.read_sparql(query, bindings_set)
+		p('read_bindings_set',read_bindings_set)
 		# only write if 
 		if len(read_bindings_set) is 0 :
 			# TODO get bound variables out of the write query

@@ -1128,11 +1128,14 @@ class SimpleSPARQL (SPARQLWrapper) :
 		else :
 			where_str = ''
 		
-		sparql_str = "INSERT INTO <%s> { %s } WHERE { %s }" % (self.graph, query_str, where_str)
+		if self.graph :
+			sparql_str = "INSERT INTO <%s> { %s } WHERE { %s }" % (self.graph, query_str, where_str)
+		else :
+			sparql_str = "INSERT { %s } WHERE { %s }" % (query_str, where_str)
 		print
 		print
 		print 'write'
-		print sparql_str
+		print repr(sparql_str)
 		print
 		print
 		return self.doQuery(sparql_str)

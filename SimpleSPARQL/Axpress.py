@@ -1,5 +1,5 @@
 import Parser, Evaluator, MultilineParser
-from Utils import sub_var_bindings, find_vars, UniqueURIGenerator, debug, is_any_var, var_name, explode_bindings_set
+from Utils import sub_var_bindings, sub_var_bindings_set, find_vars, UniqueURIGenerator, debug, is_any_var, var_name, explode_bindings_set, p
 from PrettyQuery import prettyquery
 
 import time
@@ -25,7 +25,8 @@ class Axpress() :
 	def read_translate(self, query, bindings_set = [{}], reqd_bound_vars = []) :
 		query_triples = self.parser.parse(query)
 		ret_evals = []
-		for triples in sub_var_bindings(query_triples, bindings_set) :
+		bindings_set = explode_bindings_set(bindings_set)
+		for triples in sub_var_bindings_set(query_triples, bindings_set) :
 			begin_compile = time.time()
 			ret_comp = self.compiler.compile(triples, reqd_bound_vars)
 			end_compile = time.time()
@@ -42,6 +43,9 @@ class Axpress() :
 		return ret_evals
 	
 	def write_translate(self, query, bindings_set = [{}]) :
+		p('write_translate')
+		p('query',query)
+		p('bindings_set',bindings_set)
 		pass
 	
 	def sanitize_vars(self, triples) :
@@ -50,18 +54,20 @@ class Axpress() :
 				if is_any_var(value) :
 					triple[j] = self.n.var[var_name(value)]
 	
-	def read_sparql(self, query, bindings_set = [{}]) :
+	def read_sparql(self, query, bindings_set = [{}], keep_old_bindings = False) :
 		"""
 		read from the sparql database
 		@arg query the query in one long string, a list of string or triples_set
-		@return a sets of bindings
+		@arg bindings_set is a set of bindings to apply on the way in
+		@arg keep_old_bindings if True will keep variable bound in the incoming 
+		bindings_set in the new bindings_set
+		@return a new set of bindings
 		"""
 		results = []
 		query_triples = self.parser.parse(query)
-		for triples in sub_var_bindings(query_triples, bindings_set) :
-			#print 'triples',prettyquery(triples)
+		bindings_set = explode_bindings_set(bindings_set)
+		for triples in sub_var_bindings_set(query_triples, bindings_set) :
 			self.sanitize_vars(triples)
-			#print 'triples',prettyquery(triples)
 			results.extend(self.sparql.read(triples))
 		return results
 
@@ -70,18 +76,22 @@ class Axpress() :
 		write triples into sparql database.
 		NOTE: any URI which is_var will be converted to a fresh bnode URI
 		"""
+		p('write_sparql')
+		p('query',query)
+		p('bindings_set',bindings_set)		
 		query_triples = self.parser.parse(query)
-		for triples in sub_var_bindings(query_triples, bindings_set) :
+		bindings_set = explode_bindings_set(bindings_set)
+		for triples in sub_var_bindings_set(query_triples, bindings_set) :
 			missing_vars = find_vars(triples)
 			if len(missing_vars) is not 0 :
-				new_bindings = [dict([(var, self.urigen()) for var in missing_vars])]
-				triples = sub_var_bindings(triples, new_bindings).next()
+				new_bindings = dict([(var, self.urigen()) for var in missing_vars])
+				triples = sub_var_bindings(triples, new_bindings)
 			self.sparql.write(triples)
 
 	def python(self, query, bindings_set = [{}]) :
 		new_bindings_set = []
 		for bindings in bindings_set :
-			# TODO don't allow people to break in!
+			# TODO don't allow people to break in!  Not sure how good this is ...
 			bindings['__builtins__'] = None
 			exec query in bindings
 			new_bindings_set.extend(explode_bindings_set(bindings))

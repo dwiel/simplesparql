@@ -149,21 +149,16 @@ def new_explode_bindings_set(bindings_set) :
 			new_bindings_set.append(new_bindings)
 	return new_bindings_set
 	
-def sub_var_bindings(triples, bindings_set) :
+
+def sub_var_bindings(triples, bindings) :
+	new_triples = []
+	for triple in triples :
+		new_triples.append([bound_triple for bound_triple in sub_bindings_triple(triple, bindings)])
+	return new_triples
+
+def sub_var_bindings_set(triples, bindings_set) :
 	"""
-	Substitutes each of the bindings into the set of triples.  bindings_set may
-		look like:
-		[
-			{
-				'varname' : [1, 2, 3]
-			}
-		]
-		which is equivelent to:
-		[	{ 'varname' : 1 },
-			{ 'varname' : 2 },
-			{ 'varname' : 3 } ]
-		which is why this function takes in a set of bindings and returns a set of
-		triple_sets rather than just doing one at a time.
+	Substitutes each of the bindings into the set of triples.
 	@arg triples is the set of triples to substitute the bindings into
 	@arg bindings_set is the set of bindings to substitute into the triples
 	@return a generator of triple_sets with bindings substituted in.
@@ -172,14 +167,8 @@ def sub_var_bindings(triples, bindings_set) :
 	#print 'triples',prettyquery(triples)
 	#print 'bindings',prettyquery(bindings_set)
 	
-	bindings_set = explode_bindings_set(bindings_set)
-	
 	for bindings in bindings_set :
-		new_triples = []
-		for triple in triples :
-			new_triples.append([bound_triple for bound_triple in sub_bindings_triple(triple, bindings)])
-		yield new_triples
-
+		yield sub_var_bindings(triples, bindings)
 
 
 def find_vars(query, is_a_var = is_any_var) :

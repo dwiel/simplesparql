@@ -382,7 +382,7 @@ class Compiler :
 					#print 'new_bindings',prettyquery(new_bindings)
 					#print 'new_lit_vars',prettyquery(new_lit_vars)
 					
-					new_triples = sub_var_bindings(translation[n.meta.output], [output_bindings]).next()
+					new_triples = sub_var_bindings(translation[n.meta.output], output_bindings)
 					new_query = copy.copy(query)
 					
 					new_query.extend(new_triples)
@@ -705,17 +705,6 @@ class Compiler :
 		var_triples = self.find_specific_var_triples(query, reqd_bound_vars)
 		if var_triples == [] :
 			raise Exception("Waring, required bound triples were provided, but not found in the query")
-		
-		# replace all reqd_bound_vars with out vars ... I think this is already done
-		# above.  I'm going to leave it incase there is some other thing going on
-		#debug('var_triples',var_triples)
-		#bindings = dict([(var, self.n.out_lit_var[var]) for var in reqd_bound_vars])
-		#debug('bindings',bindings)
-		#var_triples = [x for x in sub_var_bindings(var_triples, [bindings])][0]
-		#debug('var_triples',var_triples)
-		
-		#debug('query',query)
-		#debug('var_triples',var_triples)
 		
 		self.original_query = query
 		self.var_triples = var_triples
