@@ -123,7 +123,7 @@ class MultilineParser() :
 	def fn_write_sparql_unless_exists(self, g, query, bindings_set, reqd_bound_vars) :
 		p('write_sparql_unless_exists')
 		p('bindings_set',bindings_set)
-		read_bindings_set = self.axpress.read_sparql(query, bindings_set)
+		read_bindings_set = self.axpress.read_sparql(query, bindings_set, keep_old_bindings = True)
 		p('read_bindings_set',read_bindings_set)
 		# only write if 
 		if len(read_bindings_set) is 0 :

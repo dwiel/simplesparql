@@ -203,6 +203,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 			else :
 				data = data.replace('\\', '\\\\')
 				data = data.replace('\n', '\\n')
+				data = data.replace('\r', '\\r')
 				data = data.replace('"', '\\"')
 				data = data.replace("'", "\\'")
 				if '"' not in data :
@@ -324,6 +325,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 			else :
 				query = query.replace('\\', '\\\\')
 				query = query.replace('\n', '\\n')
+				query = query.replace('\r', '\\r')
 				if '"' not in query :
 					return u'"'+query+u'"@'+self.lang
 				if "'" not in query :

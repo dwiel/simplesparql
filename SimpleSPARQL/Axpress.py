@@ -2,7 +2,7 @@ import Parser, Evaluator, MultilineParser
 from Utils import sub_var_bindings, sub_var_bindings_set, find_vars, UniqueURIGenerator, debug, is_any_var, var_name, explode_bindings_set, p
 from PrettyQuery import prettyquery
 
-import time
+import time, copy
 
 class Axpress() :
 	def __init__(self, sparql, compiler, evaluator = None, multiline_parser = None) :
@@ -65,10 +65,20 @@ class Axpress() :
 		"""
 		results = []
 		query_triples = self.parser.parse(query)
-		bindings_set = explode_bindings_set(bindings_set)
-		for triples in sub_var_bindings_set(query_triples, bindings_set) :
+		#for triples in sub_var_bindings_set(query_triples, bindings_set) :
+		for bindings in explode_bindings_set(bindings_set) :
+			triples = sub_var_bindings(query_triples, bindings)
 			self.sanitize_vars(triples)
-			results.extend(self.sparql.read(triples))
+			read_bindings_set = self.sparql.read(triples)
+			if keep_old_bindings :
+				p('bindings',bindings)
+				p('read_bindings_set',read_bindings_set)
+				for read_bindings in read_bindings_set :
+					new_bindings = copy.copy(bindings)
+					new_bindings.update(read_bindings)
+					results.append(new_bindings)
+			else :
+				results.extend(read_bindings_set)
 		return results
 
 	def write_sparql(self, query, bindings_set = [{}]) :
