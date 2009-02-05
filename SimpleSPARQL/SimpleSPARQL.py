@@ -1134,12 +1134,29 @@ class SimpleSPARQL (SPARQLWrapper) :
 			sparql_str = "INSERT INTO <%s> { %s } WHERE { %s }" % (self.graph, query_str, where_str)
 		else :
 			sparql_str = "INSERT { %s } WHERE { %s }" % (query_str, where_str)
-		print
-		print
 		print 'write'
 		print repr(sparql_str)
-		print
-		print
+		return self.doQuery(sparql_str)
+	
+	def delete(self, query, where = None, varnamespace = None) :
+		"""
+		@arg query a tripleslist
+		@arg where a tripleslist
+		"""
+		self._reset_SPARQL_variables()
+		self.reset_py_to_SPARQL_bnode()
+		query_str = self.triplelist_to_sparql(query, varnamespace)
+		if where :
+			where_str = self.triplelist_to_sparql(where, varnamespace)
+		else :
+			where_str = query_str
+		
+		if self.graph :
+			sparql_str = "DELETE FROM <%s> { %s } WHERE { %s }" % (self.graph, query_str, self.wrapGraph(where_str))
+		else :
+			sparql_str = "DELETE { %s } WHERE { %s }" % (query_str, where_str)
+		print 'delete'
+		print repr(sparql_str)
 		return self.doQuery(sparql_str)
 	
 	def insert(self, data, language = 'N3') :

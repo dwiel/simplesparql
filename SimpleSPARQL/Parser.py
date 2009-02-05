@@ -74,6 +74,8 @@ class Parser() :
 	
 	def parse_expression(self, expression) :
 		exp = self.parse_expression_new(expression)
+		if exp is None :
+			raise Exception('Could not parse %s' % expression)
 		code = '[\n%s\n]' % ',\n'.join([
 			'[%s]' % ', '.join(triple) for triple in exp.triplelist()
 		])

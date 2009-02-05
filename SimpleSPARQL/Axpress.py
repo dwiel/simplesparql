@@ -43,6 +43,7 @@ class Axpress() :
 		return ret_evals
 	
 	def write_translate(self, query, bindings_set = [{}]) :
+		# TODO: figure out what this even means!
 		p('write_translate')
 		p('query',query)
 		p('bindings_set',bindings_set)
@@ -86,9 +87,6 @@ class Axpress() :
 		write triples into sparql database.
 		NOTE: any URI which is_var will be converted to a fresh bnode URI
 		"""
-		p('write_sparql')
-		p('query',query)
-		p('bindings_set',bindings_set)		
 		query_triples = self.parser.parse(query)
 		bindings_set = explode_bindings_set(bindings_set)
 		for triples in sub_var_bindings_set(query_triples, bindings_set) :
@@ -97,6 +95,21 @@ class Axpress() :
 				new_bindings = dict([(var, self.urigen()) for var in missing_vars])
 				triples = sub_var_bindings(triples, new_bindings)
 			self.sparql.write(triples)
+	
+	def write_sparql_delete(self, query, bindings_set = [{}]) :
+		"""
+		delete triples from sparql database.
+		NOTE: any URI which is_var will be converted to a fresh bnode URI
+		"""
+		query_triples = self.parser.parse(query)
+		bindings_set = explode_bindings_set(bindings_set)
+		for triples in sub_var_bindings_set(query_triples, bindings_set) :
+			# replace any kind of var with a 'standard' var for SimpleSPARQL
+			for triple in triples :
+				for i, v in enumerate(triple) :
+					if is_any_var(v) :
+						triple[i] = self.n.var[var_name(v)]
+			self.sparql.delete(triples)
 
 	def python(self, query, bindings_set = [{}]) :
 		new_bindings_set = []

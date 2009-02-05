@@ -67,6 +67,7 @@ class MultilineParser() :
 			Translator(self.re_nop, self.fn_nop, self.bound_vars_nop, True),
 			Translator(self.re_read_sparql, self.fn_read_sparql, self.bound_vars_general, True),
 			Translator(self.re_write_sparql, self.fn_write_sparql, self.bound_vars_general, False),
+			Translator(self.re_write_sparql_delete, self.fn_write_sparql_delete, self.bound_vars_general, False),
 			Translator(self.re_write_sparql_unless_exists, self.fn_write_sparql_unless_exists, self.bound_vars_general, False),
 			Translator(self.re_read_translations, self.fn_read_translations, self.bound_vars_general, True),
 			Translator(self.re_write_translations, self.fn_write_translations, self.bound_vars_general, False),
@@ -117,6 +118,11 @@ class MultilineParser() :
 	re_write_sparql = re.compile('^write sparql\s*\n(.*)', re.MULTILINE | re.S)
 	def fn_write_sparql(self, g, query, bindings_set, reqd_bound_vars) :
 		self.axpress.write_sparql(query, bindings_set)
+		return bindings_set
+
+	re_write_sparql_delete = re.compile('^write sparql delete(.*)', re.MULTILINE | re.S)
+	def fn_write_sparql_delete(self, g, query, bindings_set, reqd_bound_vars) :
+		self.axpress.write_sparql_delete(query, bindings_set)
 		return bindings_set
 	
 	re_write_sparql_unless_exists = re.compile('^write sparql unless exists(.*)', re.MULTILINE | re.S)
