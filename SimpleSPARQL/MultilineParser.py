@@ -111,8 +111,9 @@ class MultilineParser() :
 	
 	re_read_sparql = re.compile('^read sparql(.*)', re.MULTILINE | re.S)
 	def fn_read_sparql(self, g, query, bindings_set, reqd_bound_vars) :
-		# TODO: change to use axpress
+		p('read_sparql')
 		bindings_set = self.axpress.read_sparql(query, bindings_set)
+		p('bindings_set',bindings_set)
 		return bindings_set
 	
 	re_write_sparql = re.compile('^write sparql\s*\n(.*)', re.MULTILINE | re.S)

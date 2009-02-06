@@ -101,6 +101,31 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			[n.lit_var.pattern, n.glob.glob, n.meta_var.filename],
 		]
 	
+	def test17(self):
+		query = """uri[test.result] = '<script type="text/javascript" src="external.js"></script>'"""
+		assert self.parser.parse_query(query) == [
+			[ n.var.uri, n.test.result, '<script type="text/javascript" src="external.js"></script>', ],
+		]
+		
+	# this is going to require a nicer parser ...
+	# at least one that understands quotes
+	# most likely also affects:
+	def test18(self):
+		query = """test.func("xyz()", 'abc = 123') = "what's um, the deal?" """
+		assert self.parser.parse_query(query) == [
+			[ n.var.bnode1, n.call.arg1, 'xyz()', ],
+			[ n.var.bnode1, n.call.arg2, 'abc = 123', ],
+			[ n.var.bnode1, n.test.func, "what's um, the deal?", ],
+		]
+	
+	def test19(self):
+		query = """test.func('''xyz() + 'what?' and "what?" ''', 'abc = 123') = "what's um, the deal?" """
+		assert self.parser.parse_query(query) == [
+			[ n.var.bnode1, n.call.arg1, 'xyz() + \'what?\' and "what?" ', ],
+			[ n.var.bnode1, n.call.arg2, 'abc = 123', ],
+			[ n.var.bnode1, n.test.func, "what's um, the deal?", ],
+		]
+	
 	def test_parseQuery1(self):
 		query = [
 			'uri[test.sum] = sum',

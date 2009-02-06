@@ -1,5 +1,6 @@
 import Namespaces
 import re
+from Utils import p, is_lit_var, var_name
 
 re_lhs_rhs = re.compile('(.+)\s*=\s*(.+)')
 re_obj_prop = re.compile('(\w+)\[(\w+)\.(\w+)\]')
@@ -73,13 +74,24 @@ class Parser() :
 		self.var = 0
 	
 	def parse_expression(self, expression) :
+		#try :
+		expression, str_bindings = self.convert_strings_to_vars(expression)
 		exp = self.parse_expression_new(expression)
+		#except :
+			#raise Exception('error parsing %s' % expression)
 		if exp is None :
 			raise Exception('Could not parse %s' % expression)
 		code = '[\n%s\n]' % ',\n'.join([
 			'[%s]' % ', '.join(triple) for triple in exp.triplelist()
 		])
-		return eval(code, {'n' : self.n}, {})
+		triples = eval(code, {'n' : self.n}, {})
+		# if there were strings before, insert them back in now that its been parsed
+		if str_bindings :
+			for triple in triples :
+				for i, value in enumerate(triple) :
+					if is_lit_var(value) and var_name(value)[:4] == '_str' :
+						triple[i] = str_bindings[var_name(value)[4:]]
+		return triples
 	
 	def flatten(self, seq):
 		"""
@@ -99,6 +111,36 @@ class Parser() :
 			line = line.strip()
 			if line is not '' :
 				yield line
+	
+	def convert_strings_to_vars(self, expression) :
+		"""
+		given an expression, find all strings and replace them with token variables.
+		This make parsing later easier.
+		@returns a new expression and a set of bindings from new variable to string
+		"""
+		str_bindings = {}
+		str_num = 0
+		new_expression = ""
+		i = 0
+		# loop through each character, if it is either of the quotes, start quoting
+		# if its a triple quote though, start a long triple quote.
+		while i < len(expression) :
+			letter = expression[i]
+			if letter in "'\"" :
+				if expression[i+1:i+3] == letter * 2 :
+					letter *= 3
+				g = re.search("(.*?[^\\\\])"+letter, expression[i+len(letter):])
+				if g is None :
+					raise Exception("Parse Error: unclosed quote (%s): %s" % (letter, expression))
+				string = g.group(1)
+				new_expression += '__str' + str(str_num)
+				str_bindings[str(str_num)] = string
+				str_num += 1
+				i += len(string) + (len(letter) * 2) - 1
+			else :
+				new_expression += letter
+			i += 1
+		return new_expression, str_bindings
 	
 	def parse(self, query, reset_bnodes = True) :
 		return self.parse_query(query, reset_bnodes)
@@ -130,6 +172,9 @@ class Parser() :
 		expression = expression.strip()
 		g = re_equals.match(expression)
 		if g is not None :
+			if expression.count('=') > 1 :
+				# this is a harder case ...
+				print g.group(0)
 			lhs = self.parse_expression_new(g.group(1))
 			rhs = self.parse_expression_new(g.group(2))
 			

@@ -18,6 +18,7 @@ def loadTranslations(translator, n) :
 	
 	n.bind('music', '<http://dwiel.net/axpress/music/0.1/>')
 	n.bind('lastfm', '<http://dwiel.net/axpress/lastfm/0.1/>')
+	n.bind('reference', '<http://dwiel.net/axpress/reference/0.1/>')
 	
 ## TODO: allow a 'function' to accept a variable number of arguments?
 	#def sum(vars) :
