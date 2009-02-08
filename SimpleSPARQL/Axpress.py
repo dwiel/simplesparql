@@ -117,6 +117,7 @@ class Axpress() :
 			# TODO don't allow people to break in!  Not sure how good this is ...
 			bindings['__builtins__'] = None
 			exec query in bindings
+			del bindings['__builtins__']
 			new_bindings_set.extend(explode_bindings_set(bindings))
 		return new_bindings_set
 	

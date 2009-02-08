@@ -316,6 +316,32 @@ def loadTranslations(translator, n) :
 		n.meta.constant_vars : ['image', 'pixel'],
 	})
 	
+	def html_color(vars) :
+		color = vars['pil_color']
+		vars['html_color'] = hex(color[0])[2:]+hex(color[1])[2:]+hex(color[2])[2:]
+	translator.register_translation({
+		n.meta.name : 'html color',
+		n.meta.input : """
+			pixel[pil.color] = _pil_color
+		""",
+		n.meta.output : """
+			pixel[html.color] = _html_color
+		""",
+		n.meta.function : html_color,
+		n.meta.constant_vars : ['pixel'],
+	})
+	
+	"""
+	create translation
+		input:
+			image[pil.image] = _pil_image
+		function: (compiled? read translate)
+			image.thumbnail(image, 1, 1) = thumb
+			image.pixel(thumb, 0, 0) = _color
+		output:
+			image[image.average_color] = _color
+	"""
+	
 	
 	#def color_distance(vars):
 		#vars['color_diff'] = vars['pil_color1'] - vars['pil_color2']
@@ -509,7 +535,19 @@ def loadTranslations(translator, n) :
 	})
 	
 
-
+	#def filename_to_url(vars):
+		#vars['url'] = vars['filename'].replace('/home/dwiel', '/home')
+	#translator.register_translation({
+		#n.meta.name : 'filename to url',
+		#n.meta.input : """
+			#file[file.filename] = _filename
+		#""",
+		#n.meta.output : """
+			#file[file.url] = _url
+		#""",
+		#n.meta.function : filename_to_url,
+		#n.meta.constant_vars : [],
+	#})
 
 
 	def html_img(vars):

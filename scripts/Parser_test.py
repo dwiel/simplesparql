@@ -107,9 +107,6 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			[ n.var.uri, n.test.result, '<script type="text/javascript" src="external.js"></script>', ],
 		]
 		
-	# this is going to require a nicer parser ...
-	# at least one that understands quotes
-	# most likely also affects:
 	def test18(self):
 		query = """test.func("xyz()", 'abc = 123') = "what's um, the deal?" """
 		assert self.parser.parse_query(query) == [

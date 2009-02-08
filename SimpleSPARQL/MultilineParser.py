@@ -191,12 +191,16 @@ class MultilineParser() :
 			these_lines = [line.strip() for line in these_lines]
 			sub_query = '\n'.join(these_lines)
 			
+			found = False
 			for translator in self.translators :
 				g = translator.re.match(sub_query)
 				if g is not None :
+					found = True
 					bound_vars, query = translator.bound_vars(g)
 					compiled.append((translator, g, bound_vars, query))
 					continue
+			if not found :
+				raise Exception("Unknown command for block %s" % sub_query)
 			
 			cur_position = end_position
 		
@@ -222,7 +226,6 @@ class MultilineParser() :
 		#debug('writes',writes)
 		
 		for translator, g, bound_vars, query, reqd_bound_vars in compiled :			
-			print 'translator',translator
 			print 'g',g
 			print 'bound_vars', bound_vars
 			print 'reqd_bound_vars', reqd_bound_vars
