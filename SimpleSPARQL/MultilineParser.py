@@ -111,9 +111,9 @@ class MultilineParser() :
 	
 	re_read_sparql = re.compile('^read sparql(.*)', re.MULTILINE | re.S)
 	def fn_read_sparql(self, g, query, bindings_set, reqd_bound_vars) :
-		p('read_sparql')
+		#p('read_sparql')
 		bindings_set = self.axpress.read_sparql(query, bindings_set)
-		p('bindings_set',bindings_set)
+		#p('bindings_set',bindings_set)
 		return bindings_set
 	
 	re_write_sparql = re.compile('^write sparql\s*\n(.*)', re.MULTILINE | re.S)
@@ -166,8 +166,13 @@ class MultilineParser() :
 		method = ''
 		
 		lines = query.split('\n')
-		while lines[0].strip() == '' :
+		if len(lines) == 0:
+			return []
+		while len(lines) and lines[0].strip() == '' :
 			lines = lines[1:]
+		
+		if len(lines) == 0 :
+			return []
 		
 		while lines[-1].strip() == '' :
 			lines = lines[:-1]
@@ -230,7 +235,7 @@ class MultilineParser() :
 			print 'bound_vars', bound_vars
 			print 'reqd_bound_vars', reqd_bound_vars
 			bindings_set = translator.fn(g, query, bindings_set, reqd_bound_vars)
-			print 'bindings_set',prettyquery(bindings_set)
+			#print 'bindings_set',prettyquery(bindings_set)
 		
 		return bindings_set
 

@@ -248,6 +248,8 @@ class Compiler :
 		#p('pattern',pattern)
 		#p('output_vars',output_vars)
 		#p('reqd_triples',reqd_triples)
+		if len(pattern) == 0 :
+			return True, [Bindings()]
 		found_reqd = False
 		for triple in pattern :
 			if self.find_triple_match(triple, reqd_triples) :

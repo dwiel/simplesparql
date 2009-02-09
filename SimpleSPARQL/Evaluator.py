@@ -146,7 +146,7 @@ class Evaluator :
 					else :
 						bindings_set = self.evaluate_step_with_bindings_set(dependency, bindings_set)
 						dependency['output_bindings_set'] = bindings_set
-				# evaluate self
+				# evaluate self (this has not been evaluated because nothing depends on it)
 				#p('translation',translation.keys())
 				bindings_set = self.evaluate_step_with_bindings_set(translation['step'], bindings_set)
 				#p('1bindings_set',bindings_set)

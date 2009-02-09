@@ -16,8 +16,10 @@ def loadTranslations(translator, n) :
 	n.bind('glob', '<http://dwiel.net/express/python/glob/0.1/>')
 	n.bind('call', '<http://dwiel.net/express/call/0.1/>')
 	
+	n.bind('axpress', '<http://dwiel.net/axpress/0.1/>')
 	n.bind('music', '<http://dwiel.net/axpress/music/0.1/>')
 	n.bind('lastfm', '<http://dwiel.net/axpress/lastfm/0.1/>')
+	n.bind('amarok', '<http://dwiel.net/axpress/amarok/0.1/>')
 	n.bind('reference', '<http://dwiel.net/axpress/reference/0.1/>')
 	
 ## TODO: allow a 'function' to accept a variable number of arguments?
@@ -586,8 +588,16 @@ def loadTranslations(translator, n) :
 
 
 
-
-
+	def get_amarok_artist(vars):
+		vars['artist'] = os.popen('dcop amarok player artist').next()[:-1]
+	translator.register_translation({
+		n.meta.name : 'get amarok artist',
+		n.meta.input : """""",
+		n.meta.output : """
+			amarok.amarok[amarok.artist] = _artist
+		""",
+		n.meta.function : get_amarok_artist,
+	})
 
 	#def foo(vars):
 		#pass
