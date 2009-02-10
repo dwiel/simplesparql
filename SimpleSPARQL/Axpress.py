@@ -30,7 +30,7 @@ class Axpress() :
 			begin_compile = time.time()
 			ret_comp = self.compiler.compile(triples, reqd_bound_vars)
 			end_compile = time.time()
-			#p('ret_comp',ret_comp)
+			p('ret_comp',ret_comp)
 			print 'compile time:',end_compile-begin_compile
 			if ret_comp == False :
 				raise Exception("Couldn't compile ... sorry I don't have more here")

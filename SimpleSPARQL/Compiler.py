@@ -300,13 +300,29 @@ class Compiler :
 	def find_var_triples(self, query, is_a_var = is_any_var) :
 		return [triple for triple in query if any(map(lambda x:is_a_var(x), triple))]
 	
-	# return all triples which have at least one var
+	# return all triples which have at least one var in vars
 	def find_specific_var_triples(self, query, vars) :
 		return [triple for triple in query if any(map(lambda x:is_any_var(x) and var_name(x) in vars, triple))]
 
 	def next_num(self) :
 		self._next_num += 1
 		return self._next_num
+	
+	def find_unified_bindings_triple(self, otriple, ntriple) :
+		bindings = {}
+		for ov, nv in izip(otriple, ntriple) :
+			if ov != nv :
+				return {}
+			elif is_var(ov) and is_var(nv) :
+				bindings[nv] = var_name(ov)
+		return bindings
+	
+	def find_unified_bindings(self, old, new) :
+		bindings = {}
+		for otriple in old :
+			for ntriple in new :
+				bindings.update(self.find_unified_bindings_triple(otriple, ntriple))
+		return bindings
 
 	#@logger
 	def next_translations(self, query, history, output_vars, reqd_triples, root = False) :
@@ -343,7 +359,7 @@ class Compiler :
 			matches, bindings_set = self.testtranslation(translation, query, output_vars, reqd_triples, root)
 			#debug('bindings_set', bindings_set)
 			if matches :
-				#p('match %s' % translation[n.meta.name])
+				p('match %s' % translation[n.meta.name])
 				for bindings in bindings_set :
 					# not allowed to bind an output variable as a value to the input of a
 					# translation
@@ -372,20 +388,45 @@ class Compiler :
 							new_lit_vars[var_name(value)] = new_var
 							new_bindings[var] = new_var
 					
-					#input_bindings = dict([(var, binding) for (var, binding) in bindings.iteritems() if not is_var(binding)])
+					# input_bindings map from translation space to query space
 					input_bindings = bindings
 					output_bindings = {}
 					
-					for var in find_vars(translation[n.meta.output]) :
-						if var not in translation[n.meta.constant_vars] :
-							output_bindings[var] = n.lit_var[var+'_out_'+str(self.next_num())]
-						else :
-							output_bindings[var] = input_bindings[var]
+					# look through each of the output triples to see if they match any of 
+					# the already known facts.  By match, I mean everything the same 
+					# except for a lit_var in the output where a var is in the facts.  If
+					# one of these are found, replace the lit var with the var
+					#for ttriple in translation[n.meta.output] :
+						#for qtriple in query :
+							#self.find_triple_match
+							#for tv, qv in izip(ttriple, qtriple) :
+								#if tv == qv :
+									#p('tv',tv)
+									#p('qv',qv)
+								#else :
+									#break
+					#p('input_bindings',input_bindings)
+					#p('translation[n.meta.output]',translation[n.meta.output])
+					#tmp_out = sub_var_bindings(translation[n.meta.output], input_bindings)
+					#p('tmp_out',tmp_out)
+					#p('query',query)
+					#unified_bindings = self.find_unified_bindings(query, tmp_out)
+					#p('unified_bindings',unified_bindings)
 					
-					#debug('input_bindings',input_bindings)
-					#debug('output_bindings',output_bindings)
-					#print 'new_bindings',prettyquery(new_bindings)
-					#print 'new_lit_vars',prettyquery(new_lit_vars)
+					#constant_vars = unified_bindings.values()
+					#p('constant_vars',constant_vars)
+					
+					# find output_bindings
+					for var in find_vars(translation[n.meta.output]) :
+						if var in translation[n.meta.constant_vars] :
+							output_bindings[var] = input_bindings[var]
+						#elif var in constant_vars :
+							#output_bindings[var] = n.var[var]
+						else :
+							output_bindings[var] = n.lit_var[var+'_out_'+str(self.next_num())]
+					
+					p('1input_bindings',input_bindings)
+					p('1output_bindings',output_bindings)
 					
 					new_triples = sub_var_bindings(translation[n.meta.output], output_bindings)
 					new_query = copy.copy(query)
@@ -450,12 +491,14 @@ class Compiler :
 				# not sure if this is really right ...
 				if is_any_var(qv) :
 					if var_name(tv) == var_name(qv) :
-						#print '! ! !',prettyquery(tv),prettyquery(qv)
 						return {tv : qv}
-				#print '? ? ?',prettyquery(tv),prettyquery(qv)
 				return False
 			elif is_out_lit_var(qv) :
-				raise Exception("Does this really happen?")
+				# This happens when a query is looking for a literal variable and a 
+				# translation is willing to provide a variable, just not a literal one.
+				# (see lastfm similar artist output variable similar_artist) and a query
+				# wanting it to be literal
+				#raise Exception("Does this really happen?")
 				return False
 			elif is_lit_var(tv) and is_lit_var(qv) :
 				return True
@@ -533,7 +576,7 @@ class Compiler :
 		bindings = dict([(var_name(var), var_name(value)) for var, value in bindings.iteritems()])
 		return bindings, found_var_triples, fact_triples
 	
-	#@logger
+	@logger
 	def follow_guaranteed(self, query, possible_stack, history, output_vars, new_triples, root = False) :
 		"""
 		follow guaranteed translations and add possible translations to the 
@@ -581,11 +624,11 @@ class Compiler :
 				
 				# if the new information at this point is enough to fulfil the query, done
 				# otherwise, recursively continue searching
-				#debug('var_triples',self.var_triples)
-				#debug('step',step['translation'][self.n.meta.name])
-				#debug("step['new_query']",step['new_query'])
+				p('var_triples',self.var_triples)
+				p('step',step['translation'][self.n.meta.name])
+				p("step['new_query']",step['new_query'])
 				found_solution = self.find_solution(self.var_triples, step['new_query'])
-				#debug('found_solution',found_solution)
+				p('found_solution',found_solution)
 				if found_solution :
 					step['solution'] = found_solution
 					#debug('solution', step['solution'])
@@ -714,7 +757,7 @@ class Compiler :
 		
 		self.original_query = query
 		self.var_triples = var_triples
-		#p('var_triples',var_triples)
+		p('var_triples',var_triples)
 		self.vars = reqd_bound_vars
 		self.vars = [var for var in self.vars if var.find('bnode') is not 0]
 		#debug('self.vars',self.vars)
