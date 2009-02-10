@@ -53,19 +53,29 @@ class Evaluator :
 		#p('result_bindings',result_bindings)
 		
 		# bind the values resulting from the function call
-		# new_bindings = {}
-		new_bindings = copy.copy(incoming_bindings)				
-		for var, value in result_bindings.iteritems() :
-			if var in output_bindings :
-				if is_any_var(output_bindings[var]) :
-					new_bindings[var_name(output_bindings[var])] = value
-				else :
-					print 'hmm should I do something?',output_bindings[var],value
+		# the translation might return a bindings_set so deal with that case
+		if isinstance(result_bindings, list) :
+			result_bindings_set = result_bindings
+		else :
+			result_bindings_set = [result_bindings]
+		new_bindings_set = []
+		for result_bindings in result_bindings_set :
+			new_bindings = copy.copy(incoming_bindings)				
+			for var, value in result_bindings.iteritems() :
+				if var in output_bindings :
+					if is_any_var(output_bindings[var]) :
+						new_bindings[var_name(output_bindings[var])] = value
+					else :
+						print 'hmm should I do something?',output_bindings[var],value
+			new_bindings_set.append(new_bindings)
 		
 		#p('new_bindings',new_bindings)
-		new_bindings = new_explode_bindings_set(new_bindings)
-		#p('new_bindings',new_bindings)		
-		return new_bindings
+		new_exploded_bindings_set = []
+		for new_bindings in new_bindings_set :
+			new_exploded_bindings_set.extend(new_explode_bindings_set(new_bindings))
+		#new_bindings_set = [new_explode_bindings_set(new_bindings) for new_bindings in new_bindings_set]
+		#p('new_exploded_bindings_set',new_exploded_bindings_set)
+		return new_exploded_bindings_set
 
 	#@logger
 	def evaluate_step_with_bindings_set(self, step, incoming_bindings_set) :
@@ -157,6 +167,7 @@ class Evaluator :
 				#p('combination_bindings_set after',combination_bindings_set)
 				#p('translation[partial_bindings]',translation['step']['partial_bindings'])
 			
+			#p('combination_bindings_set',combination_bindings_set)
 			#p('solution_bindings',solution_bindings)
 			for bindings in self.each_binding_set(combination_bindings_set) :
 				solution = {}

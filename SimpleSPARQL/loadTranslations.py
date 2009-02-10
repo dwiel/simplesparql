@@ -122,41 +122,50 @@ def loadTranslations(translator, n) :
 	})
 	
 		
-	# these compilations could translate into direct hashes writen to memory/disk
-	# these should basically be able to act like globally (or not) referencable
-	# garbage collected variables.
-	#   garbage collection would require some way to define when somethign expires
-	def pre(vars) :
-		vars['getlastime'] = sparql.compile_single_number([
-			{
-				n.hash.namespace : n.lastfm,
-				n.hash.key : 'lastfm-lasttime',
-				n.hash.value : None
-			}
-		])
+	## these compilations could translate into direct hashes writen to memory/disk
+	## these should basically be able to act like globally (or not) referencable
+	## garbage collected variables.
+	##   garbage collection would require some way to define when somethign expires
+	#def pre(vars) :
+		#vars['getlastime'] = sparql.compile_single_number([
+			#{
+				#n.hash.namespace : n.lastfm,
+				#n.hash.key : 'lastfm-lasttime',
+				#n.hash.value : None
+			#}
+		#])
 		
-		vars['setlasttime'] = sparql.compile_write([
-			{
-				n.hash.namespace : n.lastfm,
-				n.hash.key : 'lastfm-lasttime',
-				n.hash.value : None,
-			}
-		])
-		
+		#vars['setlasttime'] = sparql.compile_write([
+			#{
+				#n.hash.namespace : n.lastfm,
+				#n.hash.key : 'lastfm-lasttime',
+				#n.hash.value : None,
+			#}
+		#])
+	
 	# WARNING: the output of this transformation does not always result in > 1 
 	# set of bindings.  (If the artist is not in lastfm - or if there is no inet?)
 	def lastfmsimilar(vars) :
 	#	vars[n.var.similar_artist] = lastfm.Artist(vars[n.var.artist_name]).getSimilar()
 	#	vars[n.var.similar_artist] = ['Taken By Trees', 'Viva Voce', 'New Buffalo']
-		url = 'http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt' % urllib.quote(vars['artist_name'])
-		f = urllib.urlopen(url)
+		import os, urllib, time
+		filename = '/home/dwiel/.lastfmcache/artist_%s_similar' % urllib.quote(vars['artist_name'])
+		filename = filename.replace('%','_')
+		print('filename',filename)
+		if not os.path.exists(filename) :
+			print('system','wget http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt -O %s' % (urllib.quote(vars['artist_name']), filename))
+			os.system('wget http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt -O %s' % (urllib.quote(vars['artist_name']), filename))
+			#url = 'http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt' % urllib.quote(vars['artist_name'])
+			#f = urllib.urlopen(url)
 		
-		lasttime = vars['getlastime']()
-		while lasttime + 1 < time.time() :
-			# sleep a little
-			pass
+			lasttime = time.time()
+			while lasttime + 1 < time.time() :
+				# sleep a little
+				time.sleep(0)
 		
-		vars['setlasttime'](time.time())
+		f = open(filename)
+		
+		#vars['setlasttime'](time.time())
 		
 		outputs = []
 		for line in f :
@@ -167,20 +176,8 @@ def loadTranslations(translator, n) :
 				'name' : tokens[2],
 			})
 		return outputs[:10]
-		print 'vars',prettyquery(outputs[:10])
-		
-		#vars[n.var.similar_artist] = [
-			#{
-				#n.lastfm.name : 'Taken By Trees',
-				#n.lastfm.similarity_measure : 100,
-				#n.lastfm.mbid : '924392349239429urjf834',
-			#},
-			#{
-				#n.lastfm.name : 'Viva Voce',
-				#n.lastfm.similarity_measure : 96,
-				#n.lastfm.mbid : '88r328394nc3jr43jdmmnn',
-			#}
-		#]
+		#print 'vars',prettyquery(outputs[:10])
+
 	translator.register_translation({
 		n.meta.name : 'last.fm similar artists',
 		n.meta.input : [
@@ -266,22 +263,22 @@ def loadTranslations(translator, n) :
 		n.meta.constant_vars : ['image'],
 	})
 	
-	def load_image2(vars) :
-		from PIL import Image
-		im = Image.open(vars['filename'])
-		im.load() # force the data to be loaded (Image.open is lazy)
-		vars['pil_image'] = im
-	translator.register_translation({
-		n.meta.name : 'load image2',
-		n.meta.input : """
-			image[file.filename] = _filename
-		""",
-		n.meta.output : """
-			image[pil.image2] = _pil_image
-		""",
-		n.meta.function : load_image2,
-		n.meta.constant_vars : ['image'],
-	})
+	#def load_image2(vars) :
+		#from PIL import Image
+		#im = Image.open(vars['filename'])
+		#im.load() # force the data to be loaded (Image.open is lazy)
+		#vars['pil_image'] = im
+	#translator.register_translation({
+		#n.meta.name : 'load image2',
+		#n.meta.input : """
+			#image[file.filename] = _filename
+		#""",
+		#n.meta.output : """
+			#image[pil.image2] = _pil_image
+		#""",
+		#n.meta.function : load_image2,
+		#n.meta.constant_vars : ['image'],
+	#})
 		
 	def image_thumbnail(vars) :
 		from PIL import Image

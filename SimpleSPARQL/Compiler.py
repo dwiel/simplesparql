@@ -231,7 +231,7 @@ class Compiler :
 		
 		return matches, bindings
 	
-	def find_bindings(self, facts, pattern, output_vars, reqd_triples) :
+	def find_bindings(self, facts, pattern, output_vars, reqd_triples, root = False) :
 		"""
 		@arg facts is the set of triples whose values are attempting to matched to
 		@arg pattern is the pattern whose variables are attempting to be matched
@@ -239,6 +239,9 @@ class Compiler :
 			literal variable in the pattern
 		@arg reqd_triples is a set of triples which is a subset of the data of which
 			at least one must be used in the bindings
+		@arg root is True only on the first set of matches to inform find_bindings
+			that a 0 length pattern matches.  Otherwise, 0 length patterns don't match
+			
 		@return matches, set_of_bindings
 			matches is True iff the query matched the set of data
 			set_of_bindings is the set of bindings which matched the data
@@ -248,7 +251,7 @@ class Compiler :
 		#p('pattern',pattern)
 		#p('output_vars',output_vars)
 		#p('reqd_triples',reqd_triples)
-		if len(pattern) == 0 :
+		if len(pattern) == 0 and root:
 			return True, [Bindings()]
 		found_reqd = False
 		for triple in pattern :
@@ -274,7 +277,7 @@ class Compiler :
 		#p('testret',matches,bindings_set)
 		return matches, bindings_set
 	
-	def testtranslation(self, translation, query, output_vars, reqd_triples) :
+	def testtranslation(self, translation, query, output_vars, reqd_triples, root = False) :
 		"""
 		@returns matches, bindings
 			matches is True iff the translation is guaranteed to match the query.  It 
@@ -284,7 +287,7 @@ class Compiler :
 				query
 		"""
 		#p('testing',translation[self.n.meta.name])
-		return self.find_bindings(query, translation[self.n.meta.input], output_vars, reqd_triples)
+		return self.find_bindings(query, translation[self.n.meta.input], output_vars, reqd_triples, root)
 	
 	def next_bnode(self) :
 		return self.n.bnode[str(time.time()).replace('.','') + '_' +  str(random.random()).replace('.','')]
@@ -306,7 +309,7 @@ class Compiler :
 		return self._next_num
 
 	#@logger
-	def next_translations(self, query, history, output_vars, reqd_triples) :
+	def next_translations(self, query, history, output_vars, reqd_triples, root = False) :
 		"""
 		@arg query the query in triples set form
 		@arg history the history of steps already followed
@@ -337,10 +340,10 @@ class Compiler :
 		
 		for translation in self.translations :
 			#p('name',translation[n.meta.name])
-			matches, bindings_set = self.testtranslation(translation, query, output_vars, reqd_triples)
-			#debug('match %s' % translation[n.meta.name], matches)
+			matches, bindings_set = self.testtranslation(translation, query, output_vars, reqd_triples, root)
 			#debug('bindings_set', bindings_set)
 			if matches :
+				#p('match %s' % translation[n.meta.name])
 				for bindings in bindings_set :
 					# not allowed to bind an output variable as a value to the input of a
 					# translation
@@ -531,7 +534,7 @@ class Compiler :
 		return bindings, found_var_triples, fact_triples
 	
 	#@logger
-	def follow_guaranteed(self, query, possible_stack, history, output_vars, new_triples) :
+	def follow_guaranteed(self, query, possible_stack, history, output_vars, new_triples, root = False) :
 		"""
 		follow guaranteed translations and add possible translations to the 
 			possible_stack
@@ -554,7 +557,7 @@ class Compiler :
 		compile_node_found_solution = False
 		
 		# recursively search through all possible guaranteed translations
-		guaranteed_steps, possible_steps = self.next_translations(query, history, output_vars, new_triples)
+		guaranteed_steps, possible_steps = self.next_translations(query, history, output_vars, new_triples, root)
 		#p('len_guaranteed_steps',len(guaranteed_steps))
 		if len(guaranteed_steps) == 0 :
 			#partial_solution = self.find_partial_solution(self.var_triples, query, [])
@@ -565,7 +568,8 @@ class Compiler :
 		for step in guaranteed_steps :
 			#debug('?match',step['translation'][n.meta.name])
 			if [step['translation'], step['input_bindings']] not in history :
-				#debug('+match',step['translation'][n.meta.name])
+				#p('+match',step['translation'][n.meta.name])
+				#p(" step['input_bindings']",step['input_bindings'])
 				# if there is only one next step, don't worry about copying the history
 				if len(guaranteed_steps) > 1 :
 					new_history = copy.copy(history)
@@ -718,7 +722,7 @@ class Compiler :
 		possible_stack = []
 		history = []
 		
-		compile_root_node = self.follow_guaranteed(query, possible_stack, history, reqd_bound_vars, query)
+		compile_root_node = self.follow_guaranteed(query, possible_stack, history, reqd_bound_vars, query, True)
 		
 		if not compile_root_node :
 			return compile_root_node
