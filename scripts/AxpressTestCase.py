@@ -44,8 +44,7 @@ class AxpressTestCase(unittest.TestCase):
 			sparql = sparql,
 			compiler = self.compiler,
 			evaluator = self.evaluator
-		)
-	
+		)	
 	def test1(self):
 		def is_num(x):
 			return isinstance(x, (int, long, float))
@@ -86,8 +85,7 @@ class AxpressTestCase(unittest.TestCase):
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
 			thumb[pil.image] = _thumb_image
 		""", reqd_bound_vars = ['thumb_image', 'thumb'])
-		print '-----------------------------'
-		print 'ret',prettyquery(ret)
+		#print 'ret2',prettyquery(ret)
 		for i, bindings in enumerate(ret) :
 			ret[i]['thumb_image'] = type(bindings['thumb_image'])
 		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
@@ -108,7 +106,7 @@ class AxpressTestCase(unittest.TestCase):
 			thumb[pil.image] = _thumb_image
 			query.query[query.limit] = 1
 		""", reqd_bound_vars = ['thumb_image'])
-		print 'ret test2_1',prettyquery(ret)
+		#print 'ret test2_1',prettyquery(ret)
 		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
 		assert ret == [
 			{
@@ -123,7 +121,7 @@ class AxpressTestCase(unittest.TestCase):
 			thumb[pil.image] = _thumb_image
 			query.query[query.limit] = 2
 		""", reqd_bound_vars = ['thumb_image'])
-		print 'ret',prettyquery(ret)
+		#print 'ret2_2',prettyquery(ret)
 		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
 		assert ret == [
 			{
@@ -140,7 +138,7 @@ class AxpressTestCase(unittest.TestCase):
 			thumb[pil.image] = _thumb_image
 			query.query[query.limit] = 3
 		""", reqd_bound_vars = ['thumb_image'])
-		print 'ret',prettyquery(ret)
+		#print 'ret2_3',prettyquery(ret)
 		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
 		assert ret == [
 			{
@@ -176,7 +174,7 @@ class AxpressTestCase(unittest.TestCase):
 			pixel = image.pixel(thumb, 0, 0)
 			pixel[pil.color] = _thumb_pixel_color
 		""", reqd_bound_vars = ['filename','thumb_pixel_color'])
-		# print 'ret',prettyquery(ret)
+		# print 'ret5',prettyquery(ret)
 		assert ret == [
 			{
 				u'filename' : '/home/dwiel/pictures/stitt blanket/00002.jpg',
@@ -196,7 +194,7 @@ class AxpressTestCase(unittest.TestCase):
 			dist[type.number] = color.distance(color.red, pixel)
 			dist[type.number] = _distance
 		""", reqd_bound_vars = ['filename','distance'])
-		#print 'ret',prettyquery(ret)
+		#print 'ret6',prettyquery(ret)
 		assert ret == [
 			{
 				u'distance' : 39896,
@@ -216,8 +214,18 @@ class AxpressTestCase(unittest.TestCase):
 			image[file.filename] = _filename
 			image[html.html] = _html
 		""")
-		print 'ret',prettyquery(ret)
+		#print 'ret7',prettyquery(ret)
 		assert len(ret) == 2
+		assert ret == [
+			{
+				u'color' : ( 71, 43, 85, ),
+				u'filename' : '/home/dwiel/AMOSvid/20080804_080127.jpg',
+			}, {
+				u'color' : ( 58, 25, 47, ),
+				u'filename' : '/home/dwiel/AMOSvid/20080804_083127.jpg',
+			},
+		]
+
 	
 	def test8(self):
 		ret = self.axpress.read_translate("""
@@ -225,7 +233,8 @@ class AxpressTestCase(unittest.TestCase):
 			foo[test.y] = 10
 			foo[test.sum] = _sum
 		""")
-		p('ret',ret)
+		#p('ret8',ret)
+		assert ret == [{'sum' : 11}]
 
 	def test9(self):
 		ret = self.axpress.read_translate("""
@@ -234,13 +243,21 @@ class AxpressTestCase(unittest.TestCase):
 			pix[pil.color] = _color
 			image[html.html] = _html
 		""")
-		p('ret',ret)
+		#p('ret9',ret)
+		assert ret ==  [
+			{
+				u'color' : ( 249, 255, 237, ),
+			},
+		]
+
 	
 	def test10(self):
 		ret = self.axpress.read_translate("""
- 			amarok.amarok[amarok.artist] = _artist
+ 			amarok.amarok[amarok.artist] = artist
+			artist[music.artist_name] = _name
 		""")
-		p('ret',ret)
+		#p('ret10',ret)
+		assert len(ret) == 1 and len(ret[0]) == 1 and 'name' in ret[0] and isinstance(ret[0]['name'], basestring)
 
 	def test11(self):
 		ret = self.axpress.read_translate("""
@@ -248,10 +265,25 @@ class AxpressTestCase(unittest.TestCase):
 			qartist[lastfm.similar_to] = qsimilar_artist
 			qsimilar_artist[lastfm.name] = _name
 		""")
-		p('ret',ret)
-	
-	
-	
+		#p('ret11',ret)
+		assert len(ret) == 10
+		for bindings in ret :
+			assert len(bindings) == 1
+			assert 'name' in bindings
+			assert isinstance(bindings['name'], basestring)
+
+	def test12(self):
+		ret = self.axpress.read_translate("""
+			amarok.amarok[amarok.artist] = artist
+			artist[lastfm.similar_to] = similar_artist
+			similar_artist[lastfm.name] = _name
+		""")
+		#p('ret12',ret)
+		assert len(ret) == 10
+		for bindings in ret :
+			assert len(bindings) == 1
+			assert 'name' in bindings
+			assert isinstance(bindings['name'], basestring)
 	
 	
 	

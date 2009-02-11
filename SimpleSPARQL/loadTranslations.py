@@ -162,9 +162,9 @@ def loadTranslations(translator, n) :
 		import os, urllib, time
 		filename = '/home/dwiel/.lastfmcache/artist_%s_similar' % urllib.quote(vars['artist_name'])
 		filename = filename.replace('%','_')
-		print('filename',filename)
+		#print('filename',filename)
 		if not os.path.exists(filename) :
-			print('system','wget http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt -O %s' % (urllib.quote(vars['artist_name']), filename))
+			#print('system','wget http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt -O %s' % (urllib.quote(vars['artist_name']), filename))
 			os.system('wget http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt -O %s' % (urllib.quote(vars['artist_name']), filename))
 			#url = 'http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt' % urllib.quote(vars['artist_name'])
 			#f = urllib.urlopen(url)
@@ -602,14 +602,17 @@ def loadTranslations(translator, n) :
 
 
 	def get_amarok_artist(vars):
-		vars['artist'] = os.popen('dcop amarok player artist').next()[:-1]
+		vars['artist_name'] = os.popen('dcop amarok player artist').next()[:-1]
 	translator.register_translation({
 		n.meta.name : 'get amarok artist',
-		n.meta.input : """""",
+		n.meta.input : """
+			amarok.amarok[amarok.artist] = artist
+		""",
 		n.meta.output : """
-			amarok.amarok[amarok.artist] = _artist
+			artist[music.artist_name] = _artist_name
 		""",
 		n.meta.function : get_amarok_artist,
+		n.meta.constant_vars : ['artist'],
 	})
 
 	#def foo(vars):

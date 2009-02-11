@@ -619,8 +619,8 @@ class Compiler :
 				else :
 					new_history = history
 				new_history.append([step['translation'], copy.copy(step['input_bindings'])])
-				#debug('step',step)
-				#debug('step',step['translation'][self.n.meta.name])
+				#p('step',step)
+				#p('step',step['translation'][self.n.meta.name])
 				
 				# if the new information at this point is enough to fulfil the query, done
 				# otherwise, recursively continue searching
@@ -633,7 +633,11 @@ class Compiler :
 					step['solution'] = found_solution
 					#debug('solution', step['solution'])
 				else :
-					child_steps = self.follow_guaranteed(step['new_query'], possible_stack, new_history, output_vars, step['new_triples'])
+					#p('root',root)
+					new_triples = step['new_triples']
+					#if root :
+						#new_triples = new_triples + query
+					child_steps = self.follow_guaranteed(step['new_query'], possible_stack, new_history, output_vars, new_triples)
 					if child_steps :
 						found_solution = True
 						#for child_step in child_steps['guaranteed'] :
@@ -757,7 +761,7 @@ class Compiler :
 		
 		self.original_query = query
 		self.var_triples = var_triples
-		p('var_triples',var_triples)
+		#p('var_triples',var_triples)
 		self.vars = reqd_bound_vars
 		self.vars = [var for var in self.vars if var.find('bnode') is not 0]
 		#debug('self.vars',self.vars)
