@@ -359,7 +359,7 @@ class Compiler :
 			matches, bindings_set = self.testtranslation(translation, query, output_vars, reqd_triples, root)
 			#debug('bindings_set', bindings_set)
 			if matches :
-				p('match %s' % translation[n.meta.name])
+				#p('match %s' % translation[n.meta.name])
 				for bindings in bindings_set :
 					# not allowed to bind an output variable as a value to the input of a
 					# translation
@@ -425,8 +425,8 @@ class Compiler :
 						else :
 							output_bindings[var] = n.lit_var[var+'_out_'+str(self.next_num())]
 					
-					p('1input_bindings',input_bindings)
-					p('1output_bindings',output_bindings)
+					#p('1input_bindings',input_bindings)
+					#p('1output_bindings',output_bindings)
 					
 					new_triples = sub_var_bindings(translation[n.meta.output], output_bindings)
 					new_query = copy.copy(query)
@@ -576,7 +576,7 @@ class Compiler :
 		bindings = dict([(var_name(var), var_name(value)) for var, value in bindings.iteritems()])
 		return bindings, found_var_triples, fact_triples
 	
-	@logger
+	#@logger
 	def follow_guaranteed(self, query, possible_stack, history, output_vars, new_triples, root = False) :
 		"""
 		follow guaranteed translations and add possible translations to the 
@@ -624,11 +624,11 @@ class Compiler :
 				
 				# if the new information at this point is enough to fulfil the query, done
 				# otherwise, recursively continue searching
-				p('var_triples',self.var_triples)
-				p('step',step['translation'][self.n.meta.name])
-				p("step['new_query']",step['new_query'])
+				#p('var_triples',self.var_triples)
+				#p('step',step['translation'][self.n.meta.name])
+				#p("step['new_query']",step['new_query'])
 				found_solution = self.find_solution(self.var_triples, step['new_query'])
-				p('found_solution',found_solution)
+				#p('found_solution',found_solution)
 				if found_solution :
 					step['solution'] = found_solution
 					#debug('solution', step['solution'])

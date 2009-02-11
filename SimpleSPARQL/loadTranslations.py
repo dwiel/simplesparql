@@ -144,6 +144,15 @@ def loadTranslations(translator, n) :
 			#}
 		#])
 	
+	from htmlentitydefs import name2codepoint
+	# for some reason, python 2.5.2 doesn't have this one (apostrophe)
+	name2codepoint['#39'] = 39
+	
+	def unescape(s):
+			"unescape HTML code refs; c.f. http://wiki.python.org/moin/EscapingHtml"
+			return re.sub('&(%s);' % '|'.join(name2codepoint),
+								lambda m: unichr(name2codepoint[m.group(1)]), s)
+
 	# WARNING: the output of this transformation does not always result in > 1 
 	# set of bindings.  (If the artist is not in lastfm - or if there is no inet?)
 	def lastfmsimilar(vars) :
@@ -170,16 +179,15 @@ def loadTranslations(translator, n) :
 		
 		outputs = []
 		for line in f :
-			tokens = line.strip().split(',')
+			tokens = unescape(line.strip()).split(',')
 			outputs.append({
 				'similarity_measure' : float(tokens[0]),
 				'mbid' : tokens[1],
 				'name' : tokens[2],
 			})
 		ret = outputs[:10]
-		print 'vars', prettyquery(ret)
+		#print 'vars', prettyquery(ret)
 		return ret
-		#print 'vars',prettyquery(outputs[:10])
 
 	translator.register_translation({
 		n.meta.name : 'last.fm similar artists',
@@ -482,7 +490,9 @@ def loadTranslations(translator, n) :
 	
 	def glob_glob(vars):
 		import glob
-		vars['out_filename'] = glob.glob(vars['pattern'])
+		#vars['out_filename'] = glob.glob(vars['pattern'])
+		ret = [{'out_filename' : filename} for filename in glob.glob(vars['pattern'])]
+		return ret
 	translator.register_translation({
 		n.meta.name : 'glob glob',
 		# This doesn't work!

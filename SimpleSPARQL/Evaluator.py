@@ -54,13 +54,18 @@ class Evaluator :
 		
 		# bind the values resulting from the function call
 		# the translation might return a bindings_set so deal with that case
+		# list_later surrounds the return value with an extra list to represent that
+		# it has been exploded
+		list_later = False
 		if isinstance(result_bindings, list) :
+			list_later = True
 			result_bindings_set = result_bindings
 		else :
 			result_bindings_set = [result_bindings]
 		new_bindings_set = []
 		for result_bindings in result_bindings_set :
-			new_bindings = copy.copy(incoming_bindings)				
+			#p('result_bindings',result_bindings)
+			new_bindings = copy.copy(incoming_bindings)
 			for var, value in result_bindings.iteritems() :
 				if var in output_bindings :
 					if is_any_var(output_bindings[var]) :
@@ -69,11 +74,15 @@ class Evaluator :
 						print 'hmm should I do something?',output_bindings[var],value
 			new_bindings_set.append(new_bindings)
 		
-		#p('new_bindings',new_bindings)
+		#p('new_bindings_set',new_bindings_set)
 		new_exploded_bindings_set = []
 		for new_bindings in new_bindings_set :
 			new_exploded_bindings_set.extend(new_explode_bindings_set(new_bindings))
-		#new_bindings_set = [new_explode_bindings_set(new_bindings) for new_bindings in new_bindings_set]
+		#if len(new_exploded_bindings_set) > 1 :
+			#new_exploded_bindings_set = [new_exploded_bindings_set]
+		if list_later :
+			new_exploded_bindings_set = [new_exploded_bindings_set]
+		
 		#p('new_exploded_bindings_set',new_exploded_bindings_set)
 		return new_exploded_bindings_set
 
@@ -155,11 +164,12 @@ class Evaluator :
 						bindings_set = dependency['output_bindings_set']
 					else :
 						bindings_set = self.evaluate_step_with_bindings_set(dependency, bindings_set)
+						#p('bindings_set',bindings_set)
 						dependency['output_bindings_set'] = bindings_set
 				# evaluate self (this has not been evaluated because nothing depends on it)
 				#p('translation',translation.keys())
 				bindings_set = self.evaluate_step_with_bindings_set(translation['step'], bindings_set)
-				#p('1bindings_set',bindings_set)
+				#p('bindings_set',bindings_set)
 			
 				# make all possible merges between combination_bindings_set and the new bindings_set
 				#p('combination_bindings_set before',combination_bindings_set)
