@@ -1,5 +1,5 @@
 from SimpleSPARQL import *
-import os, random
+import os, random, re
 from itertools import izip
 
 
@@ -155,6 +155,7 @@ def loadTranslations(translator, n) :
 
 	# WARNING: the output of this transformation does not always result in > 1 
 	# set of bindings.  (If the artist is not in lastfm - or if there is no inet?)
+	re_lastfmsimilar = re.compile('(.*?),(.*?),(.+)')
 	def lastfmsimilar(vars) :
 	#	vars[n.var.similar_artist] = lastfm.Artist(vars[n.var.artist_name]).getSimilar()
 	#	vars[n.var.similar_artist] = ['Taken By Trees', 'Viva Voce', 'New Buffalo']
@@ -179,11 +180,12 @@ def loadTranslations(translator, n) :
 		
 		outputs = []
 		for line in f :
-			tokens = unescape(line.strip()).split(',')
+			line = unescape(line.strip())
+			g = re_lastfmsimilar.match(line)
 			outputs.append({
-				'similarity_measure' : float(tokens[0]),
-				'mbid' : tokens[1],
-				'name' : tokens[2],
+				'similarity_measure' : float(g.group(1)),
+				'mbid' : g.group(2),
+				'name' : g.group(3),
 			})
 		ret = outputs[:10]
 		#print 'vars', prettyquery(ret)
