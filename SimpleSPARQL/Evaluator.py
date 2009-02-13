@@ -45,7 +45,7 @@ class Evaluator :
 		#p('input_bindings',input_bindings)
 		
 		ret = step['translation'][self.n.meta.function](input_bindings)
-		if ret :
+		if ret is not None:
 			result_bindings = ret
 		else :
 			result_bindings = input_bindings

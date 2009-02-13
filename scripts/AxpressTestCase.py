@@ -22,7 +22,6 @@ n.bind('music_album', '<http://dwiel.net/axpress/music_album/0.1/>')
 n.bind('source', '<http://dwiel.net/axpress/source/0.1/>')
 n.bind('lastfm', '<http://dwiel.net/axpress/lastfm/0.1/>')
 n.bind('rdfs', '<http://www.w3.org/2000/01/rdf-schema#>')
-n.bind('test', '<http://dwiel.net/express/test/0.1/>')
 n.bind('bound_var', '<http://dwiel.net/axpress/bound_var/0.1/>')
 n.bind('flickr', '<http://dwiel.net/axpress/flickr/0.1/>')
 n.bind('amos', '<http://dwiel.net/axpress/amos/0.1/>')
@@ -74,6 +73,7 @@ class AxpressTestCase(unittest.TestCase):
 			foo[test.y] = y
 			foo[test.sum] = _sum
 		""", reqd_bound_vars = ['sum'], bindings_set = bindings_set)
+		#p('ret',ret)
 		assert ret == [
 			{
 				u'sum' : 3,
@@ -253,14 +253,14 @@ class AxpressTestCase(unittest.TestCase):
 			},
 		]
 
-	
-	def testAmarok(self):
-		ret = self.axpress.read_translate("""
- 			amarok.amarok[amarok.artist] = artist
-			artist[music.artist_name] = _name
-		""")
-		#p('ret10',ret)
-		assert len(ret) == 1 and len(ret[0]) == 1 and 'name' in ret[0] and isinstance(ret[0]['name'], basestring)
+	## only works when amarok is playing music
+	#def testAmarok(self):
+		#ret = self.axpress.read_translate("""
+ 			#amarok.amarok[amarok.artist] = artist
+			#artist[music.artist_name] = _name
+		#""")
+		##p('ret10',ret)
+		#assert len(ret) == 1 and len(ret[0]) == 1 and 'name' in ret[0] and isinstance(ret[0]['name'], basestring)
 
 	def testTranslationReturnsListOfBindings(self):
 		ret = self.axpress.read_translate("""
@@ -275,18 +275,19 @@ class AxpressTestCase(unittest.TestCase):
 			assert 'name' in bindings
 			assert isinstance(bindings['name'], basestring)
 
-	def testTranslationReturnsListOfBindings2(self):
-		ret = self.axpress.read_translate("""
-			amarok.amarok[amarok.artist] = artist
-			artist[lastfm.similar_to] = similar_artist
-			similar_artist[lastfm.name] = _name
-		""")
-		#p('ret12',ret)
-		assert len(ret) == 10
-		for bindings in ret :
-			assert len(bindings) == 1
-			assert 'name' in bindings
-			assert isinstance(bindings['name'], basestring)
+	## only works when amarok is playing music
+	#def testTranslationReturnsListOfBindings2(self):
+		#ret = self.axpress.read_translate("""
+			#amarok.amarok[amarok.artist] = artist
+			#artist[lastfm.similar_to] = similar_artist
+			#similar_artist[lastfm.name] = _name
+		#""")
+		##p('ret12',ret)
+		#assert len(ret) == 10
+		#for bindings in ret :
+			#assert len(bindings) == 1
+			#assert 'name' in bindings
+			#assert isinstance(bindings['name'], basestring)
 	
 	def testNoBindingsFromTranslation(self):
 		ret = self.axpress.read_translate("""
@@ -294,6 +295,14 @@ class AxpressTestCase(unittest.TestCase):
 			image[file.filename] = _filename
 		""")
 		assert len(ret) == 0
+
+	def testNoBindingsFromTranslation2(self):
+		ret = self.axpress.read_translate("""
+			foo[test.no_bindings_input] = "input string"
+			foo[test.no_bindings_output] = _output
+		""")
+		assert len(ret) == 0
+
 	
 	
 	

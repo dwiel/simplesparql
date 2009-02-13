@@ -22,6 +22,7 @@ def loadTranslations(translator, n) :
 	n.bind('lastfm', '<http://dwiel.net/axpress/lastfm/0.1/>')
 	n.bind('amarok', '<http://dwiel.net/axpress/amarok/0.1/>')
 	n.bind('reference', '<http://dwiel.net/axpress/reference/0.1/>')
+	#n.bind('test', '<http://dwiel.net/axpress/test/0.1/>')
 	
 ## TODO: allow a 'function' to accept a variable number of arguments?
 	#def sum(vars) :
@@ -603,6 +604,8 @@ def loadTranslations(translator, n) :
 
 	def get_amarok_artist(vars):
 		vars['artist_name'] = os.popen('dcop amarok player artist').next()[:-1]
+		if vars['artist_name'] == '' :
+			return []
 	translator.register_translation({
 		n.meta.name : 'get amarok artist',
 		n.meta.input : """
@@ -614,6 +617,26 @@ def loadTranslations(translator, n) :
 		n.meta.function : get_amarok_artist,
 		n.meta.constant_vars : ['artist'],
 	})
+	
+	
+	
+	# used for testing a translation which returns no bindings
+	def no_bindings(vars):
+		return []
+	translator.register_translation({
+		n.meta.name : 'no bindings',
+		n.meta.input : """
+			foo[test.no_bindings_input] = _input
+		""",
+		n.meta.output : """
+			foo[test.no_bindings_output] = _output
+		""",
+		n.meta.function : no_bindings,
+		n.meta.constant_vars : ['foo'],
+	})
+	
+	
+	
 
 	#def foo(vars):
 		#pass

@@ -2,7 +2,6 @@ from SimpleSPARQL import *
 
 n = Namespaces.globalNamespaces()
 n.bind('sparql', '<http://dwiel.net/express/sparql/0.1/>')
-n.bind('test', '<http://dwiel.net/express/test/0.1/>')
 
 def prettyquery(query, tabs = '', indent = '  ', namespaces = n) :
 	s = prettyquery_helper(query, tabs, indent, namespaces)
