@@ -228,7 +228,7 @@ class AxpressTestCase(unittest.TestCase):
 		]
 
 	
-	def test8(self):
+	def testBasicExample(self):
 		ret = self.axpress.read_translate("""
 			foo[test.x] = 1
 			foo[test.y] = 10
@@ -286,7 +286,7 @@ class AxpressTestCase(unittest.TestCase):
 			assert 'name' in bindings
 			assert isinstance(bindings['name'], basestring)
 	
-	def test13(self):
+	def testNoBindingsFromTranslation(self):
 		ret = self.axpress.read_translate("""
 			image[glob.glob] = '/no/files/here/*.jpg'
 			image[file.filename] = _filename
