@@ -46,7 +46,7 @@ class AxpressTestCase(unittest.TestCase):
 			evaluator = self.evaluator
 		)	
 	
-	def test1(self):
+	def testIncomingBindings(self):
 		def is_num(x):
 			return isinstance(x, (int, long, float))
 		
@@ -80,7 +80,7 @@ class AxpressTestCase(unittest.TestCase):
 			},
 		]
 	
-	def test2(self):
+	def testTranslationReturnsMultipleValues(self):
 		ret = self.axpress.read_translate("""
 			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
@@ -100,7 +100,7 @@ class AxpressTestCase(unittest.TestCase):
 			}
 		]
 	
-	def test2_1(self):
+	def testQueryLimitLessThanAvailable(self):
 		ret = self.axpress.read_translate("""
 			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
@@ -115,7 +115,7 @@ class AxpressTestCase(unittest.TestCase):
 			}
 		]
 	
-	def test2_2(self):
+	def testQueryLimitSameAsAvailable(self):
 		ret = self.axpress.read_translate("""
 			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
@@ -132,7 +132,7 @@ class AxpressTestCase(unittest.TestCase):
 			}
 		]
 	
-	def test2_3(self):
+	def testQueryLimitMoreThanAvailable(self):
 		ret = self.axpress.read_translate("""
 			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
@@ -213,7 +213,6 @@ class AxpressTestCase(unittest.TestCase):
 			pix = image.pixel(thumb, 0, 0)
 			pix[pil.color] = _color
 			image[file.filename] = _filename
-			image[html.html] = _html
 		""")
 		#print 'ret7',prettyquery(ret)
 		assert len(ret) == 2
@@ -237,22 +236,25 @@ class AxpressTestCase(unittest.TestCase):
 		#p('ret8',ret)
 		assert ret == [{'sum' : 11}]
 
-	def test9(self):
+	def testMultipleNonDependentPaths(self):
 		ret = self.axpress.read_translate("""
 			image[file.filename] = "/home/dwiel/AMOSvid/20080804_080127.jpg"
 			pix = image.pixel(image, 0, 0)
 			pix[pil.color] = _color
+			image[html.height] = 200
+			image[html.width] = 300
 			image[html.html] = _html
 		""")
 		#p('ret9',ret)
 		assert ret ==  [
 			{
 				u'color' : ( 249, 255, 237, ),
+				u'html' : '<img src="/home/AMOSvid/20080804_080127.jpg" width="300" height="200"/>',
 			},
 		]
 
 	
-	def test10(self):
+	def testAmarok(self):
 		ret = self.axpress.read_translate("""
  			amarok.amarok[amarok.artist] = artist
 			artist[music.artist_name] = _name
@@ -260,7 +262,7 @@ class AxpressTestCase(unittest.TestCase):
 		#p('ret10',ret)
 		assert len(ret) == 1 and len(ret[0]) == 1 and 'name' in ret[0] and isinstance(ret[0]['name'], basestring)
 
-	def test11(self):
+	def testTranslationReturnsListOfBindings(self):
 		ret = self.axpress.read_translate("""
 			qartist[music.artist_name] = 'Neil Young'
 			qartist[lastfm.similar_to] = qsimilar_artist
@@ -273,7 +275,7 @@ class AxpressTestCase(unittest.TestCase):
 			assert 'name' in bindings
 			assert isinstance(bindings['name'], basestring)
 
-	def test12(self):
+	def testTranslationReturnsListOfBindings2(self):
 		ret = self.axpress.read_translate("""
 			amarok.amarok[amarok.artist] = artist
 			artist[lastfm.similar_to] = similar_artist
