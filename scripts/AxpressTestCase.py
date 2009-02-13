@@ -45,6 +45,7 @@ class AxpressTestCase(unittest.TestCase):
 			compiler = self.compiler,
 			evaluator = self.evaluator
 		)	
+	
 	def test1(self):
 		def is_num(x):
 			return isinstance(x, (int, long, float))
@@ -284,6 +285,13 @@ class AxpressTestCase(unittest.TestCase):
 			assert len(bindings) == 1
 			assert 'name' in bindings
 			assert isinstance(bindings['name'], basestring)
+	
+	def test13(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = '/no/files/here/*.jpg'
+			image[file.filename] = _filename
+		""")
+		assert len(ret) == 0
 	
 	
 	

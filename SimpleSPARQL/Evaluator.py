@@ -97,6 +97,9 @@ class Evaluator :
 			else :
 				new_bindings_set.extend(self.evaluate_step_with_bindings(step, incoming_bindings))
 		
+		if new_bindings_set == [{}] :
+			new_bindings_set = []
+		
 		#p('new_bindings_set',new_bindings_set)
 		return new_bindings_set
 	
