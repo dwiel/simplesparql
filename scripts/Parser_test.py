@@ -175,6 +175,12 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			[n.var.uri, n.test.x, 1],
 		]
 	
+	def test_parseBrokenQuery(self):
+		query = """
+			note[e.tag] _tag
+		"""
+		p('parsed',self.parser.parse_query(query))
+	
 	
 if __name__ == "__main__" :
 	unittest.main()

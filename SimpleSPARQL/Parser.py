@@ -11,7 +11,7 @@ re_dict = re.compile('(.+){(.+)}')
 re_dict_pair = re.compile('\s*([^,:\.]*[:\.]*[^,:\.]*)\s*:\s*([^,:\.]*[:\.]*[^,:\.]*)\s*,')
 re_call = re.compile('(.+)\((.*)\)')
 re_call_params = re.compile('([^,]+),')
-re_uri = re.compile('(\D\w+)[\.:](\w+)')
+re_uri = re.compile('(\D\w*)[\.:](\w+)')
 re_var = re.compile('^[a-zA-Z_]\w*$')
 re_meta_var = re.compile('^\?[a-zA-Z_]\w*$')
 re_lit_var = re.compile('^_[a-zA-Z_]\w*$')
@@ -34,7 +34,9 @@ class Expression() :
 		ele[self.missing[-1]] = value
 		self.missing = None
 	
-	def triplelist(self) :
+	def triplelist(self, check_for_missing=False) :
+		if check_for_missing and self.missing :
+			p('missing',self.missing)
 		if isinstance(self.exp, list) and not isinstance(self.exp[0], list) :
 			return [self.exp]
 		else :
@@ -79,10 +81,11 @@ class Parser() :
 		exp = self.parse_expression_new(expression)
 		#except :
 			#raise Exception('error parsing %s' % expression)
+		#p('exp',exp)
 		if exp is None :
 			raise Exception('Could not parse %s' % expression)
 		code = '[\n%s\n]' % ',\n'.join([
-			'[%s]' % ', '.join(triple) for triple in exp.triplelist()
+			'[%s]' % ', '.join(triple) for triple in exp.triplelist(True)
 		])
 		triples = eval(code, {'n' : self.n}, {})
 		# if there were strings before, insert them back in now that its been parsed
@@ -172,6 +175,7 @@ class Parser() :
 		expression = expression.strip()
 		g = re_equals.match(expression)
 		if g is not None :
+			#p('re_equals')
 			if expression.count('=') > 1 :
 				# this is a harder case ...
 				print g.group(0)
@@ -197,6 +201,7 @@ class Parser() :
 		
 		g = re_prop.match(expression)
 		if g is not None :
+			#p('re_prop')
 			obj = self.parse_expression_new(g.group(1))
 			prop = self.parse_expression_new(g.group(2))
 			
@@ -216,6 +221,7 @@ class Parser() :
 		
 		g = re_dict.match(expression)
 		if g is not None :
+			#p('re_dict')
 			obj = g.group(1).strip()
 			inside = g.group(2).strip() + ','
 			
@@ -237,6 +243,7 @@ class Parser() :
 		
 		g = re_call.match(expression)
 		if g is not None :
+			#p('re_call')
 			obj = self.parse_expression_new(g.group(1))
 			params = g.group(2) + ','
 			
@@ -253,23 +260,29 @@ class Parser() :
 		
 		g = re_uri.match(expression)
 		if g is not None :
+			#p('re_uri')
 			namespace = g.group(1).strip()
 			value = g.group(2).strip()
 			return 'n.%s.%s' % (namespace, value)
 		
 		if expression in python_keywords :
+			#p('keyword')
 			return expression
 		
 		g = re_lit_var.match(expression)
 		if g is not None :
+			#p('re_lit_var')
 			return 'n.lit_var.%s' % expression[1:]
 		
 		if re_meta_var.match(expression) :
+			#p('re_meta_var')
 			return 'n.meta_var.%s' % expression[1:]
 		
 		if re_var.match(expression) :
+			#p('re_var')
 			return 'n.var.%s' % expression
 		
+		#p('just expression', expression)
 		return expression
 		
 

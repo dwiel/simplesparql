@@ -15,7 +15,6 @@ n.bind('glob', '<http://dwiel.net/express/glob/0.1/>')
 n.bind('color', '<http://dwiel.net/express/color/0.1/>')
 n.bind('sparql', '<http://dwiel.net/express/sparql/0.1/>')
 n.bind('call', '<http://dwiel.net/express/call/0.1/>')
-n.bind('test', '<http://dwiel.net/express/test/0.1/>')
 n.bind('library', '<http://dwiel.net/axpress/library/0.1/>')
 n.bind('music', '<http://dwiel.net/axpress/music/0.1/>')
 n.bind('music_album', '<http://dwiel.net/axpress/music_album/0.1/>')
@@ -302,6 +301,13 @@ class AxpressTestCase(unittest.TestCase):
 			foo[test.no_bindings_output] = _output
 		""")
 		assert len(ret) == 0
+	
+	def testGeneral(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = '/home/dwiel/AMOSvid/1065/*.png'
+			image[file.filename] = _filename
+		""")
+		p('testGeneral',ret)
 
 	
 	

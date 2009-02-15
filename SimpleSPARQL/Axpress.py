@@ -50,12 +50,6 @@ class Axpress() :
 		p('bindings_set',bindings_set)
 		pass
 	
-	def sanitize_vars(self, triples) :
-		for triple in triples :
-			for j, value in enumerate(triple) :
-				if is_any_var(value) :
-					triple[j] = self.n.var[var_name(value)]
-	
 	def read_sparql(self, query, bindings_set = [{}], keep_old_bindings = False) :
 		"""
 		read from the sparql database
@@ -67,11 +61,12 @@ class Axpress() :
 		"""
 		results = []
 		query_triples = self.parser.parse(query)
+		p('query_triples',query_triples)
 		#for triples in sub_var_bindings_set(query_triples, bindings_set) :
 		for bindings in explode_bindings_set(bindings_set) :
 			triples = sub_var_bindings(query_triples, bindings)
-			self.sanitize_vars(triples)
-			read_bindings_set = self.sparql.read(triples)
+			#self.sanitize_vars(triples)
+			read_bindings_set = self.sparql.read(triples, outvarnamespace = self.n.lit_var)
 			if keep_old_bindings :
 				p('bindings',bindings)
 				p('read_bindings_set',read_bindings_set)

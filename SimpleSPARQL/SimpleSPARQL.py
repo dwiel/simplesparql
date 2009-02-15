@@ -20,7 +20,8 @@ from RDFObject import RDFObject
 from QueryException import QueryException
 from PrettyQuery import prettyquery
 from Cache import Cache
-from Utils import var_name
+from Utils import var_name, find_vars, is_lit_var
+from Parser import Parser
 
 # from parseMatchOutput import construct
 
@@ -40,11 +41,13 @@ class SimpleSPARQL (SPARQLWrapper) :
 		self.n.bind('tvar', '<http://dwiel.net/axpress/translation/var/0.1/>')
 		self.n.bind('bnode', '<http://dwiel.net/simplesparql/bnode/0.1/>')
 		self.n.bind('meta', '<http://dwiel.net/axpress/meta/0.1/>')
+		self.n.bind('lit_var', '<http://dwiel.net/express/lit_var/0.1/>')
 		#self.n.bind('meta_var', '<http://dwiel.net/axpress/meta_var/0.1/>')
 		self.lang = 'en'
 		self.debug = False
 		self.graph = graph
 		self.translations = []
+		self.parser = Parser(n)
 #		self.cache = Cache(SimpleSPARQL(self.baseURI, defaultGraph))
 	
 	def setSPARUL(self, baseURI, returnFormat=None, defaultGraph=None):
@@ -609,12 +612,33 @@ class SimpleSPARQL (SPARQLWrapper) :
 		
 		return self.verify_restrictions_helper(bindings, vars, [], root_var, explicit_vars.keys())
 	
-	def read(self, query) :
+	def read(self, query, outvarnamespace = None) :
+		"""
+		@arg query can be in many forms:
+			a multi-line string: foo[rdfs.a] = bar
+			triple list form: [
+				[n.var.foo, n.rdfs.a, n.var.bar],
+			]
+			or jsparql :
+			{
+				n.sparql.subject : None,
+				n.rdfs.a : None
+			}
+		@arg outvarnamespace can be set if the query is in triplelist form.  
+			Variables in this namespace will have values bound to them while other 
+			variables will not.
+		"""
 		n = self.n
+		
+		# if this is a string (if it is in "foo[rdfs.a] = bar" form)
+		if isinstance(query, basestring) :
+			query = self.parser.parse(query)
+		
+		# TODO: also test to see if it fits the standard SPARQL form SELECT/PREFIX/etc
 		if type(query) == list :
 			if len(query) > 0 :
 				if type(query[0]) == list :
-					return self.new_read(query)
+					return self.new_read(query, outvarnamespace = outvarnamespace)
 			else :
 				return {
 					n.sparql.status : n.sparql.error,
@@ -1258,7 +1282,14 @@ class SimpleSPARQL (SPARQLWrapper) :
 				query_str += triple_str + ' .\n'.join(extra_triple_strs)
 			return query_str
 
-	def new_read(self, query, expected_vars = [], varnamespace = None) :
+	def sanitize_vars(self, triples, outvarnamespace, varnamespace) :
+		for triple in triples :
+			for j, value in enumerate(triple) :
+				if value.find(outvarnamespace) == 0:
+					triple[j] = varnamespace[var_name(value)]
+	
+	def new_read(self, query, expected_vars = [], varnamespace = None, outvarnamespace = None) :
+		print('query',query)
 		# TODO: extract out the result bindings as in self.read
 		# TODO: allow object notation as root query.
 		#   TODO: depricate read, and others
@@ -1292,10 +1323,23 @@ class SimpleSPARQL (SPARQLWrapper) :
 				new_query.append(triple)
 		query = new_query
 		
+		# determine what the output vars are before they are sanitized for 
+		# triplelist_to_sparql
+		output_vars_list = '*'
+		if outvarnamespace :
+			output_vars = find_vars(query, lambda var: var.find(outvarnamespace) == 0)
+			if len(output_vars) :
+				output_vars_list = ', '.join(map(lambda x:'?'+x, output_vars))
+				self.sanitize_vars(query, outvarnamespace, varnamespace)
+			else :
+				print('couldnt find them')
+		print('output_vars_list',output_vars_list)
+		
 		self.reset_py_to_SPARQL_bnode()
 		self._reset_SPARQL_variables()
 		query_str = self.triplelist_to_sparql(query, varnamespace)
-		query = "SELECT * WHERE { %s } %s" % (self.wrapGraph(query_str), '\n'.join(modifiers))
+		print('query',query)
+		query = "SELECT %s WHERE { %s } %s" % (output_vars_list, self.wrapGraph(query_str), '\n'.join(modifiers))
 		ret = self.doQuery(query)
 		for binding in ret['results']['bindings'] :
 			newbinding = {}

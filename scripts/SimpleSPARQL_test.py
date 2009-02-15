@@ -447,7 +447,8 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 		pass
 	
 	def testRead14(self) :
-		# TODO: allow n.sparql.any as the predicate
+		# TODO: allow n.sparql.any as the predicate.  Could also use None predicate?
+		# or var?
 		query = [
 			{
 				n.test.x : None,
@@ -470,7 +471,7 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 			n.sparql.status : n.sparql.error,
 		}
 	
-	def testNewRead1(self) :
+	def testReadTripleList(self) :
 		query = """
 			foo[test.x] = x
 			query.query[query.sort_ascending] = x
@@ -481,7 +482,7 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 		ret = [x for x in ret]
 		assert len(ret) == 1 and ret[0]['x'] == 1
 	
-	def testNewRead2(self) :
+	def testReadTripleList2(self) :
 		query = """
 			foo[test.x] = x
 			query.query[query.sort_descending] = x
@@ -492,7 +493,7 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 		ret = [x for x in ret]
 		assert len(ret) == 1 and ret[0]['x'] == 5
 	
-	def testNewRead3(self) :
+	def testReadTripleList3(self) :
 		query = """
 			foo[test.x] = x
 			query.query[query.sort_descending] = x
@@ -501,6 +502,17 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 		"""
 		query_triples = self.parser.parse(query)
 		ret = self.sparql.read(query_triples)
+		ret = [x for x in ret]
+		assert len(ret) == 1 and ret[0]['x'] == 1
+	
+	def testReadMultilineString(self) :
+		query = """
+			foo[test.x] = x
+			query.query[query.sort_descending] = x
+			query.query[query.limit] = 1
+			query.query[query.offset] = 1
+		"""
+		ret = self.sparql.read(query)
 		ret = [x for x in ret]
 		assert len(ret) == 1 and ret[0]['x'] == 1
 	
@@ -520,8 +532,3 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 if __name__ == "__main__" :
 	unittest.main()
 
-	"""?uri a schema:type .
-		?uri schema:property [
-			schema_property:default ?b ;
-			schema_property:type ?c
-		] ."""

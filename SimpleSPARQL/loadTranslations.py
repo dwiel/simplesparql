@@ -16,6 +16,7 @@ def loadTranslations(translator, n) :
 	n.bind('pil', '<http://dwiel.net/express/python/pil/0.1/>')
 	n.bind('glob', '<http://dwiel.net/express/python/glob/0.1/>')
 	n.bind('call', '<http://dwiel.net/express/call/0.1/>')
+	n.bind('test', '<http://dwiel.net/express/test/0.1/>')
 	
 	n.bind('axpress', '<http://dwiel.net/axpress/0.1/>')
 	n.bind('music', '<http://dwiel.net/axpress/music/0.1/>')
@@ -495,6 +496,7 @@ def loadTranslations(translator, n) :
 		import glob
 		#vars['out_filename'] = glob.glob(vars['pattern'])
 		ret = [{'out_filename' : filename} for filename in glob.glob(vars['pattern'])]
+		print(vars['pattern'],ret)
 		return ret
 	translator.register_translation({
 		n.meta.name : 'glob glob',
