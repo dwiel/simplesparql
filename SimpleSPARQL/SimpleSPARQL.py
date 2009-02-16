@@ -1329,7 +1329,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		if outvarnamespace :
 			output_vars = find_vars(query, lambda var: var.find(outvarnamespace) == 0)
 			if len(output_vars) :
-				output_vars_list = ', '.join(map(lambda x:'?'+x, output_vars))
+				output_vars_list = ' '.join(map(lambda x:'?'+x, output_vars))
 				self.sanitize_vars(query, outvarnamespace, varnamespace)
 			else :
 				print('couldnt find them')
