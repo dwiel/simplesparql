@@ -638,7 +638,19 @@ def loadTranslations(translator, n) :
 	})
 	
 	
-	
+	#translator.register_translation({
+		#n.meta.name : 'sql test',
+		#n.meta.input : """
+			#query[sql.host] = _host
+			#query[sql.database] = _database
+			#query[sql.table] = _table
+			#query[sql.
+		#""",
+		#n.meta.output : """
+		#""",
+		#n.meta.function : foo,
+		##n.meta.constant_vars : [],
+	#})
 
 	#def foo(vars):
 		#pass

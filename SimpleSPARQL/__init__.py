@@ -20,4 +20,4 @@ from PassCheckCreateUnlessExists import PassCheckCreateUnlessExists
 
 from QueryException import QueryException
 
-from Utils import p
+from Utils import p, is_var, var_name

@@ -54,7 +54,7 @@ class Translator() :
 		self.is_read = is_read
 
 class MultilineParser() :
-	def __init__(self, n = None, axpress = None) :
+	def __init__(self, n = None, axpress = None, options = None) :
 		if n == None :
 			n = Namespaces.Namespaces()
 		
@@ -161,7 +161,10 @@ class MultilineParser() :
 		bindings_set = self.axpress.python(query, bindings_set = bindings_set)
 		return bindings_set
 	
-	def parse(self, query, bindings_set = [{}]) :
+	def parse(self, query, bindings_set = [{}], options = None) :
+		if options is None :
+			options = self.options
+		
 		subquery_lines = []		
 		method = ''
 		
@@ -230,12 +233,14 @@ class MultilineParser() :
 		#debug('reads',reads)
 		#debug('writes',writes)
 		
-		for translator, g, bound_vars, query, reqd_bound_vars in compiled :			
-			print 'g',g
-			print 'bound_vars', bound_vars
-			print 'reqd_bound_vars', reqd_bound_vars
+		for translator, g, bound_vars, query, reqd_bound_vars in compiled :
+			#print 'bound_vars', bound_vars
+			#print 'reqd_bound_vars', reqd_bound_vars
+			if 'intermediate-bindings' in options :
+				print 'pre-bindings_set',prettyquery(bindings_set)
 			bindings_set = translator.fn(g, query, bindings_set, reqd_bound_vars)
-			#print 'bindings_set',prettyquery(bindings_set)
+			if 'intermediate-bindings' in options :
+				print 'post-bindings_set',prettyquery(bindings_set)
 		
 		return bindings_set
 

@@ -192,7 +192,11 @@ class Evaluator :
 						#solution[var_name(var)] = incoming_bindings[var_name(binding)]
 				final_bindings_set.append(solution)
 		
-		return final_bindings_set
+		# TODO: only actually evalute 'limit' #, instead of only returning that many
+		if len(final_bindings_set) > modifiers['limit'] :
+			return final_bindings_set[:modifiers['limit']]
+		else :
+			return final_bindings_set
 		#return self.evaluate_helper(compiled['combinations'], incoming_bindings_set, modifiers)
 
 

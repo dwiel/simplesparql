@@ -5,7 +5,7 @@ from PrettyQuery import prettyquery
 import time, copy
 
 class Axpress() :
-	def __init__(self, sparql, compiler, evaluator = None, multiline_parser = None) :
+	def __init__(self, sparql, compiler, evaluator = None, multiline_parser = None, options = ['time']) :
 		self.sparql = sparql
 		self.n = sparql.n
 		# self.translator = translator
@@ -18,9 +18,12 @@ class Axpress() :
 		if multiline_parser == None :
 			multiline_parser = MultilineParser.MultilineParser(self.n, self)
 		self.multiline_parser = multiline_parser
+		self.options = options
 		
-	def do(self, query, bindings_set = [{}]) :
-		return self.multiline_parser.parse(query, bindings_set)
+	def do(self, query, bindings_set = [{}], options = None) :
+		if options is None :
+			options = self.options
+		return self.multiline_parser.parse(query, bindings_set, self.options)
 	
 	def read_translate(self, query, bindings_set = [{}], reqd_bound_vars = []) :
 		query_triples = self.parser.parse(query)
@@ -31,14 +34,16 @@ class Axpress() :
 			ret_comp = self.compiler.compile(triples, reqd_bound_vars)
 			end_compile = time.time()
 			#p('ret_comp',ret_comp)
-			print 'compile time:',end_compile-begin_compile
+			if 'time' in self.options :
+				print 'compile time:',end_compile-begin_compile
 			if ret_comp == False :
 				raise Exception("Couldn't compile ... sorry I don't have more here")
 			begin_eval = time.time()
 			#for i in range(100) :
 			ret_eval = self.evaluator.evaluate(ret_comp)
 			end_eval = time.time()
-			print 'eval time:',end_eval-begin_eval
+			if 'time' in self.options :
+				print 'eval time:',end_eval-begin_eval
 			ret_evals.extend(ret_eval)
 			
 		return ret_evals
@@ -61,15 +66,15 @@ class Axpress() :
 		"""
 		results = []
 		query_triples = self.parser.parse(query)
-		p('query_triples',query_triples)
+		#p('query_triples',query_triples)
 		#for triples in sub_var_bindings_set(query_triples, bindings_set) :
 		for bindings in explode_bindings_set(bindings_set) :
 			triples = sub_var_bindings(query_triples, bindings)
 			#self.sanitize_vars(triples)
 			read_bindings_set = self.sparql.read(triples, outvarnamespace = self.n.lit_var)
 			if keep_old_bindings :
-				p('bindings',bindings)
-				p('read_bindings_set',read_bindings_set)
+				#p('bindings',bindings)
+				#p('read_bindings_set',read_bindings_set)
 				for read_bindings in read_bindings_set :
 					new_bindings = copy.copy(bindings)
 					new_bindings.update(read_bindings)
