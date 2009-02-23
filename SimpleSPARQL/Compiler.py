@@ -55,6 +55,21 @@ class Compiler :
 		
 		self.translations.append(translation)
 	
+	def get_used_uris(self) :
+		uris = []
+		
+		def extract_uris(triples_list) :
+			for triple in triples_list :
+				for v in triple :
+					if isinstance(v, URIRef) and not is_any_var(v):
+						uris.append(v)
+		
+		for translation in self.translations :
+			extract_uris(translation[n.meta.input])
+			extract_uris(translation[n.meta.output])
+		
+		return set(uris)
+	
 	#@logger
 	def values_match(self, value, qvalue) :
 		if type(value) == URIRef :
