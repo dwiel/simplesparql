@@ -244,7 +244,7 @@ class AxpressTestCase(unittest.TestCase):
 			image[html.width] = 300
 			image[html.html] = _html
 		""")
-		#p('ret9',ret)
+		p('testMultipleNonDependentPaths',ret)
 		assert ret ==  [
 			{
 				u'color' : ( 249, 255, 237, ),
@@ -252,6 +252,31 @@ class AxpressTestCase(unittest.TestCase):
 			},
 		]
 
+	#def testOptionInputs(self):
+		#ret = self.axpress.read_translate("""
+			#image[file.filename] = "/home/dwiel/AMOSvid/20080804_080127.jpg"
+			#image[html.width] = 300
+			#image[html.html] = _html
+		#""")
+		#p('testOptionInputs',ret)
+		#assert ret ==  [
+			#{
+				#u'html' : '<img src="/home/AMOSvid/20080804_080127.jpg" width="300"/>',
+			#},
+		#]
+
+	#def testOptionInputs2(self):
+		#ret = self.axpress.read_translate("""
+			#image[file.filename] = "/home/dwiel/AMOSvid/20080804_080127.jpg"
+			#image[html.html] = _html
+		#""")
+		#p('testOptionInputs2',ret)
+		#assert ret ==  [
+			#{
+				#u'html' : '<img src="/home/AMOSvid/20080804_080127.jpg" />',
+			#},
+		#]
+	
 	## only works when amarok is playing music
 	#def testAmarok(self):
 		#ret = self.axpress.read_translate("""
@@ -265,7 +290,7 @@ class AxpressTestCase(unittest.TestCase):
 		ret = self.axpress.read_translate("""
 			qartist[music.artist_name] = 'Neil Young'
 			qartist[lastfm.similar_to] = qsimilar_artist
-			qsimilar_artist[lastfm.name] = _name
+			qsimilar_artist[lastfm.artist_name] = _name
 		""")
 		#p('ret11',ret)
 		assert len(ret) == 10

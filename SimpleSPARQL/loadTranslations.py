@@ -158,8 +158,8 @@ def loadTranslations(translator, n) :
 
 	# WARNING: the output of this transformation does not always result in > 1 
 	# set of bindings.  (If the artist is not in lastfm - or if there is no inet?)
-	re_lastfmsimilar = re.compile('(.*?),(.*?),(.+)')
-	def lastfmsimilar(vars) :
+	re_lastfm_similar = re.compile('(.*?),(.*?),(.+)')
+	def lastfm_similar(vars) :
 	#	vars[n.var.similar_artist] = lastfm.Artist(vars[n.var.artist_name]).getSimilar()
 	#	vars[n.var.similar_artist] = ['Taken By Trees', 'Viva Voce', 'New Buffalo']
 		import os, urllib, time
@@ -184,7 +184,7 @@ def loadTranslations(translator, n) :
 		outputs = []
 		for line in f :
 			line = unescape(line.strip())
-			g = re_lastfmsimilar.match(line)
+			g = re_lastfm_similar.match(line)
 			outputs.append({
 				'similarity_measure' : float(g.group(1)),
 				'mbid' : g.group(2),
@@ -204,14 +204,104 @@ def loadTranslations(translator, n) :
 			'artist[lastfm.similar_to] = similar_artist',
 			'similar_artist[lastfm.similarity_measure] = ?similarity_measure',
 			'similar_artist[lastfm.mbid] = _mbid',
-			'similar_artist[lastfm.name] = _name',
+			'similar_artist[lastfm.artist_name] = _name',
 		],
-		n.meta.function : lastfmsimilar,
+		n.meta.function : lastfm_similar,
 		n.meta.scale : 100,
 		n.meta.expected_time : 1,
 		n.cache.expiration_length : 2678400, # 1 month in seconds
 		n.meta.constant_vars : ['artist', 'similar_artist'],
 	})
+	
+	def lastfm_user_recent_tracks(vars) :
+		import urllib2
+		import xml.etree.ElementTree
+		
+		url = 'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=%s&api_key=41f38f5e3d328f6ff186835d06780989' % urllib.quote(vars['user_name'])
+		
+		f = urllib2.urlopen(url)
+		lasttime = time.time()
+		etree = xml.etree.ElementTree.parse(f)
+		results = []
+		for track in etree.findall('*/track') :
+			result = {}
+			artist = track.find('artist')
+			result['artist_mbid'] = artist.attrib['mbid']
+			result['artist_name'] = artist.text
+			result['track_name'] = track.find('name').text
+			album = track.find('album')
+			result['album_mbid'] = album.attrib['mbid']
+			result['album_name'] = album.text
+			result['date_uts'] = track.find('date').attrib['uts']
+			results.append(result)
+		
+		while lasttime + 1 < time.time() :
+			# sleep a little
+			time.sleep(0)
+		
+		return results
+		
+	translator.register_translation({
+		n.meta.name : "last.fm user's recent tracks",
+		n.meta.input : """
+			user[lastfm.user_name] = _user_name
+		""",
+		n.meta.output : """
+			user[lastfm.recent_track] = track
+			track[lastfm.artist] = artist
+			artist[lastfm.mbid] = _artist_mbid
+			artist[lastfm.artist_name] = _artist_name
+			track[lastfm.track_name] = _track_name
+			artist[lastfm.album] = album
+			album[lastfm.mbid] = _album_mbid
+			album[lastfm.album_name] = _album_name
+			track[lastfm.date_uts] = _date_uts
+		""",
+		n.meta.function : lastfm_user_recent_tracks,
+		n.meta.constant_vars : ['user'],
+	})
+	
+	translator.register_translation({
+		n.meta.name : "last.fm shorthand artist name",
+		n.meta.input : """
+			track[lastfm.artist] = artist
+			artist[lastfm.artist_name] = _artist_name
+		""",
+		n.meta.output : """
+			track[lastfm.artist_name] = _artist_name
+		""",
+		n.meta.constant_vars : ['track'],
+	})
+	
+	translator.register_translation({
+		n.meta.name : "last.fm shorthand artist mbid",
+		n.meta.input : """
+			track[lastfm.artist] = artist
+			artist[lastfm.mbid] = _artist_mbid
+		""",
+		n.meta.output : """
+			track[lastfm.artist_mbid] = _artist_mbid
+		""",
+		n.meta.constant_vars : ['track'],
+	})
+	
+	translator.register_translation({
+		n.meta.name : "last.fm shorthand album mbid",
+		n.meta.input : """
+			track[lastfm.album] = album
+			album[lastfm.mbid] = _album_mbid
+		""",
+		n.meta.output : """
+			track[lastfm.album_mbid] = _album_mbid
+		""",
+		n.meta.constant_vars : ['track'],
+	})
+	
+	
+	
+	
+	
+	
 	"""
 	artist[music.artist_name] = artist_name
 	artist[lastfm.similar_to] = similar_artist
@@ -571,13 +661,26 @@ def loadTranslations(translator, n) :
 
 	def html_img(vars):
 		web_filename = vars['filename'].replace('/home/dwiel', '/home')
+		
+		#if 'width' in vars :
+			#width = 'width="%s" ' % vars['width']
+		#else :
+			#width = ''
+		
+		#if 'height' in vars :
+			#height = 'height="%s" ' % vars['height']
+		#else :
+			#height = ''
+		
+		#vars['html'] = '<img src="%s" %s%s/>' % (web_filename, width, height)
+		
 		vars['html'] = '<img src="%s" width="%s" height="%s"/>' % (web_filename, vars['width'], vars['height'])
 	translator.register_translation({
 		n.meta.name : 'html img link',
 		n.meta.input : """
-			image[html.height] = _height
-			image[html.width] = _width
 			image[file.filename] = _filename
+			image[html.width] = _width
+			image[html.height] = _height
 		""",
 		n.meta.output : """
 			image[html.html] = _html

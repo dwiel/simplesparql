@@ -35,10 +35,13 @@ class Compiler :
 		n = self.n
 		
 		# make sure all of the required keys are present
-		required = [n.meta.input, n.meta.output, n.meta.function, n.meta.name]
+		required = [n.meta.input, n.meta.output, n.meta.name]
 		missing = [key for key in required if key not in translation]
 		if missing :
 			raise Exception('translation is missing keys: %s' % prettyquery(missing))
+		
+		if n.meta.function not in translation :
+			translation[n.meta.function] = lambda x:x
 		
 		if n.meta.constant_vars not in translation :
 			translation[n.meta.constant_vars] = []
