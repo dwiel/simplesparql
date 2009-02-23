@@ -309,6 +309,34 @@ class AxpressTestCase(unittest.TestCase):
 		""")
 		p('testGeneral',ret)
 
+	def testIncomingOutgoingBindings(self):
+		ret = self.axpress.read_translate("""
+			foo[test.x] = x
+			foo[test.y] = y
+			foo[test.sum] = _sum
+		""", bindings_set = [{'x' : 1, 'y' : 2}], reqd_bound_vars=['x', 'sum'])
+		#p('ret',ret)
+		assert ret == [
+			{
+				u'x' : 1,
+				u'sum' : 3,
+			},
+		]
+	
+	def testIncomingOutgoingBindings2(self):
+		ret = self.axpress.read_translate("""
+			foo[test.x] = _x
+			foo[test.y] = y
+			foo[test.sum] = _sum
+		""", bindings_set = [{'x' : 1, 'y' : 2}])
+		p('ret',ret)
+		assert ret == [
+			{
+				u'x' : 1,
+				u'sum' : 3,
+			},
+		]
+
 	
 	
 	

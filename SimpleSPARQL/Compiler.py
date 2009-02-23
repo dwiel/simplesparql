@@ -753,18 +753,13 @@ class Compiler :
 					new_combination[depends_triple] = dependency
 		return new_combination
 
-	def compile(self, query, reqd_bound_vars = [], input = [], output = []) :
+	def compile(self, query, reqd_bound_vars, input = [], output = []) :
 		if isinstance(query, basestring) :
 			query = [line.strip() for line in query.split('\n')]
 			query = [line for line in query if line is not ""]
 		query = self.parser.parse(query)
 		
 		query, modifiers = self.extract_query_modifiers(query)
-		
-		if len(reqd_bound_vars) == 0 :
-			#var_triples = self.find_var_triples(query, is_lit_var)
-			reqd_bound_vars = find_vars(query, is_lit_var)
-			#p('new reqd_bound_vars',reqd_bound_vars)
 		
 		self.make_vars_out_vars(query, reqd_bound_vars)
 		
@@ -916,82 +911,82 @@ class Compiler :
 		
 		
 		
+		##p('compile_root_node',compile_root_node)
+		##@logger
+		#def print_compiled(node, l = []) :
+			#for step in node['guaranteed'] :
+				##p('\\',step['translation'][n.meta.name])
+				#instruction = [
+					#step['translation'][n.meta.name], {
+						#'input_bindings' : step['input_bindings'],
+						#'output_bindings' : step['output_bindings'],
+					#}
+				#]
+				#print_compiled(step, l + [instruction])
+				##p('/',step['translation'][n.meta.name])
+			#if not node['guaranteed'] :
+				#p(l+[node['solution']])
+		##print_compiled(compile_root_node)
+		
+		
+		## prune any paths which are not necessary:
+		#def mark_unnecessary_translations_helper(node) :
+			#"""
+			#returns variables which need to be bound for the children (next) 
+			#translations to be able to work.  If a translation doesn't provide any of
+			#those variables as output, than it is unecessary.
+			#correlary: if a translation provides an output binding that is never used
+			#remove it.
+			#"""
+			#if 'solution' in node :
+				#required_variables = set(node['solution'].values())
+			#else :
+				#required_variables = set()
+			
+			#for step in node['guaranteed'] :
+				#required_variables.update(mark_unnecessary_translations_helper(step))
+			
+			#for var, binding in node['output_bindings'].items() :
+				#if binding not in required_variables :
+					#del node['output_bindings'][var]
+			
+			#if node['output_bindings'] :
+				#node['input_bindings'] = dict([(var, binding) for (var, binding) in node['input_bindings'].iteritems() if not is_var(binding)])
+				#required_variables.update(node['input_bindings'].values())
+			
+			#return required_variables
+		
+		#for node in compile_root_node['guaranteed'] :
+			##p('---')
+			#mark_unnecessary_translations_helper(node)
+			
+		##p('///')
+		##print_compiled(compile_root_node)
+		
+		#def remove_unnecessary_translations(node) :
+			#"""
+			#returns a list to replace
+			#"""
+			#node['guaranteed'] = [step for step in node['guaranteed'] if step['output_bindings']]
+			#for step in node['guaranteed'] :
+				#remove_unnecessary_translations(step)
+			
+		#remove_unnecessary_translations(compile_root_node)
+		
+		##print_compiled(compile_root_node)
+		
+		##p(compile_root_node['guaranteed'][0]['translation'][n.meta.name])
+		
+		## TODO: make this work
+		## self.follow_possible(query, possible_stack)
+		
+		#compile_root_node['modifiers'] = modifiers
+		
+		##debug('modifiers',modifiers)
+		
 		#p('compile_root_node',compile_root_node)
-		#@logger
-		def print_compiled(node, l = []) :
-			for step in node['guaranteed'] :
-				#p('\\',step['translation'][n.meta.name])
-				instruction = [
-					step['translation'][n.meta.name], {
-						'input_bindings' : step['input_bindings'],
-						'output_bindings' : step['output_bindings'],
-					}
-				]
-				print_compiled(step, l + [instruction])
-				#p('/',step['translation'][n.meta.name])
-			if not node['guaranteed'] :
-				p(l+[node['solution']])
-		#print_compiled(compile_root_node)
-		
-		
-		# prune any paths which are not necessary:
-		def mark_unnecessary_translations_helper(node) :
-			"""
-			returns variables which need to be bound for the children (next) 
-			translations to be able to work.  If a translation doesn't provide any of
-			those variables as output, than it is unecessary.
-			correlary: if a translation provides an output binding that is never used
-			remove it.
-			"""
-			if 'solution' in node :
-				required_variables = set(node['solution'].values())
-			else :
-				required_variables = set()
 			
-			for step in node['guaranteed'] :
-				required_variables.update(mark_unnecessary_translations_helper(step))
-			
-			for var, binding in node['output_bindings'].items() :
-				if binding not in required_variables :
-					del node['output_bindings'][var]
-			
-			if node['output_bindings'] :
-				node['input_bindings'] = dict([(var, binding) for (var, binding) in node['input_bindings'].iteritems() if not is_var(binding)])
-				required_variables.update(node['input_bindings'].values())
-			
-			return required_variables
-		
-		for node in compile_root_node['guaranteed'] :
-			#p('---')
-			mark_unnecessary_translations_helper(node)
-			
-		#p('///')
-		#print_compiled(compile_root_node)
-		
-		def remove_unnecessary_translations(node) :
-			"""
-			returns a list to replace
-			"""
-			node['guaranteed'] = [step for step in node['guaranteed'] if step['output_bindings']]
-			for step in node['guaranteed'] :
-				remove_unnecessary_translations(step)
-			
-		remove_unnecessary_translations(compile_root_node)
-		
-		#print_compiled(compile_root_node)
-		
-		#p(compile_root_node['guaranteed'][0]['translation'][n.meta.name])
-		
-		# TODO: make this work
-		# self.follow_possible(query, possible_stack)
-		
-		compile_root_node['modifiers'] = modifiers
-		
-		#debug('modifiers',modifiers)
-		
-		p('compile_root_node',compile_root_node)
-			
-		return compile_root_node
+		#return compile_root_node
 
 
 

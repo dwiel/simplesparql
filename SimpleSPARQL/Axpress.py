@@ -1,5 +1,5 @@
 import Parser, Evaluator, MultilineParser
-from Utils import sub_var_bindings, sub_var_bindings_set, find_vars, UniqueURIGenerator, debug, is_any_var, var_name, explode_bindings_set, p
+from Utils import sub_var_bindings, sub_var_bindings_set, find_vars, UniqueURIGenerator, debug, is_any_var, var_name, explode_bindings_set, p, is_lit_var
 from PrettyQuery import prettyquery
 
 import time, copy
@@ -29,7 +29,27 @@ class Axpress() :
 		query_triples = self.parser.parse(query)
 		ret_evals = []
 		bindings_set = explode_bindings_set(bindings_set)
-		for triples in sub_var_bindings_set(query_triples, bindings_set) :
+		if len(reqd_bound_vars) == 0 :
+			reqd_bound_vars = find_vars(query_triples, is_lit_var)
+			if len(reqd_bound_vars) == 0 :
+				p('Warning: no required bound variables.  Are there any _vars?')
+		
+		#for triples in sub_var_bindings_set(query_triples, bindings_set) :
+		for bindings in bindings_set :
+			#p('bindings',bindings)
+			#p('reqd_bound_vars',reqd_bound_vars)
+			new_reqd_bound_vars = []
+			provided_bindings = []
+			for var in reqd_bound_vars :
+				if var in bindings :
+					provided_bindings.append(var)
+				else :
+					new_reqd_bound_vars.append(var)
+			reqd_bound_vars = new_reqd_bound_vars
+			
+			#p('reqd_bound_vars',reqd_bound_vars)
+			#p('provided_bindings',provided_bindings)
+			triples = sub_var_bindings(query_triples, bindings)
 			begin_compile = time.time()
 			ret_comp = self.compiler.compile(triples, reqd_bound_vars)
 			end_compile = time.time()
@@ -44,6 +64,10 @@ class Axpress() :
 			end_eval = time.time()
 			if 'time' in self.options :
 				print 'eval time:',end_eval-begin_eval
+			for ret in ret_eval :
+				for var in provided_bindings :
+					ret[var] = bindings[var]
+			#p('ret_eval',ret_eval)
 			ret_evals.extend(ret_eval)
 			
 		return ret_evals
