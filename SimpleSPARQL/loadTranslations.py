@@ -21,6 +21,7 @@ def loadTranslations(translator, n) :
 	n.bind('axpress', '<http://dwiel.net/axpress/0.1/>')
 	n.bind('music', '<http://dwiel.net/axpress/music/0.1/>')
 	n.bind('lastfm', '<http://dwiel.net/axpress/lastfm/0.1/>')
+	n.bind('yahoo', '<http://dwiel.net/axpress/yahoo/0.1/>')
 	n.bind('amarok', '<http://dwiel.net/axpress/amarok/0.1/>')
 	n.bind('reference', '<http://dwiel.net/axpress/reference/0.1/>')
 	#n.bind('test', '<http://dwiel.net/axpress/test/0.1/>')
@@ -636,6 +637,37 @@ def loadTranslations(translator, n) :
 		n.meta.function : no_bindings,
 		n.meta.constant_vars : ['foo'],
 	})
+	
+	
+	
+	
+	# http://lethain.com/entry/2008/jul/11/search-recipes-for-yahoo-s-boss-in-python/
+	# yahoo search bindings
+	def yahoo_search(vars):
+		from yos.boss import ysearch
+		from yos.yql import db
+		data = ysearch.search(vars['query'],count=10)
+		table = db.create(data=data)
+		return table.rows
+
+	translator.register_translation({
+		n.meta.name : '',
+		n.meta.input : """
+			search[yahoo.query] = _query
+		""",
+		n.meta.output : """
+			search[yahoo.dispurl] = _dispurl
+			search[yahoo.title] = _title
+			search[yahoo.url] = _url
+			search[yahoo.abstract] = _abstract
+			search[yahoo.clickurl] = _clickurl
+			search[yahoo.date] = _date
+			search[yahoo.size] = _size
+		""",
+		n.meta.function : yahoo_search,
+		n.meta.constant_vars : ['search'],
+	})
+	
 	
 	
 	#translator.register_translation({

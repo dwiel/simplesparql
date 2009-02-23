@@ -114,12 +114,15 @@ class Axpress() :
 		"""
 		query_triples = self.parser.parse(query)
 		bindings_set = explode_bindings_set(bindings_set)
-		for triples in sub_var_bindings_set(query_triples, bindings_set) :
+		for bindings in bindings_set :
+			triples = sub_var_bindings(query_triples, bindings)
 			missing_vars = find_vars(triples)
 			if len(missing_vars) is not 0 :
 				new_bindings = dict([(var, self.urigen()) for var in missing_vars])
 				triples = sub_var_bindings(triples, new_bindings)
+				bindings.update(new_bindings)
 			self.sparql.write(triples)
+		return bindings_set
 	
 	def write_sparql_delete(self, query, bindings_set = [{}]) :
 		"""

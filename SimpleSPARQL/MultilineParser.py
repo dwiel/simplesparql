@@ -136,7 +136,7 @@ class MultilineParser() :
 		if len(read_bindings_set) is 0 :
 			# TODO get bound variables out of the write query
 			print 'didnt find anything', prettyquery(query), prettyquery(bindings_set)
-			self.axpress.write_sparql(query, bindings_set)
+			bindings_set = self.axpress.write_sparql(query, bindings_set)
 		else :
 			print 'they already exist!', prettyquery(bindings_set)
 			bindings_set = read_bindings_set
