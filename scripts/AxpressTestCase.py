@@ -304,10 +304,10 @@ class AxpressTestCase(unittest.TestCase):
 	
 	def testGeneral(self):
 		ret = self.axpress.read_translate("""
-			image[glob.glob] = '/home/dwiel/AMOSvid/1065/*.png'
+			image[glob.glob] = '/home/dwiel/AMOSvid/1065/*.nothing'
 			image[file.filename] = _filename
 		""")
-		p('testGeneral',ret)
+		assert ret == []
 
 	def testIncomingOutgoingBindings(self):
 		ret = self.axpress.read_translate("""
@@ -329,7 +329,7 @@ class AxpressTestCase(unittest.TestCase):
 			foo[test.y] = y
 			foo[test.sum] = _sum
 		""", bindings_set = [{'x' : 1, 'y' : 2}])
-		p('ret',ret)
+		#p('ret',ret)
 		assert ret == [
 			{
 				u'x' : 1,

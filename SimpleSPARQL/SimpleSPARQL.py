@@ -1289,7 +1289,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 					triple[j] = varnamespace[var_name(value)]
 	
 	def new_read(self, query, expected_vars = [], varnamespace = None, outvarnamespace = None) :
-		print('query',query)
+		#print('query',query)
 		# TODO: extract out the result bindings as in self.read
 		# TODO: allow object notation as root query.
 		#   TODO: depricate read, and others
@@ -1333,12 +1333,12 @@ class SimpleSPARQL (SPARQLWrapper) :
 				self.sanitize_vars(query, outvarnamespace, varnamespace)
 			else :
 				print('couldnt find them')
-		print('output_vars_list',output_vars_list)
+		#print('output_vars_list',output_vars_list)
 		
 		self.reset_py_to_SPARQL_bnode()
 		self._reset_SPARQL_variables()
 		query_str = self.triplelist_to_sparql(query, varnamespace)
-		print('query',query)
+		#print('query',query)
 		query = "SELECT %s WHERE { %s } %s" % (output_vars_list, self.wrapGraph(query_str), '\n'.join(modifiers))
 		ret = self.doQuery(query)
 		for binding in ret['results']['bindings'] :

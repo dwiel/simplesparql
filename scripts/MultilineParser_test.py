@@ -66,17 +66,17 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 				#thumb[pil.image] = thumb_image
 		#""") == 'hello'
 	
-	def test3(self):
-		ret = self.parser.parse("""
-			read translate
-					image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-					image[file.filename] = _filename
-			write sparql unless exists
-					_image[file.filename] = _filename
-			write sparql unless exists
-					image[meta.tag] = 'stitt'
-		""")
-		print 'ret',prettyquery(ret)
+	#def test3(self):
+		#ret = self.parser.parse("""
+			#read translate
+					#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+					#image[file.filename] = _filename
+			#write sparql unless exists
+					#_image[file.filename] = _filename
+			#write sparql unless exists
+					#image[meta.tag] = 'stitt'
+		#""")
+		#print 'ret',prettyquery(ret)
 	
 	"""
 """
