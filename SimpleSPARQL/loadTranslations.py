@@ -3,7 +3,7 @@ import os, random, re
 from itertools import izip
 
 
-def loadTranslations(translator, n) :	
+def loadTranslations(axpress, n) :	
 	n.bind('rdfs', '<http://www.w3.org/2000/01/rdf-schema#>')
 	n.bind('math', '<http://dwiel.net/express/math/0.1/>')
 	n.bind('type', '<http://dwiel.net/express/type/0.1/>')
@@ -32,7 +32,7 @@ def loadTranslations(translator, n) :
 			#vars[n.var.sum] = vars[n.var.number1] + vars[n.var.number2]
 		#else :
 			#raise Exception('cant add things that arent numbers .........')
-	#translator.register_translation({
+	#axpress.register_translation({
 		#n.meta.name : 'sum',
 		#n.meta.input : [
 			#[n.var.uri, n.var.any, n.var.number1],
@@ -46,7 +46,7 @@ def loadTranslations(translator, n) :
 
 	def _sum(vars) :
 		vars['sum'] = vars['x'] + vars['y']
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'sum',
 		n.meta.input : """
 			foo[test.x] = _x
@@ -66,7 +66,7 @@ def loadTranslations(translator, n) :
 	
 	def prod(vars) :
 		vars['prod'] = float(vars['sum']) * vars['z']
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'product',
 		n.meta.input : [
 			'uri[test.sum] = _sum',
@@ -81,7 +81,7 @@ def loadTranslations(translator, n) :
 	
 	def div(vars) :
 		vars['div'] = float(vars['sum']) / vars['z']
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'division',
 		n.meta.input : [
 			'uri[test.sum] = _sum',
@@ -94,7 +94,7 @@ def loadTranslations(translator, n) :
 		n.meta.constant_vars : ['uri'],
 	})
 
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'rdfs.label => music.artist_name',
 		n.meta.input : [
 			'artist[rdfs.label] = artist_name',
@@ -113,7 +113,7 @@ def loadTranslations(translator, n) :
 	def is_num(vars) :
 		vars['is_num'] = isinstance(vars['x'], (int, long, float))
 		print 'is_num:',vars['is_num']
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'is_num',
 		n.meta.input : """
 			type.is_num(_x) = ?is_num
@@ -188,7 +188,7 @@ def loadTranslations(translator, n) :
 		#print 'vars', prettyquery(ret)
 		return ret
 
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'last.fm similar artists',
 		n.meta.input : """
 			artist[music.artist_name] = _artist_name
@@ -247,7 +247,7 @@ def loadTranslations(translator, n) :
 		#print(results)
 		#return results
 		
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : "last.fm user's recent tracks",
 		n.meta.input : """
 			user[lastfm.user_name] = _user_name
@@ -267,7 +267,7 @@ def loadTranslations(translator, n) :
 		n.meta.constant_vars : ['user', 'track', 'artist', 'album'],
 	})
 	
-	#translator.register_translation({
+	#axpress.register_translation({
 		#n.meta.name : "last.fm shorthand artist name",
 		#n.meta.input : """
 			#track[lastfm.artist] = artist
@@ -279,7 +279,7 @@ def loadTranslations(translator, n) :
 		#n.meta.constant_vars : ['track'],
 	#})
 	
-	#translator.register_translation({
+	#axpress.register_translation({
 		#n.meta.name : "last.fm shorthand artist mbid",
 		#n.meta.input : """
 			#track[lastfm.artist] = artist
@@ -291,7 +291,7 @@ def loadTranslations(translator, n) :
 		#n.meta.constant_vars : ['track'],
 	#})
 	
-	#translator.register_translation({
+	#axpress.register_translation({
 		#n.meta.name : "last.fm shorthand album mbid",
 		#n.meta.input : """
 			#track[lastfm.album] = album
@@ -341,7 +341,7 @@ def loadTranslations(translator, n) :
 			urls.append(flickr_make_url(photo))
 		vars['url'] = urls
 		
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'flickr photos search',
 		n.meta.input : [
 			'image[flickr.tag] = _tag',
@@ -364,7 +364,7 @@ def loadTranslations(translator, n) :
 		im = Image.open(vars['filename'])
 		im.load() # force the data to be loaded (Image.open is lazy)
 		vars['pil_image'] = im
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'load image',
 		n.meta.input : """
 			image[file.filename] = _filename
@@ -381,7 +381,7 @@ def loadTranslations(translator, n) :
 		#im = Image.open(vars['filename'])
 		#im.load() # force the data to be loaded (Image.open is lazy)
 		#vars['pil_image'] = im
-	#translator.register_translation({
+	#axpress.register_translation({
 		#n.meta.name : 'load image2',
 		#n.meta.input : """
 			#image[file.filename] = _filename
@@ -398,7 +398,7 @@ def loadTranslations(translator, n) :
 		im = vars['pil_image']
 		im.thumbnail((int(vars['x']), int(vars['y'])), Image.ANTIALIAS)
 		vars['thumb_image'] = im
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'image thumbnail',
 		n.meta.input : """
 			image[pil.image] = _pil_image
@@ -415,7 +415,7 @@ def loadTranslations(translator, n) :
 		from PIL import Image
 		im = vars['pil_image']
 		vars['color'] = im.getpixel((int(vars['x']), int(vars['y'])))
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'image pixel',
 		n.meta.input : """
 			image[pil.image] = _pil_image
@@ -431,7 +431,7 @@ def loadTranslations(translator, n) :
 	def html_color(vars) :
 		color = vars['pil_color']
 		vars['html_color'] = hex(color[0])[2:]+hex(color[1])[2:]+hex(color[2])[2:]
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'html color',
 		n.meta.input : """
 			pixel[pil.color] = _pil_color
@@ -453,12 +453,34 @@ def loadTranslations(translator, n) :
 		output:
 			image[image.average_color] = _color
 	"""
+	def image_average_color(vars):
+		print 'vars',vars
+		ret = axpress.read_translate("""
+			image[pil.image] = pil_image
+			image.thumbnail(image, 1, 1) = thumb
+			image.pixel(thumb, 0, 0) = pixel
+			pixel[pil.color] = _color
+		""", vars)
+		print 'ret',ret
+		return ret
+	axpress.register_translation({
+		n.meta.name : 'image average color',
+		n.meta.input : """
+			image[pil.image] = _pil_image
+		""",
+		n.meta.output : """
+			image[image.average_color] = _color
+		""",
+		n.meta.function : image_average_color,
+		n.meta.constant_vars : ['image'],
+	})
+
 	
 	
 	#def color_distance(vars):
 		#vars['color_diff'] = vars['pil_color1'] - vars['pil_color2']
 		#print 'color_diff',prettyquery(vars['color_diff'])
-	#translator.register_translation({
+	#axpress.register_translation({
 		#n.meta.name : 'color distance',
 		#n.meta.input : """
 			#color1[pil.color] = _pil_color1
@@ -475,7 +497,7 @@ def loadTranslations(translator, n) :
 	def color_distance_red(vars):
 		diff = tuple([x-y for x,y in izip((255,0,0), vars['pil_color2'])])
 		vars['distance'] = sum([x*x for x in diff])
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'color distance',
 		n.meta.input : """
 			color2[pil.color] = _pil_color2
@@ -496,7 +518,7 @@ def loadTranslations(translator, n) :
 
 	def playlist_enuque(vars):
 		pass
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'playlist enqueue',
 		n.meta.input : """
 			playlist.enqueue(playlist.playlist, album) = True
@@ -521,7 +543,7 @@ def loadTranslations(translator, n) :
 	## so might some kind of macros ... wow
 	#def foo(vars):
 		#pass
-	#translator.register_translation({
+	#axpress.register_translation({
 		#n.meta.name : 'sql_where',
 		#n.meta.input : [
 			#'sql[sql.connection] = connection',
@@ -595,7 +617,7 @@ def loadTranslations(translator, n) :
 		ret = [{'out_filename' : filename} for filename in glob.glob(vars['pattern'])]
 		print(vars['pattern'],ret)
 		return ret
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'glob glob',
 		# This doesn't work!
 		#n.meta.input : [
@@ -615,11 +637,23 @@ def loadTranslations(translator, n) :
 		n.meta.constant_vars : ['glob'],
 	})
 	
+	# TODO: allow define uriX == uriY or in this case glob.glob == file.pattern
+	axpress.register_translation({
+		n.meta.name : 'file pattern (glob)',
+		n.meta.input : """
+			glob[file.pattern] = _pattern
+		""",
+		n.meta.output : """
+			glob[file.filename] = _out_filename
+		""",
+		n.meta.function : glob_glob,
+		n.meta.constant_vars : ['glob'],
+	})
 	
 	def glob_glob(vars):
 		import glob
 		vars['out_filename'] = glob.glob(vars['pattern'])
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'glob glob',
 		n.meta.input : """
 			glob.glob(_pattern) = foo[file.filename]
@@ -637,7 +671,7 @@ def loadTranslations(translator, n) :
 		#TODO don't depend on wget ...
 		vars['filename'] = 'axpress.tmp%s' % str(random.random()).replace('.','')
 		os.system('wget %s -O %s' % (vars['url'], vars['filename']))
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'download_tmp_file',
 		n.meta.input : """
 			file[file.url] = _url
@@ -652,7 +686,7 @@ def loadTranslations(translator, n) :
 
 	#def filename_to_url(vars):
 		#vars['url'] = vars['filename'].replace('/home/dwiel', '/home')
-	#translator.register_translation({
+	#axpress.register_translation({
 		#n.meta.name : 'filename to url',
 		#n.meta.input : """
 			#file[file.filename] = _filename
@@ -681,7 +715,7 @@ def loadTranslations(translator, n) :
 		#vars['html'] = '<img src="%s" %s%s/>' % (web_filename, width, height)
 		
 		vars['html'] = '<img src="%s" width="%s" height="%s"/>' % (web_filename, vars['width'], vars['height'])
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'html img link',
 		n.meta.input : """
 			image[file.filename] = _filename
@@ -698,7 +732,7 @@ def loadTranslations(translator, n) :
 	## this is starting to get silly.  I vote for a python/js code block in MultilineParser
 	#def div(vars):
 		#pass
-	#translator.register_translation({
+	#axpress.register_translation({
 		#n.meta.name : 'div',
 		#n.meta.input : """
 			#div[html.background_color] = _color
@@ -718,7 +752,7 @@ def loadTranslations(translator, n) :
 		vars['artist_name'] = os.popen('dcop amarok player artist').next()[:-1]
 		if vars['artist_name'] == '' :
 			return []
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'get amarok artist',
 		n.meta.input : """
 			amarok.amarok[amarok.artist] = artist
@@ -735,7 +769,7 @@ def loadTranslations(translator, n) :
 	# used for testing a translation which returns no bindings
 	def no_bindings(vars):
 		return []
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : 'no bindings',
 		n.meta.input : """
 			foo[test.no_bindings_input] = _input
@@ -759,7 +793,7 @@ def loadTranslations(translator, n) :
 		table = db.create(data=data)
 		return table.rows
 
-	translator.register_translation({
+	axpress.register_translation({
 		n.meta.name : '',
 		n.meta.input : """
 			search[yahoo.query] = _query
@@ -779,7 +813,7 @@ def loadTranslations(translator, n) :
 	
 	
 	
-	#translator.register_translation({
+	#axpress.register_translation({
 		#n.meta.name : 'sql test',
 		#n.meta.input : """
 			#query[sql.host] = _host
@@ -795,7 +829,7 @@ def loadTranslations(translator, n) :
 
 	#def foo(vars):
 		#pass
-	#translator.register_translation({
+	#axpress.register_translation({
 		#n.meta.name : '',
 		#n.meta.input : """
 		#""",

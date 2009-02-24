@@ -35,14 +35,13 @@ class AxpressTestCase(unittest.TestCase):
 		self.compiler = Compiler(n)
 		self.evaluator = Evaluator(n)
 		
-		loadTranslations(self.compiler, n)
-		
-		#self.parser = MultilineParser(n, sparql = sparql, translator = self.translator)
 		self.axpress = Axpress(
 			sparql = sparql,
 			compiler = self.compiler,
 			evaluator = self.evaluator
 		)	
+		loadTranslations(self.axpress, n)
+		
 	
 	def testIncomingBindings(self):
 		def is_num(x):
@@ -379,7 +378,22 @@ class AxpressTestCase(unittest.TestCase):
 		""")
 		assert ret == [{'count' : 13}]
 	
-	
+	# test a translation which makes an axpress call
+	def testEmbededAxpress(self):
+		ret = self.axpress.read_translate("""
+			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			image[image.average_color] = _color
+		""")
+		assert ret == [
+			{
+				u'color' : ( 154, 99, 120, ),
+			}, {
+				u'color' : ( 144, 92, 109, ),
+			},
+		]
+
+
+
 	
 	
 if __name__ == "__main__" :

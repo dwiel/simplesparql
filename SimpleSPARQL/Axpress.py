@@ -19,6 +19,9 @@ class Axpress() :
 			multiline_parser = MultilineParser.MultilineParser(self.n, self)
 		self.multiline_parser = multiline_parser
 		self.options = options
+	
+	def register_translation(self, translation) :
+		self.compiler.register_translation(translation)
 		
 	def do(self, query, bindings_set = [{}], options = None) :
 		if options is None :
