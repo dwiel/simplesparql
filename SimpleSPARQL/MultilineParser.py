@@ -77,6 +77,7 @@ class MultilineParser() :
 			Translator(self.re_read_translations, self.fn_read_translations, self.bound_vars_general, True),
 			Translator(self.re_write_translations, self.fn_write_translations, self.bound_vars_general, False),
 			Translator(self.re_python, self.fn_python, self.bound_vars_python, True),
+			Translator(self.re_mako, self.fn_mako, self.bound_vars_python, True),
 		]
 
 	#def string_to_multiline(self, string) :
@@ -164,6 +165,18 @@ class MultilineParser() :
 	re_python = re.compile('^python(.*)', re.MULTILINE | re.S)
 	def fn_python(self, g, query, bindings_set, reqd_bound_vars) :
 		bindings_set = self.axpress.python(query, bindings_set = bindings_set)
+		return bindings_set
+	
+	re_mako = re.compile('^mako(.*)', re.MULTILINE | re.S)
+	def fn_mako(self, g, query, bindings_set, reqd_bound_vars) :
+		from mako.template import Template
+		
+		for bindings in bindings_set :
+			str_bindings = {}
+			for k, v in bindings.iteritems() :
+				str_bindings[str(k)] = v
+			bindings['html'] = Template(query).render(**str_bindings)
+		
 		return bindings_set
 	
 	def execute(self, query, bindings_set = [{}], options = None) :
@@ -260,7 +273,12 @@ class MultilineParser() :
 
 
 
+"""
 
+from mako.template import Template
+print Template("hello ${data}!").render(data="world")
+
+"""
 
 
 

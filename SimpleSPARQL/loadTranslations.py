@@ -160,17 +160,11 @@ def loadTranslations(translator, n) :
 	# set of bindings.  (If the artist is not in lastfm - or if there is no inet?)
 	re_lastfm_similar = re.compile('(.*?),(.*?),(.+)')
 	def lastfm_similar(vars) :
-	#	vars[n.var.similar_artist] = lastfm.Artist(vars[n.var.artist_name]).getSimilar()
-	#	vars[n.var.similar_artist] = ['Taken By Trees', 'Viva Voce', 'New Buffalo']
 		import os, urllib, time
 		filename = '/home/dwiel/.lastfmcache/artist_%s_similar' % urllib.quote(vars['artist_name'])
 		filename = filename.replace('%','_')
-		#print('filename',filename)
 		if not os.path.exists(filename) :
-			#print('system','wget http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt -O %s' % (urllib.quote(vars['artist_name']), filename))
 			os.system('wget http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt -O %s' % (urllib.quote(vars['artist_name']), filename))
-			#url = 'http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt' % urllib.quote(vars['artist_name'])
-			#f = urllib.urlopen(url)
 		
 			lasttime = time.time()
 			while lasttime + 1 < time.time() :
@@ -214,88 +208,100 @@ def loadTranslations(translator, n) :
 	})
 	
 	def lastfm_user_recent_tracks(vars) :
-		import urllib2
+		import urllib2, urllib
 		import xml.etree.ElementTree
 		
-		url = 'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=%s&api_key=41f38f5e3d328f6ff186835d06780989' % urllib.quote(vars['user_name'])
+		filename = '/home/dwiel/.lastfmcache/user_%s_recent_tracks' % urllib.quote(vars['user_name'])
+		filename = filename.replace('%','_')
+		# use the cached version if it exists and is no more than 10 mins old
+		if not os.path.exists(filename) or (time.time() - os.stat(filename)[8] > 2000):
+			os.system('wget "http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=%s&api_key=41f38f5e3d328f6ff186835d06780989" -O %s' % (urllib.quote(vars['user_name']), filename))
+			
+			lasttime = time.time()
+			while lasttime + 1 < time.time() :
+				# sleep a little
+				time.sleep(0)
 		
-		f = urllib2.urlopen(url)
-		lasttime = time.time()
+		print time.time() - os.stat(filename)[8]
+		
+		f = open(filename)
 		etree = xml.etree.ElementTree.parse(f)
 		results = []
-		for track in etree.findall('*/track') :
-			result = {}
-			artist = track.find('artist')
-			result['artist_mbid'] = artist.attrib['mbid']
-			result['artist_name'] = artist.text
-			result['track_name'] = track.find('name').text
-			album = track.find('album')
-			result['album_mbid'] = album.attrib['mbid']
-			result['album_name'] = album.text
-			result['date_uts'] = track.find('date').attrib['uts']
-			results.append(result)
+		#for track in etree.findall('*/track') :
+		track = etree.find('*/track')
+		#result = {}
+		result = vars
+		artist = track.find('artist')
+		result['artist_mbid'] = artist.attrib['mbid']
+		result['artist_name'] = artist.text
+		result['track_name'] = track.find('name').text
+		album = track.find('album')
+		result['album_mbid'] = album.attrib['mbid']
+		result['album_name'] = album.text
+		result['date_uts'] = track.find('date').attrib['uts']
+		#results.append(result)
 		
-		while lasttime + 1 < time.time() :
-			# sleep a little
-			time.sleep(0)
 		
-		return results
+		#print result
+		#return result
+		#print(results)
+		#return results
 		
 	translator.register_translation({
 		n.meta.name : "last.fm user's recent tracks",
 		n.meta.input : """
 			user[lastfm.user_name] = _user_name
+			user[lastfm.recent_track] = track
+			track[lastfm.album] = album
+			track[lastfm.artist] = artist
 		""",
 		n.meta.output : """
-			user[lastfm.recent_track] = track
-			track[lastfm.artist] = artist
 			artist[lastfm.mbid] = _artist_mbid
 			artist[lastfm.artist_name] = _artist_name
 			track[lastfm.track_name] = _track_name
-			artist[lastfm.album] = album
 			album[lastfm.mbid] = _album_mbid
 			album[lastfm.album_name] = _album_name
 			track[lastfm.date_uts] = _date_uts
 		""",
 		n.meta.function : lastfm_user_recent_tracks,
-		n.meta.constant_vars : ['user'],
+		n.meta.constant_vars : ['user', 'track', 'artist', 'album'],
 	})
 	
-	translator.register_translation({
-		n.meta.name : "last.fm shorthand artist name",
-		n.meta.input : """
-			track[lastfm.artist] = artist
-			artist[lastfm.artist_name] = _artist_name
-		""",
-		n.meta.output : """
-			track[lastfm.artist_name] = _artist_name
-		""",
-		n.meta.constant_vars : ['track'],
-	})
+	#translator.register_translation({
+		#n.meta.name : "last.fm shorthand artist name",
+		#n.meta.input : """
+			#track[lastfm.artist] = artist
+			#artist[lastfm.artist_name] = _artist_name
+		#""",
+		#n.meta.output : """
+			#track[lastfm.artist_name] = _artist_name
+		#""",
+		#n.meta.constant_vars : ['track'],
+	#})
 	
-	translator.register_translation({
-		n.meta.name : "last.fm shorthand artist mbid",
-		n.meta.input : """
-			track[lastfm.artist] = artist
-			artist[lastfm.mbid] = _artist_mbid
-		""",
-		n.meta.output : """
-			track[lastfm.artist_mbid] = _artist_mbid
-		""",
-		n.meta.constant_vars : ['track'],
-	})
+	#translator.register_translation({
+		#n.meta.name : "last.fm shorthand artist mbid",
+		#n.meta.input : """
+			#track[lastfm.artist] = artist
+			#artist[lastfm.mbid] = _artist_mbid
+		#""",
+		#n.meta.output : """
+			#track[lastfm.artist_mbid] = _artist_mbid
+		#""",
+		#n.meta.constant_vars : ['track'],
+	#})
 	
-	translator.register_translation({
-		n.meta.name : "last.fm shorthand album mbid",
-		n.meta.input : """
-			track[lastfm.album] = album
-			album[lastfm.mbid] = _album_mbid
-		""",
-		n.meta.output : """
-			track[lastfm.album_mbid] = _album_mbid
-		""",
-		n.meta.constant_vars : ['track'],
-	})
+	#translator.register_translation({
+		#n.meta.name : "last.fm shorthand album mbid",
+		#n.meta.input : """
+			#track[lastfm.album] = album
+			#album[lastfm.mbid] = _album_mbid
+		#""",
+		#n.meta.output : """
+			#track[lastfm.album_mbid] = _album_mbid
+		#""",
+		#n.meta.constant_vars : ['track'],
+	#})
 	
 	
 	

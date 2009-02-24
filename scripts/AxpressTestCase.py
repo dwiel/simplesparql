@@ -361,6 +361,16 @@ class AxpressTestCase(unittest.TestCase):
 				u'sum' : 3,
 			},
 		]
+	
+	#def testMultipleInputObjects(self) :
+		#ret = self.axpress.read_translate("""
+			#user[lastfm.user_name] = 'dwiel'
+			#user[lastfm.recent_track] = track
+			#track[lastfm.album] = album
+			#track[lastfm.artist] = artist
+			#artist[lastfm.artist_name] = _name
+		#""")
+		#p('ret',ret)
 
 	
 	
