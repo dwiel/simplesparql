@@ -87,17 +87,17 @@ class SimpleSPARQLTestCase(unittest.TestCase):
 		#print '---'
 		#print self.sparql.python_to_SPARQL({'e:x' : 1, 'abc' : 'def'})
 
-	def testSPARQLDictionary2(self):
-		for rdfo in self.sparql.find(
-			{
-				'rdf:type' : 'schema:type', 
-				'schema:property' : {
-					'schema_property:default' : None,
-					'schema_property:type' : None,
-				}
-			}
-		) :
-			print rdfo.root
+	#def testSPARQLDictionary2(self):
+		#for rdfo in self.sparql.find(
+			#{
+				#'rdf:type' : 'schema:type', 
+				#'schema:property' : {
+					#'schema_property:default' : None,
+					#'schema_property:type' : None,
+				#}
+			#}
+		#) :
+			#print rdfo.root
 	
 	#def testWriteDictionary(self):
 		#self.sparql.write({

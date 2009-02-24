@@ -170,11 +170,13 @@ class MultilineParser() :
 	re_mako = re.compile('^mako(.*)', re.MULTILINE | re.S)
 	def fn_mako(self, g, query, bindings_set, reqd_bound_vars) :
 		from mako.template import Template
+		import cgi
 		
 		for bindings in bindings_set :
 			str_bindings = {}
 			for k, v in bindings.iteritems() :
 				str_bindings[str(k)] = v
+			str_bindings['cgi'] = cgi
 			bindings['html'] = Template(query).render(**str_bindings)
 		
 		return bindings_set

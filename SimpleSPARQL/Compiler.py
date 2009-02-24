@@ -499,7 +499,7 @@ class Compiler :
 		if is_any_var(tv) :
 			if is_out_lit_var(tv) :
 				# if the pattern is an out_lit_var, qv must be a lit_var or a literal
-				if is_lit_var(qv) :
+				if is_lit_var(qv):
 					return {tv : qv}
 				elif is_any_var(qv) :
 					return False

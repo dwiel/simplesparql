@@ -190,16 +190,16 @@ def loadTranslations(translator, n) :
 
 	translator.register_translation({
 		n.meta.name : 'last.fm similar artists',
-		n.meta.input : [
-			'artist[music.artist_name] = _artist_name',
-			'artist[lastfm.similar_to] = similar_artist',
-		],
-		n.meta.output : [
-			'artist[lastfm.similar_to] = similar_artist',
-			'similar_artist[lastfm.similarity_measure] = ?similarity_measure',
-			'similar_artist[lastfm.mbid] = _mbid',
-			'similar_artist[lastfm.artist_name] = _name',
-		],
+		n.meta.input : """
+			artist[music.artist_name] = _artist_name
+			artist[lastfm.similar_to] = similar_artist
+		""",
+		n.meta.output : """
+			artist[lastfm.similar_to] = similar_artist
+			similar_artist[lastfm.similarity_measure] = _similarity_measure
+			similar_artist[lastfm.mbid] = _mbid
+			similar_artist[lastfm.artist_name] = _name
+		""",
 		n.meta.function : lastfm_similar,
 		n.meta.scale : 100,
 		n.meta.expected_time : 1,

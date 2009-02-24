@@ -85,7 +85,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 		if the query is a SELECT: returns JSON of the bindings
 		"""
 		try :
-			query = self.n.SPARQL_PREFIX() + query
+			#query = self.n.SPARQL_PREFIX() + query
+			pass
 		except:
 			pass
 		
@@ -284,8 +285,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 		self._reset_SPARQL_variables()
 		return u"%s %s" %(variable.n3(), self.python_to_SPARQL_helper(data, variable, bound_vars))
 
-	def find(self, data) :
-		return self.doShortQueryURI(self.python_to_SPARQL(data, Variable("uri")))
+	#def find(self, data) :
+		#return self.doShortQueryURI(self.python_to_SPARQL(data, Variable("uri")))
 	
 	def _dict_key_list_set(self, obj, ls, value) :
 		for key in ls[:-1] :
