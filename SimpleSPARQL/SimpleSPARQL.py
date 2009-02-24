@@ -20,7 +20,7 @@ from RDFObject import RDFObject
 from QueryException import QueryException
 from PrettyQuery import prettyquery
 from Cache import Cache
-from Utils import var_name, find_vars, is_lit_var
+from Utils import var_name, find_vars, is_lit_var, is_any_var
 from Parser import Parser
 
 # from parseMatchOutput import construct
@@ -1304,6 +1304,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		# required by SPARQL.  LIMIT after ORDER and OFFSET after LIMIT
 		modifiers = []
 		new_query = []
+		count = False
 		for triple in query :
 			modified = False
 			if triple[0] == self.n.query.query :
@@ -1319,6 +1320,13 @@ class SimpleSPARQL (SPARQLWrapper) :
 				if triple[1] == self.n.query.sort_descending :
 					modifiers.append('ORDER BY DESC(?%s)' % var_name(triple[2]))
 					modified = True
+				if triple[1] == self.n.query['count'] :
+					count = triple[2]
+					if not is_any_var(count) :
+						raise Exception('When query.query[query.count] = count. count must be a variable')
+					count = var_name(count)
+					modified = True
+
 			
 			if not modified :
 				new_query.append(triple)
@@ -1326,14 +1334,17 @@ class SimpleSPARQL (SPARQLWrapper) :
 		
 		# determine what the output vars are before they are sanitized for 
 		# triplelist_to_sparql
-		output_vars_list = '*'
-		if outvarnamespace :
-			output_vars = find_vars(query, lambda var: var.find(outvarnamespace) == 0)
-			if len(output_vars) :
-				output_vars_list = ' '.join(map(lambda x:'?'+x, output_vars))
-				self.sanitize_vars(query, outvarnamespace, varnamespace)
-			else :
-				print('couldnt find them')
+		if count :
+			output_vars_list = 'COUNT(*)'
+		else :
+			output_vars_list = '*'
+			if outvarnamespace :
+				output_vars = find_vars(query, lambda var: var.find(outvarnamespace) == 0)
+				if len(output_vars) :
+					output_vars_list = ' '.join(map(lambda x:'?'+x, output_vars))
+					self.sanitize_vars(query, outvarnamespace, varnamespace)
+				else :
+					print("couldn't find them")
 		#print('output_vars_list',output_vars_list)
 		
 		self.reset_py_to_SPARQL_bnode()
@@ -1342,24 +1353,26 @@ class SimpleSPARQL (SPARQLWrapper) :
 		#print('query',query)
 		query = "SELECT %s WHERE { %s } %s" % (output_vars_list, self.wrapGraph(query_str), '\n'.join(modifiers))
 		ret = self.doQuery(query)
-		for binding in ret['results']['bindings'] :
-			newbinding = {}
-			for var, value in binding.iteritems() :
-				if value['type'] == 'typed-literal' :
-					if value['datatype'] == 'http://www.w3.org/2001/XMLSchema#integer' :
-						newbinding[var] = int(value['value'])
-					elif value['datatype'] == 'http://www.w3.org/2001/XMLSchema#decimal' :
-						newbinding[var] = float(value['value'])
-				elif value['type'] == 'literal' :
-					newbinding[var] = value['value']
-				elif value['type'] == 'uri' :
-					newbinding[var] = URIRef(value['value'])
-				elif value['type'] == 'bnode' :
-					raise Exception('cant do bnodes')
-			
-			yield newbinding
-		
-		#return ret
+		if count :
+			# NOTE: This is most likely implementation dependant.  Works for Joseki-3.3.0
+			yield {count : int(ret['results']['bindings'][0][u'.1']['value'])}
+		else :
+			for binding in ret['results']['bindings'] :
+				newbinding = {}
+				for var, value in binding.iteritems() :
+					if value['type'] == 'typed-literal' :
+						if value['datatype'] == 'http://www.w3.org/2001/XMLSchema#integer' :
+							newbinding[var] = int(value['value'])
+						elif value['datatype'] == 'http://www.w3.org/2001/XMLSchema#decimal' :
+							newbinding[var] = float(value['value'])
+					elif value['type'] == 'literal' :
+						newbinding[var] = value['value']
+					elif value['type'] == 'uri' :
+						newbinding[var] = URIRef(value['value'])
+					elif value['type'] == 'bnode' :
+						raise Exception('cant do bnodes')
+				
+				yield newbinding
 
 
 
