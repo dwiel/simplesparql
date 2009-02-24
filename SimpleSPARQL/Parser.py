@@ -263,7 +263,7 @@ class Parser() :
 			#p('re_uri')
 			namespace = g.group(1).strip()
 			value = g.group(2).strip()
-			return 'n.%s.%s' % (namespace, value)
+			return 'n.%s["%s"]' % (namespace, value)
 		
 		if expression in python_keywords :
 			#p('keyword')
@@ -272,15 +272,15 @@ class Parser() :
 		g = re_lit_var.match(expression)
 		if g is not None :
 			#p('re_lit_var')
-			return 'n.lit_var.%s' % expression[1:]
+			return 'n.lit_var["%s"]' % expression[1:]
 		
 		if re_meta_var.match(expression) :
 			#p('re_meta_var')
-			return 'n.meta_var.%s' % expression[1:]
+			return 'n.meta_var["%s"]' % expression[1:]
 		
 		if re_var.match(expression) :
 			#p('re_var')
-			return 'n.var.%s' % expression
+			return 'n.var["%s"]' % expression
 		
 		#p('just expression', expression)
 		return expression

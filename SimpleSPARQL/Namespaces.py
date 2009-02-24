@@ -1,5 +1,8 @@
+#from rdflib.Namespace import NamespaceDict
 from rdflib import Namespace
 import re
+
+#Namespace = NamespaceDict
 
 def uri_could_be_from_namespace(self, uri, namespace) :
 	if re.match(namespace+"([^ .\}]+)", uri) :

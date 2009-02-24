@@ -44,7 +44,7 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 	def test7(self):
 		assert self.parser.parse_expression("tag = image[flickr.tag][string.upper]") == [
 			[n.var.image, n.flickr.tag, n.var.bnode1],
-			[n.var.bnode1, n.string.upper, n.var.tag],
+			[n.var.bnode1, n.string['upper'], n.var.tag],
 		]
 	
 	def test8(self):
@@ -173,6 +173,14 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			[n.var.uri, n.test.x, n.var.bnode1],
 			[n.var.uri2, n.test.x, n.var.bnode1],
 			[n.var.uri, n.test.x, 1],
+		]
+	
+	def test_parseKeyword(self):
+		query = """
+			count[file.count] = _count
+		"""
+		assert self.parser.parse_query(query) == [
+			[n.var['count'], n.file['count'], n.lit_var['count']],
 		]
 	
 	def test_parseBrokenQuery(self):

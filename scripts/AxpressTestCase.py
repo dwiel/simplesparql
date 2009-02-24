@@ -44,334 +44,340 @@ class AxpressTestCase(unittest.TestCase):
 			evaluator = self.evaluator
 		)	
 	
-	def testIncomingBindings(self):
-		def is_num(x):
-			return isinstance(x, (int, long, float))
+	#def testIncomingBindings(self):
+		#def is_num(x):
+			#return isinstance(x, (int, long, float))
 		
-		bindings_set = self.axpress.read_sparql("""
-			foo[test.x] = x
-			foo[test.y] = y
-		""")
+		#bindings_set = self.axpress.read_sparql("""
+			#foo[test.x] = x
+			#foo[test.y] = y
+		#""")
 		
-		# reduce bindings to those whose x and y values are numbers
-		# I'd like this functionality to exist, but I don't think this is the right
-		# way to get at it, or think about it.  For one, the type should take care
-		# of most of this kind of thing - though I know that it shouldn't be relied
-		# on ...
-		#bindings_set = [x for x in bindings_set]
-		#print 'bindings_set',prettyquery(bindings_set)
-		new_bindings_set = []
-		for bindings in bindings_set :
-			if is_num(bindings['x']) and is_num(bindings['y']) :
-				new_bindings_set.append(bindings)
-		bindings_set = new_bindings_set
-		#print 'bindings_set',prettyquery(bindings_set)
+		## reduce bindings to those whose x and y values are numbers
+		## I'd like this functionality to exist, but I don't think this is the right
+		## way to get at it, or think about it.  For one, the type should take care
+		## of most of this kind of thing - though I know that it shouldn't be relied
+		## on ...
+		##bindings_set = [x for x in bindings_set]
+		##print 'bindings_set',prettyquery(bindings_set)
+		#new_bindings_set = []
+		#for bindings in bindings_set :
+			#if is_num(bindings['x']) and is_num(bindings['y']) :
+				#new_bindings_set.append(bindings)
+		#bindings_set = new_bindings_set
+		##print 'bindings_set',prettyquery(bindings_set)
 		
-		ret = self.axpress.read_translate("""
-			foo[test.x] = x
-			foo[test.y] = y
-			foo[test.sum] = _sum
-		""", reqd_bound_vars = ['sum'], bindings_set = bindings_set)
-		#p('ret',ret)
-		assert ret == [
-			{
-				u'sum' : 3,
-			},
-		]
-	
-	def testTranslationReturnsMultipleValues(self):
-		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			thumb = image.thumbnail(image, 4, 4, image.antialias)
-			thumb[pil.image] = _thumb_image
-		""", reqd_bound_vars = ['thumb_image', 'thumb'])
-		#print 'ret2',prettyquery(ret)
-		for i, bindings in enumerate(ret) :
-			ret[i]['thumb_image'] = type(bindings['thumb_image'])
-		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
-		assert ret == [
-			{
-				'thumb' : n.out_var.thumb,
-				'thumb_image' : type_instance,
-			}, {
-				'thumb' : n.out_var.thumb,
-				'thumb_image' : type_instance,
-			}
-		]
-	
-	def testQueryLimitLessThanAvailable(self):
-		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			thumb = image.thumbnail(image, 4, 4, image.antialias)
-			thumb[pil.image] = _thumb_image
-			query.query[query.limit] = 1
-		""", reqd_bound_vars = ['thumb_image'])
-		#print 'ret test2_1',prettyquery(ret)
-		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
-		assert ret == [
-			{
-				'thumb_image' : type_instance,
-			}
-		]
-	
-	def testQueryLimitSameAsAvailable(self):
-		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			thumb = image.thumbnail(image, 4, 4, image.antialias)
-			thumb[pil.image] = _thumb_image
-			query.query[query.limit] = 2
-		""", reqd_bound_vars = ['thumb_image'])
-		#print 'ret2_2',prettyquery(ret)
-		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
-		assert ret == [
-			{
-				'thumb_image' : type_instance,
-			}, {
-				'thumb_image' : type_instance,
-			}
-		]
-	
-	def testQueryLimitMoreThanAvailable(self):
-		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			thumb = image.thumbnail(image, 4, 4, image.antialias)
-			thumb[pil.image] = _thumb_image
-			query.query[query.limit] = 3
-		""", reqd_bound_vars = ['thumb_image'])
-		#print 'ret2_3',prettyquery(ret)
-		ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
-		assert ret == [
-			{
-				'thumb_image' : type_instance,
-			}, {
-				'thumb_image' : type_instance,
-			}
-		]
-	
-	# warning this test requires the internet and will ping flickr.  Don't do alot
-	#def test3(self) :
 		#ret = self.axpress.read_translate("""
-			#image[flickr.tag] = 'floor'
-			#image[file.url] = _url
-		#""", reqd_bound_vars = ['url'])
-		#print 'ret',prettyquery(ret)
+			#foo[test.x] = x
+			#foo[test.y] = y
+			#foo[test.sum] = _sum
+		#""", reqd_bound_vars = ['sum'], bindings_set = bindings_set)
+		##p('ret',ret)
+		#assert ret == [
+			#{
+				#u'sum' : 3,
+			#},
+		#]
 	
-	# warning this test requires the internet and will ping flickr.  Don't do alot
-	#def test4(self) :
+	#def testTranslationReturnsMultipleValues(self):
 		#ret = self.axpress.read_translate("""
-			#image[flickr.tag] = 'wall'
+			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			#thumb = image.thumbnail(image, 4, 4, image.antialias)
+			#thumb[pil.image] = _thumb_image
+		#""", reqd_bound_vars = ['thumb_image', 'thumb'])
+		##print 'ret2',prettyquery(ret)
+		#for i, bindings in enumerate(ret) :
+			#ret[i]['thumb_image'] = type(bindings['thumb_image'])
+		##ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		#assert ret == [
+			#{
+				#'thumb' : n.out_var.thumb,
+				#'thumb_image' : type_instance,
+			#}, {
+				#'thumb' : n.out_var.thumb,
+				#'thumb_image' : type_instance,
+			#}
+		#]
+	
+	#def testQueryLimitLessThanAvailable(self):
+		#ret = self.axpress.read_translate("""
+			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
 			#thumb = image.thumbnail(image, 4, 4, image.antialias)
 			#thumb[pil.image] = _thumb_image
 			#query.query[query.limit] = 1
 		#""", reqd_bound_vars = ['thumb_image'])
-		#print 'ret',prettyquery(ret)
+		##print 'ret test2_1',prettyquery(ret)
+		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		#assert ret == [
+			#{
+				#'thumb_image' : type_instance,
+			#}
+		#]
 	
-	def test5(self):
-		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			image[file.filename] = _filename
-			thumb = image.thumbnail(image, 4, 4, image.antialias)
-			pixel = image.pixel(thumb, 0, 0)
-			pixel[pil.color] = _thumb_pixel_color
-		""", reqd_bound_vars = ['filename','thumb_pixel_color'])
-		# print 'ret5',prettyquery(ret)
-		assert ret == [
-			{
-				u'filename' : '/home/dwiel/pictures/stitt blanket/00002.jpg',
-				u'thumb_pixel_color' : (141, 130, 100),
-			}, {
-				u'filename' : '/home/dwiel/pictures/stitt blanket/00001.jpg',
-				u'thumb_pixel_color' : (94, 48, 67),
-			},
-		]
+	#def testQueryLimitSameAsAvailable(self):
+		#ret = self.axpress.read_translate("""
+			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			#thumb = image.thumbnail(image, 4, 4, image.antialias)
+			#thumb[pil.image] = _thumb_image
+			#query.query[query.limit] = 2
+		#""", reqd_bound_vars = ['thumb_image'])
+		##print 'ret2_2',prettyquery(ret)
+		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		#assert ret == [
+			#{
+				#'thumb_image' : type_instance,
+			#}, {
+				#'thumb_image' : type_instance,
+			#}
+		#]
 	
-	def test6(self):
-		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
-			image[file.filename] = _filename
-			thumb = image.thumbnail(image, 4, 4, image.antialias)
-			pixel = image.pixel(thumb, 0, 0)
-			dist[type.number] = color.distance(color.red, pixel)
-			dist[type.number] = _distance
-		""", reqd_bound_vars = ['filename','distance'])
-		#print 'ret6',prettyquery(ret)
-		assert ret == [
-			{
-				u'distance' : 39896,
-				u'filename' : '/home/dwiel/pictures/stitt blanket/00002.jpg',
-			}, {
-				u'distance' : 32714,
-				u'filename' : '/home/dwiel/pictures/stitt blanket/00001.jpg',
-			},
-		]
+	#def testQueryLimitMoreThanAvailable(self):
+		#ret = self.axpress.read_translate("""
+			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			#thumb = image.thumbnail(image, 4, 4, image.antialias)
+			#thumb[pil.image] = _thumb_image
+			#query.query[query.limit] = 3
+		#""", reqd_bound_vars = ['thumb_image'])
+		##print 'ret2_3',prettyquery(ret)
+		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
+		#assert ret == [
+			#{
+				#'thumb_image' : type_instance,
+			#}, {
+				#'thumb_image' : type_instance,
+			#}
+		#]
+	
+	## warning this test requires the internet and will ping flickr.  Don't do alot
+	##def test3(self) :
+		##ret = self.axpress.read_translate("""
+			##image[flickr.tag] = 'floor'
+			##image[file.url] = _url
+		##""", reqd_bound_vars = ['url'])
+		##print 'ret',prettyquery(ret)
+	
+	## warning this test requires the internet and will ping flickr.  Don't do alot
+	##def test4(self) :
+		##ret = self.axpress.read_translate("""
+			##image[flickr.tag] = 'wall'
+			##thumb = image.thumbnail(image, 4, 4, image.antialias)
+			##thumb[pil.image] = _thumb_image
+			##query.query[query.limit] = 1
+		##""", reqd_bound_vars = ['thumb_image'])
+		##print 'ret',prettyquery(ret)
+	
+	#def test5(self):
+		#ret = self.axpress.read_translate("""
+			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			#image[file.filename] = _filename
+			#thumb = image.thumbnail(image, 4, 4, image.antialias)
+			#pixel = image.pixel(thumb, 0, 0)
+			#pixel[pil.color] = _thumb_pixel_color
+		#""", reqd_bound_vars = ['filename','thumb_pixel_color'])
+		## print 'ret5',prettyquery(ret)
+		#assert ret == [
+			#{
+				#u'filename' : '/home/dwiel/pictures/stitt blanket/00002.jpg',
+				#u'thumb_pixel_color' : (141, 130, 100),
+			#}, {
+				#u'filename' : '/home/dwiel/pictures/stitt blanket/00001.jpg',
+				#u'thumb_pixel_color' : (94, 48, 67),
+			#},
+		#]
+	
+	#def test6(self):
+		#ret = self.axpress.read_translate("""
+			#image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			#image[file.filename] = _filename
+			#thumb = image.thumbnail(image, 4, 4, image.antialias)
+			#pixel = image.pixel(thumb, 0, 0)
+			#dist[type.number] = color.distance(color.red, pixel)
+			#dist[type.number] = _distance
+		#""", reqd_bound_vars = ['filename','distance'])
+		##print 'ret6',prettyquery(ret)
+		#assert ret == [
+			#{
+				#u'distance' : 39896,
+				#u'filename' : '/home/dwiel/pictures/stitt blanket/00002.jpg',
+			#}, {
+				#u'distance' : 32714,
+				#u'filename' : '/home/dwiel/pictures/stitt blanket/00001.jpg',
+			#},
+		#]
 
-	def test7(self):
-		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/AMOSvid/*.jpg"
-			thumb = image.thumbnail(image, 1, 1)
-			pix = image.pixel(thumb, 0, 0)
-			pix[pil.color] = _color
-			image[file.filename] = _filename
-		""")
-		#print 'ret7',prettyquery(ret)
-		assert len(ret) == 2
-		assert ret == [
-			{
-				u'color' : ( 71, 43, 85, ),
-				u'filename' : '/home/dwiel/AMOSvid/20080804_080127.jpg',
-			}, {
-				u'color' : ( 58, 25, 47, ),
-				u'filename' : '/home/dwiel/AMOSvid/20080804_083127.jpg',
-			},
-		]
+	#def test7(self):
+		#ret = self.axpress.read_translate("""
+			#image[glob.glob] = "/home/dwiel/AMOSvid/*.jpg"
+			#thumb = image.thumbnail(image, 1, 1)
+			#pix = image.pixel(thumb, 0, 0)
+			#pix[pil.color] = _color
+			#image[file.filename] = _filename
+		#""")
+		##print 'ret7',prettyquery(ret)
+		#assert len(ret) == 2
+		#assert ret == [
+			#{
+				#u'color' : ( 71, 43, 85, ),
+				#u'filename' : '/home/dwiel/AMOSvid/20080804_080127.jpg',
+			#}, {
+				#u'color' : ( 58, 25, 47, ),
+				#u'filename' : '/home/dwiel/AMOSvid/20080804_083127.jpg',
+			#},
+		#]
 
 	
-	def testBasicExample(self):
-		ret = self.axpress.read_translate("""
-			foo[test.x] = 1
-			foo[test.y] = 10
-			foo[test.sum] = _sum
-		""")
-		#p('ret8',ret)
-		assert ret == [{'sum' : 11}]
+	#def testBasicExample(self):
+		#ret = self.axpress.read_translate("""
+			#foo[test.x] = 1
+			#foo[test.y] = 10
+			#foo[test.sum] = _sum
+		#""")
+		##p('ret8',ret)
+		#assert ret == [{'sum' : 11}]
 
-	def testMultipleNonDependentPaths(self):
-		ret = self.axpress.read_translate("""
-			image[file.filename] = "/home/dwiel/AMOSvid/20080804_080127.jpg"
-			pix = image.pixel(image, 0, 0)
-			pix[pil.color] = _color
-			image[html.height] = 200
-			image[html.width] = 300
-			image[html.html] = _html
-		""")
-		p('testMultipleNonDependentPaths',ret)
-		assert ret ==  [
-			{
-				u'color' : ( 249, 255, 237, ),
-				u'html' : '<img src="/home/AMOSvid/20080804_080127.jpg" width="300" height="200"/>',
-			},
-		]
-
-	#def testOptionInputs(self):
+	#def testMultipleNonDependentPaths(self):
 		#ret = self.axpress.read_translate("""
 			#image[file.filename] = "/home/dwiel/AMOSvid/20080804_080127.jpg"
+			#pix = image.pixel(image, 0, 0)
+			#pix[pil.color] = _color
+			#image[html.height] = 200
 			#image[html.width] = 300
 			#image[html.html] = _html
 		#""")
-		#p('testOptionInputs',ret)
+		#p('testMultipleNonDependentPaths',ret)
 		#assert ret ==  [
 			#{
-				#u'html' : '<img src="/home/AMOSvid/20080804_080127.jpg" width="300"/>',
+				#u'color' : ( 249, 255, 237, ),
+				#u'html' : '<img src="/home/AMOSvid/20080804_080127.jpg" width="300" height="200"/>',
 			#},
 		#]
 
-	#def testOptionInputs2(self):
-		#ret = self.axpress.read_translate("""
-			#image[file.filename] = "/home/dwiel/AMOSvid/20080804_080127.jpg"
-			#image[html.html] = _html
-		#""")
-		#p('testOptionInputs2',ret)
-		#assert ret ==  [
-			#{
-				#u'html' : '<img src="/home/AMOSvid/20080804_080127.jpg" />',
-			#},
-		#]
+	##def testOptionInputs(self):
+		##ret = self.axpress.read_translate("""
+			##image[file.filename] = "/home/dwiel/AMOSvid/20080804_080127.jpg"
+			##image[html.width] = 300
+			##image[html.html] = _html
+		##""")
+		##p('testOptionInputs',ret)
+		##assert ret ==  [
+			##{
+				##u'html' : '<img src="/home/AMOSvid/20080804_080127.jpg" width="300"/>',
+			##},
+		##]
+
+	##def testOptionInputs2(self):
+		##ret = self.axpress.read_translate("""
+			##image[file.filename] = "/home/dwiel/AMOSvid/20080804_080127.jpg"
+			##image[html.html] = _html
+		##""")
+		##p('testOptionInputs2',ret)
+		##assert ret ==  [
+			##{
+				##u'html' : '<img src="/home/AMOSvid/20080804_080127.jpg" />',
+			##},
+		##]
 	
-	## only works when amarok is playing music
-	#def testAmarok(self):
-		#ret = self.axpress.read_translate("""
- 			#amarok.amarok[amarok.artist] = artist
-			#artist[music.artist_name] = _name
-		#""")
-		##p('ret10',ret)
-		#assert len(ret) == 1 and len(ret[0]) == 1 and 'name' in ret[0] and isinstance(ret[0]['name'], basestring)
+	### only works when amarok is playing music
+	##def testAmarok(self):
+		##ret = self.axpress.read_translate("""
+ 			##amarok.amarok[amarok.artist] = artist
+			##artist[music.artist_name] = _name
+		##""")
+		###p('ret10',ret)
+		##assert len(ret) == 1 and len(ret[0]) == 1 and 'name' in ret[0] and isinstance(ret[0]['name'], basestring)
 
-	def testTranslationReturnsListOfBindings(self):
-		ret = self.axpress.read_translate("""
-			qartist[music.artist_name] = 'Neil Young'
-			qartist[lastfm.similar_to] = qsimilar_artist
-			qsimilar_artist[lastfm.artist_name] = _name
-		""")
-		#p('ret11',ret)
-		assert len(ret) == 10
-		for bindings in ret :
-			assert len(bindings) == 1
-			assert 'name' in bindings
-			assert isinstance(bindings['name'], basestring)
-
-	## only works when amarok is playing music
-	#def testTranslationReturnsListOfBindings2(self):
+	#def testTranslationReturnsListOfBindings(self):
 		#ret = self.axpress.read_translate("""
-			#amarok.amarok[amarok.artist] = artist
-			#artist[lastfm.similar_to] = similar_artist
-			#similar_artist[lastfm.name] = _name
+			#qartist[music.artist_name] = 'Neil Young'
+			#qartist[lastfm.similar_to] = qsimilar_artist
+			#qsimilar_artist[lastfm.artist_name] = _name
 		#""")
-		##p('ret12',ret)
+		##p('ret11',ret)
 		#assert len(ret) == 10
 		#for bindings in ret :
 			#assert len(bindings) == 1
 			#assert 'name' in bindings
 			#assert isinstance(bindings['name'], basestring)
-	
-	def testNoBindingsFromTranslation(self):
-		ret = self.axpress.read_translate("""
-			image[glob.glob] = '/no/files/here/*.jpg'
-			image[file.filename] = _filename
-		""")
-		assert len(ret) == 0
 
-	def testNoBindingsFromTranslation2(self):
-		ret = self.axpress.read_translate("""
-			foo[test.no_bindings_input] = "input string"
-			foo[test.no_bindings_output] = _output
-		""")
-		assert len(ret) == 0
+	### only works when amarok is playing music
+	##def testTranslationReturnsListOfBindings2(self):
+		##ret = self.axpress.read_translate("""
+			##amarok.amarok[amarok.artist] = artist
+			##artist[lastfm.similar_to] = similar_artist
+			##similar_artist[lastfm.name] = _name
+		##""")
+		###p('ret12',ret)
+		##assert len(ret) == 10
+		##for bindings in ret :
+			##assert len(bindings) == 1
+			##assert 'name' in bindings
+			##assert isinstance(bindings['name'], basestring)
 	
-	def testGeneral(self):
-		ret = self.axpress.read_translate("""
-			image[glob.glob] = '/home/dwiel/AMOSvid/1065/*.nothing'
-			image[file.filename] = _filename
-		""")
-		assert ret == []
-
-	def testIncomingOutgoingBindings(self):
-		ret = self.axpress.read_translate("""
-			foo[test.x] = x
-			foo[test.y] = y
-			foo[test.sum] = _sum
-		""", bindings_set = [{'x' : 1, 'y' : 2}], reqd_bound_vars=['x', 'sum'])
-		#p('ret',ret)
-		assert ret == [
-			{
-				u'x' : 1,
-				u'sum' : 3,
-			},
-		]
-	
-	def testIncomingOutgoingBindings2(self):
-		ret = self.axpress.read_translate("""
-			foo[test.x] = _x
-			foo[test.y] = y
-			foo[test.sum] = _sum
-		""", bindings_set = [{'x' : 1, 'y' : 2}])
-		#p('ret',ret)
-		assert ret == [
-			{
-				u'x' : 1,
-				u'sum' : 3,
-			},
-		]
-	
-	#def testMultipleInputObjects(self) :
+	#def testNoBindingsFromTranslation(self):
 		#ret = self.axpress.read_translate("""
-			#user[lastfm.user_name] = 'dwiel'
-			#user[lastfm.recent_track] = track
-			#track[lastfm.album] = album
-			#track[lastfm.artist] = artist
-			#artist[lastfm.artist_name] = _name
+			#image[glob.glob] = '/no/files/here/*.jpg'
+			#image[file.filename] = _filename
 		#""")
-		#p('ret',ret)
+		#assert len(ret) == 0
+
+	#def testNoBindingsFromTranslation2(self):
+		#ret = self.axpress.read_translate("""
+			#foo[test.no_bindings_input] = "input string"
+			#foo[test.no_bindings_output] = _output
+		#""")
+		#assert len(ret) == 0
 	
+	#def testGeneral(self):
+		#ret = self.axpress.read_translate("""
+			#image[glob.glob] = '/home/dwiel/AMOSvid/1065/*.nothing'
+			#image[file.filename] = _filename
+		#""")
+		#assert ret == []
+
+	#def testIncomingOutgoingBindings(self):
+		#ret = self.axpress.read_translate("""
+			#foo[test.x] = x
+			#foo[test.y] = y
+			#foo[test.sum] = _sum
+		#""", bindings_set = [{'x' : 1, 'y' : 2}], reqd_bound_vars=['x', 'sum'])
+		##p('ret',ret)
+		#assert ret == [
+			#{
+				#u'x' : 1,
+				#u'sum' : 3,
+			#},
+		#]
+	
+	#def testIncomingOutgoingBindings2(self):
+		#ret = self.axpress.read_translate("""
+			#foo[test.x] = _x
+			#foo[test.y] = y
+			#foo[test.sum] = _sum
+		#""", bindings_set = [{'x' : 1, 'y' : 2}])
+		##p('ret',ret)
+		#assert ret == [
+			#{
+				#u'x' : 1,
+				#u'sum' : 3,
+			#},
+		#]
+	
+	##def testMultipleInputObjects(self) :
+		##ret = self.axpress.read_translate("""
+			##user[lastfm.user_name] = 'dwiel'
+			##user[lastfm.recent_track] = track
+			##track[lastfm.album] = album
+			##track[lastfm.artist] = artist
+			##artist[lastfm.artist_name] = _name
+		##""")
+		##p('ret',ret)
+		
+	def testLongCount(self) :
+		ret = self.axpress.read_sparql("""
+			x[y] = z
+			query.query[query.count] = _count		
+		""")
+		p('ret',ret)
 	
 	
 	
