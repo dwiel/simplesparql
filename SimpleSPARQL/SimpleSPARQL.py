@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 SimpleSPARQL provides some high level access to some basic SPARQL queries
 TODO: depricate RDFObject and everything associated with it
@@ -28,6 +29,11 @@ from Parser import Parser
 class SimpleSPARQL (SPARQLWrapper) :
 	def __init__(self, baseURI, returnFormat=None, defaultGraph=None, sparul=None, graph=None, n=None):
 		SPARQLWrapper.__init__(self, baseURI, returnFormat, defaultGraph)
+		self.pattern = re.compile(r"""
+			(?P<base>(\s*BASE\s*[<].*[>])\s*)*
+			(?P<prefixes>(\s*PREFIX\s*.*[:]\s*[<].*[>])\s*)*
+			(?P<queryType>(CLEAR|LOAD|CREATE|DROP|MODIFY|INSERT|DELETE|CONSTRUCT|SELECT|ASK|DESCRIBE))
+		""", re.VERBOSE | re.IGNORECASE)
 		if sparul :
 			self.setSPARUL(sparul)
 		else :
@@ -78,6 +84,9 @@ class SimpleSPARQL (SPARQLWrapper) :
 		where = rdflib.sparql.parser._buildQueryArgs(self.n.SPARQL_PREFIX()+str(" WHERE { %s }" % construct_str))
 		return where['where'][0]
 	
+	def _parseQueryType(self, query) :
+		return self.pattern.search(query).group("queryType").upper()
+	
 	def doQuery(self, query) :
 		"""Execute a SPARQL/SPARUL query and return the result.  The set of prefixes
 		in self.n namespaces will be prepended to the query.
@@ -94,7 +103,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		if query_type == "DELETE" or query_type == "INSERT" :
 			sparql = self.sparul
 			sparql.setMethod("POST")
-			sparql.setQueryParam("request")
+			#sparql.setQueryParam("request")
 		else :
 			sparql = self
 			

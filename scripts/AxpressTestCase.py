@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import unittest
 
 import time, urllib
@@ -39,7 +40,7 @@ class AxpressTestCase(unittest.TestCase):
 			sparql = sparql,
 			compiler = self.compiler,
 			evaluator = self.evaluator
-		)	
+		)
 		loadTranslations(self.axpress, n)
 		
 	
@@ -381,7 +382,7 @@ class AxpressTestCase(unittest.TestCase):
 	# test a translation which makes an axpress call
 	def testEmbededAxpress(self):
 		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			image[file.pattern] = "/home/dwiel/pictures/stitt blanket/*.jpg"
 			image[image.average_color] = _color
 		""")
 		assert ret == [

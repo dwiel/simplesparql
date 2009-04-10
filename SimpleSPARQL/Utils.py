@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from Namespaces import Namespaces
 from PrettyQuery import prettyquery
 
@@ -194,6 +195,13 @@ def find_vars(query, is_a_var = is_any_var) :
 
 
 class UniqueURIGenerator() :
+	"""
+	usage:
+	> urigen = UniqueURIGenerator("http://example.org/", "bnode")
+	> urigen()
+	http://example.org/bnode848538945729345892349857
+	"""
+	
 	def __init__(self, namespace = n.bnode, prefix = 'bnode') :
 		self.namespace = namespace
 		self.prefix = prefix

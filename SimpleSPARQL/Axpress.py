@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import Parser, Evaluator, MultilineParser
 from Utils import sub_var_bindings, sub_var_bindings_set, find_vars, UniqueURIGenerator, debug, is_any_var, var_name, explode_bindings_set, p, is_lit_var
 from PrettyQuery import prettyquery
@@ -147,8 +148,12 @@ class Axpress() :
 		for bindings in bindings_set :
 			# TODO don't allow people to break in!  Not sure how good this is ...
 			bindings['__builtins__'] = None
+			bindings['bindings'] = bindings
+			bindings['str'] = str
 			exec query in bindings
 			del bindings['__builtins__']
+			del bindings['bindings']
+			del bindings['str']
 			new_bindings_set.extend(explode_bindings_set(bindings))
 		return new_bindings_set
 	

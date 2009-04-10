@@ -247,37 +247,64 @@ def loadTranslations(axpress, n) :
 		#print(results)
 		#return results
 		
+	#axpress.register_translation({
+		#n.meta.name : "last.fm user's recent tracks",
+		#n.meta.input : """
+			#user[lastfm.user_name] = _user_name
+			#user[lastfm.recent_track] = track
+			#track[lastfm.album] = album
+			#track[lastfm.artist] = artist
+		#""",
+		#n.meta.output : """
+			#artist[lastfm.mbid] = _artist_mbid
+			#artist[lastfm.artist_name] = _artist_name
+			#track[lastfm.track_name] = _track_name
+			#album[lastfm.mbid] = _album_mbid
+			#album[lastfm.album_name] = _album_name
+			#track[lastfm.date_uts] = _date_uts
+		#""",
+		#n.meta.function : lastfm_user_recent_tracks,
+		#n.meta.constant_vars : ['user', 'track', 'artist', 'album'],
+	#})
 	axpress.register_translation({
 		n.meta.name : "last.fm user's recent tracks",
 		n.meta.input : """
 			user[lastfm.user_name] = _user_name
 			user[lastfm.recent_track] = track
-			track[lastfm.album] = album
 			track[lastfm.artist] = artist
 		""",
 		n.meta.output : """
 			artist[lastfm.mbid] = _artist_mbid
 			artist[lastfm.artist_name] = _artist_name
 			track[lastfm.track_name] = _track_name
-			album[lastfm.mbid] = _album_mbid
-			album[lastfm.album_name] = _album_name
 			track[lastfm.date_uts] = _date_uts
 		""",
 		n.meta.function : lastfm_user_recent_tracks,
-		n.meta.constant_vars : ['user', 'track', 'artist', 'album'],
+		n.meta.constant_vars : ['user', 'track', 'artist'],
 	})
 	
-	#axpress.register_translation({
-		#n.meta.name : "last.fm shorthand artist name",
-		#n.meta.input : """
-			#track[lastfm.artist] = artist
-			#artist[lastfm.artist_name] = _artist_name
-		#""",
-		#n.meta.output : """
-			#track[lastfm.artist_name] = _artist_name
-		#""",
-		#n.meta.constant_vars : ['track'],
-	#})
+	axpress.register_translation({
+		n.meta.name : "last.fm shorthand artist name",
+		n.meta.input : """
+			track[lastfm.artist] = artist
+			artist[lastfm.artist_name] = _artist_name
+		""",
+		n.meta.output : """
+			track[lastfm.artist_name] = _artist_name
+		""",
+		n.meta.constant_vars : ['track'],
+	})
+	
+	axpress.register_translation({
+		n.meta.name : "lastfm.artist_name -> music.artist_name",
+		n.meta.input : """
+			x[lastfm.artist_name] = _name
+		""",
+		n.meta.output : """
+			x[music.artist_name] = _name
+		""",
+		n.meta.constant_vars : ['x'],
+	})
 	
 	#axpress.register_translation({
 		#n.meta.name : "last.fm shorthand artist mbid",
@@ -339,7 +366,9 @@ def loadTranslations(axpress, n) :
 		urls = []
 		for photo in photos.find('photos').findall('photo') :
 			urls.append(flickr_make_url(photo))
-		vars['url'] = urls
+		# for now, limit it to 5 urls just to keep it reasonable since there isnt a
+		# good query limit atm
+		vars['url'] = urls[:5]
 		
 	axpress.register_translation({
 		n.meta.name : 'flickr photos search',
