@@ -1383,7 +1383,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 				
 				yield newbinding
 
-	def parseResultsBindings(ret) :
+	def parseResultsBindings(self, ret) :
 		for binding in ret['results']['bindings'] :
 			newbinding = {}
 			for var, value in binding.iteritems() :
