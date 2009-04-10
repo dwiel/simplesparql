@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from SimpleSPARQL import SimpleSPARQL
 from Axpress import Axpress
 from Translator import Translator

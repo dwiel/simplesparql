@@ -1383,6 +1383,23 @@ class SimpleSPARQL (SPARQLWrapper) :
 				
 				yield newbinding
 
+	def parseResultsBindings(ret) :
+		for binding in ret['results']['bindings'] :
+			newbinding = {}
+			for var, value in binding.iteritems() :
+				if value['type'] == 'typed-literal' :
+					if value['datatype'] == 'http://www.w3.org/2001/XMLSchema#integer' :
+						newbinding[var] = int(value['value'])
+					elif value['datatype'] == 'http://www.w3.org/2001/XMLSchema#decimal' :
+						newbinding[var] = float(value['value'])
+				elif value['type'] == 'literal' :
+					newbinding[var] = value['value']
+				elif value['type'] == 'uri' :
+					newbinding[var] = URIRef(value['value'])
+				elif value['type'] == 'bnode' :
+					raise Exception('cant do bnodes')
+			
+			yield newbinding
 
 
 
