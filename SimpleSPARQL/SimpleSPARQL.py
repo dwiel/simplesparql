@@ -1401,8 +1401,14 @@ class SimpleSPARQL (SPARQLWrapper) :
 			
 			yield newbinding
 
+	def doQueryListIter(self, query) :
+		ret = self.doQuery(query)
+		
+		for row in self.parseResultsBindings(ret) :
+			yield row.values()[0]
 
-
+	def doQueryList(self, query) :
+		return [x for x in self.doQueryListIter(query)]
 
 
 
