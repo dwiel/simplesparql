@@ -1419,9 +1419,16 @@ class SimpleSPARQL (SPARQLWrapper) :
 		
 		return d
 
+	def doQueryRowsIter(self, query) :
+		ret = self.doQuery(query)
+		
+		for row in self.parseResultsBindings(ret) :
+			yield row
 
-
-
+	def doQueryRows(self, query) :
+		ret = self.doQuery(query)
+		
+		return [x for x in self.parseResultsBindings(ret)]
 
 
 
