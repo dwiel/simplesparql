@@ -1410,6 +1410,14 @@ class SimpleSPARQL (SPARQLWrapper) :
 	def doQueryList(self, query) :
 		return [x for x in self.doQueryListIter(query)]
 
+	def doQueryDict(self, query, key, value) :
+		ret = self.doQuery(query)
+		
+		d = {}
+		for row in self.parseResultsBindings(ret) :
+			d[row[key]] = d[row[value]]
+		
+		return d
 
 
 
