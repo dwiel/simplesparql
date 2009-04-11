@@ -1392,6 +1392,8 @@ class SimpleSPARQL (SPARQLWrapper) :
 						newbinding[var] = int(value['value'])
 					elif value['datatype'] == 'http://www.w3.org/2001/XMLSchema#decimal' :
 						newbinding[var] = float(value['value'])
+					elif value['datatype'] == 'http://www.w3.org/2001/XMLSchema#boolean' :
+						newbinding[var] = bool(value['value'])
 				elif value['type'] == 'literal' :
 					newbinding[var] = value['value']
 				elif value['type'] == 'uri' :
