@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 import unittest
 
 from SimpleSPARQL import *
 
 n = globalNamespaces()
+n.bind('', '<http://dwiel.net/express//0.1/>')
 n.bind('string', '<http://dwiel.net/express/string/0.1/>')
 n.bind('math', '<http://dwiel.net/express/math/0.1/>')
 n.bind('file', '<http://dwiel.net/express/file/0.1/>')
@@ -188,6 +190,15 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			note[e.tag] _tag
 		"""
 		p('parsed',self.parser.parse_query(query))
+	
+	def test_emptyNamespace(self):
+		query = """
+			note[:tag] = _tag
+		"""
+		
+		assert self.parser.parse_query(query) == [
+			[n.var['note'], n['']['tag'], n.lit_var['tag']],
+		]
 	
 	
 if __name__ == "__main__" :

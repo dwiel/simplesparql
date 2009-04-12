@@ -197,7 +197,7 @@ def find_vars(query, is_a_var = is_any_var) :
 class UniqueURIGenerator() :
 	"""
 	usage:
-	> urigen = UniqueURIGenerator("http://example.org/", "bnode")
+	> urigen = UniqueURIGenerator(rdflib.Namespace("http://example.org/"), "bnode")
 	> urigen()
 	http://example.org/bnode848538945729345892349857
 	"""

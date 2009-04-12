@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import Namespaces
 import re
 from Utils import p, is_lit_var, var_name
@@ -11,7 +12,7 @@ re_dict = re.compile('(.+){(.+)}')
 re_dict_pair = re.compile('\s*([^,:\.]*[:\.]*[^,:\.]*)\s*:\s*([^,:\.]*[:\.]*[^,:\.]*)\s*,')
 re_call = re.compile('(.+)\((.*)\)')
 re_call_params = re.compile('([^,]+),')
-re_uri = re.compile('(\D\w*)[\.:](\w+)')
+re_uri = re.compile('(\D\w*|)[\.:](\w+)')
 re_var = re.compile('^[a-zA-Z_]\w*$')
 re_meta_var = re.compile('^\?[a-zA-Z_]\w*$')
 re_lit_var = re.compile('^_[a-zA-Z_]\w*$')
@@ -175,7 +176,7 @@ class Parser() :
 		expression = expression.strip()
 		g = re_equals.match(expression)
 		if g is not None :
-			#p('re_equals')
+			#p('re_equals', g.group(0))
 			if expression.count('=') > 1 :
 				# this is a harder case ...
 				print g.group(0)
@@ -201,7 +202,7 @@ class Parser() :
 		
 		g = re_prop.match(expression)
 		if g is not None :
-			#p('re_prop')
+			#p('re_prop', g.group(0))
 			obj = self.parse_expression_new(g.group(1))
 			prop = self.parse_expression_new(g.group(2))
 			
@@ -221,7 +222,7 @@ class Parser() :
 		
 		g = re_dict.match(expression)
 		if g is not None :
-			#p('re_dict')
+			#p('re_dict', g.group(0))
 			obj = g.group(1).strip()
 			inside = g.group(2).strip() + ','
 			
@@ -243,7 +244,7 @@ class Parser() :
 		
 		g = re_call.match(expression)
 		if g is not None :
-			#p('re_call')
+			#p('re_call', g.group(0))
 			obj = self.parse_expression_new(g.group(1))
 			params = g.group(2) + ','
 			
@@ -260,26 +261,29 @@ class Parser() :
 		
 		g = re_uri.match(expression)
 		if g is not None :
-			#p('re_uri')
+			#p('re_uri', g.group(0))
 			namespace = g.group(1).strip()
 			value = g.group(2).strip()
-			return 'n.%s["%s"]' % (namespace, value)
+			if len(namespace) == 0 :
+				return 'n[""]["%s"]' % value
+			else :
+				return 'n.%s["%s"]' % (namespace, value)
 		
 		if expression in python_keywords :
-			#p('keyword')
+			#p('keyword', expression)
 			return expression
 		
 		g = re_lit_var.match(expression)
 		if g is not None :
-			#p('re_lit_var')
+			#p('re_lit_var', expression[1:])
 			return 'n.lit_var["%s"]' % expression[1:]
 		
 		if re_meta_var.match(expression) :
-			#p('re_meta_var')
+			#p('re_meta_var', expression[1:])
 			return 'n.meta_var["%s"]' % expression[1:]
 		
 		if re_var.match(expression) :
-			#p('re_var')
+			#p('re_var', expression)
 			return 'n.var["%s"]' % expression
 		
 		#p('just expression', expression)

@@ -1280,7 +1280,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 	
 	def triplelist_to_sparql(self, query, varnamespace = None) :
 		# todo: shouldn't have proxy functions like this
-		return self.jsparql_to_sparql(query)
+		return self.jsparql_to_sparql(query, varnamespace)
 	
 	def jsparql_to_sparql(self, query, varnamespace = None) :
 		if type(query) == list and type(query[0]) == list :
