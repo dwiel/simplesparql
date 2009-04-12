@@ -200,6 +200,14 @@ class PassCompleteReadsTestCase(unittest.TestCase):
 			[n.var['note'], n['']['tag'], n.lit_var['tag']],
 		]
 	
+	def test_emptyNamespace2(self):
+		query = """
+			note[.tag] = _tag
+		"""
+		
+		assert self.parser.parse_query(query) == [
+			[n.var['note'], n['']['tag'], n.lit_var['tag']],
+		]
 	
 if __name__ == "__main__" :
 	unittest.main()
