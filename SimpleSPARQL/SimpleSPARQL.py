@@ -163,6 +163,14 @@ class SimpleSPARQL (SPARQLWrapper) :
 		# TODO case where query is not COUNT ? I dunno if its covered
 		return value
 
+	def doQueryString(self, query) :
+		"""
+		@arg query - SPARQL query with a single string expected to be returned
+		@return the single string returned from the query
+		"""
+		qr = self.doQuery(query)
+		return qr['results']['bindings'][0]
+
 	def describe(self, uri) :
 		self.setQuery("DESCRIBE <"+uri+">")
 		self.setReturnFormat(JSON)
