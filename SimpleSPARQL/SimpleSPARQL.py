@@ -51,6 +51,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		#self.n.bind('meta_var', '<http://dwiel.net/axpress/meta_var/0.1/>')
 		self.lang = 'en'
 		self.debug = False
+		self.include_prefix = False
 		self.graph = graph
 		self.translations = []
 		self.parser = Parser(n)
@@ -87,15 +88,15 @@ class SimpleSPARQL (SPARQLWrapper) :
 	def _parseQueryType(self, query) :
 		return self.pattern.search(query).group("queryType").upper()
 	
-	def doQuery(self, query) :
+	def doQuery(self, query, include_prefix = None) :
 		"""Execute a SPARQL/SPARUL query and return the result.  The set of prefixes
 		in self.n namespaces will be prepended to the query.
 		if the query is an ASK returns true or false
 		if the query is a SELECT: returns JSON of the bindings
 		"""
 		try :
-			#query = self.n.SPARQL_PREFIX() + query
-			pass
+			if include_prefix or include_prefix == None and self.include_prefix:
+				query = self.n.SPARQL_PREFIX() + query
 		except:
 			pass
 		
