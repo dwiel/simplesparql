@@ -158,9 +158,12 @@ class SimpleSPARQL (SPARQLWrapper) :
 		@arg query - SPARQL query with a single number expected to be returned
 		@return the single number returned from the query
 		"""
-		qr = self.doQuery(query)
-		datatype = qr['results']['bindings'][0]['.1']['datatype']
-		value = qr['results']['bindings'][0]['.1']['value']
+		qr = self.doQuery(query)['results']['bindings']
+		if not qr :
+			return None
+		
+		datatype = qr[0]['.1']['datatype']
+		value = qr[0]['.1']['value']
 		if datatype == u'http://www.w3.org/2001/XMLSchema#integer' :
 			return int(value)
 		# TODO case where the datatype is a floating point value
@@ -172,8 +175,11 @@ class SimpleSPARQL (SPARQLWrapper) :
 		@arg query - SPARQL query with a single string expected to be returned
 		@return the single string returned from the query
 		"""
-		qr = self.doQuery(query)
-		return qr['results']['bindings'][0].values()[0]['value']
+		qr = self.doQuery(query)['results']['bindings']
+		if qr :
+			return qr[0].values()[0]['value']
+		else :
+			return None
 	
 	def doQueryURI(self, query) :
 		"""
