@@ -169,8 +169,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 		@return the single string returned from the query
 		"""
 		qr = self.doQuery(query)
-		first_result = qr['results']['bindings'][0]
-			return first_result.values()['value']
+		return qr['results']['bindings'][0].values()['value']
 	
 	def doQueryURI(self, query) :
 		"""
