@@ -1423,7 +1423,7 @@ class SimpleSPARQL (SPARQLWrapper) :
 	def doQueryBoolean(self, query) :
 		ret = self.doQuery(query)
 		
-		return bool(ret['results']['bindings'][0].values()[0]['value'])
+		return bool(ret['results']['bindings'])
 
 	def doQueryListIter(self, query) :
 		ret = self.doQuery(query)
