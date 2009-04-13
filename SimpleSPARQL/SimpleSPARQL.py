@@ -1419,6 +1419,11 @@ class SimpleSPARQL (SPARQLWrapper) :
 					raise Exception('cant do bnodes')
 			
 			yield newbinding
+	
+	def doQueryBoolean(self, query) :
+		ret = self.doQuery(query)
+		
+		return bool(ret['results']['bindings'][0].values()[0]['value'])
 
 	def doQueryListIter(self, query) :
 		ret = self.doQuery(query)
