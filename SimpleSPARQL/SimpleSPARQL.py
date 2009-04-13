@@ -146,9 +146,12 @@ class SimpleSPARQL (SPARQLWrapper) :
 				
 				#pattern.construct(c, bindings)
 				#yield RDFObject(c, self.n.e['uri'], self)
+	
+	def doQueryURI(self, query) :
+		return URIRef(self.doQueryString(query))
 
-	def doShortQueryURI(self, query) :
-		return self.doQueryURI("""SELECT DISTINCT ?uri WHERE { %s . }""" % self.wrapGraph(query))
+	#def doShortQueryURI(self, query) :
+		#return self.doQueryURI("""SELECT DISTINCT ?uri WHERE { %s . }""" % self.wrapGraph(query))
 	
 	def doQueryNumber(self, query) :
 		"""
