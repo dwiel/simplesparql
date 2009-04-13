@@ -1420,11 +1420,6 @@ class SimpleSPARQL (SPARQLWrapper) :
 			
 			yield newbinding
 	
-	def doQueryBoolean(self, query) :
-		ret = self.doQuery(query)
-		
-		return bool(ret['results']['bindings'])
-
 	def doQueryListIter(self, query) :
 		ret = self.doQuery(query)
 		
