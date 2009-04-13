@@ -124,27 +124,27 @@ class SimpleSPARQL (SPARQLWrapper) :
 		else :
 			return sparql.query()
 	
-	def doQueryURI(self, query, construct_str = None) :
-		"""
-		depricated ?
-		"""
-		g = self.doQuery(query)
-		for rawbindings in g['results']['bindings'] :
-			if construct_str == None :
-				uri = rawbindings['uri']['value']
-				if rawbindings['uri']['type'] == 'bnode' :
-					raise Exception("can not convert a BNode into an RDFObject")
-				n3 = self.describe(uri)
-				yield RDFObject(n3, uri, self)
-			else :
-				c = Graph()
-				pattern = self.parseConstruct(construct_str)
-				bindings = {}
-				for key,value in rawbindings.iteritems() :
-					bindings['?'+key] = Literal(value['value'])
+	#def doQueryURI(self, query, construct_str = None) :
+		#"""
+		#depricated ?
+		#"""
+		#g = self.doQuery(query)
+		#for rawbindings in g['results']['bindings'] :
+			#if construct_str == None :
+				#uri = rawbindings['uri']['value']
+				#if rawbindings['uri']['type'] == 'bnode' :
+					#raise Exception("can not convert a BNode into an RDFObject")
+				#n3 = self.describe(uri)
+				#yield RDFObject(n3, uri, self)
+			#else :
+				#c = Graph()
+				#pattern = self.parseConstruct(construct_str)
+				#bindings = {}
+				#for key,value in rawbindings.iteritems() :
+					#bindings['?'+key] = Literal(value['value'])
 				
-				pattern.construct(c, bindings)
-				yield RDFObject(c, self.n.e['uri'], self)
+				#pattern.construct(c, bindings)
+				#yield RDFObject(c, self.n.e['uri'], self)
 
 	def doShortQueryURI(self, query) :
 		return self.doQueryURI("""SELECT DISTINCT ?uri WHERE { %s . }""" % self.wrapGraph(query))
@@ -170,7 +170,15 @@ class SimpleSPARQL (SPARQLWrapper) :
 		"""
 		qr = self.doQuery(query)
 		return qr['results']['bindings'][0]['uri']['value']
-
+	
+	def doQueryURI(self, query) :
+		"""
+		@arg query - SPARQL query with a single uri expected to be returned
+		@return the single uri returned from the query
+		"""
+		qr = self.doQuery(query)
+		return qr['results']['bindings'][0]
+	
 	def describe(self, uri) :
 		self.setQuery("DESCRIBE <"+uri+">")
 		self.setReturnFormat(JSON)
