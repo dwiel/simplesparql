@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #from rdflib.Namespace import NamespaceDict
 from rdflib import Namespace
 import re
@@ -23,13 +24,13 @@ class Namespaces() :
 
 	def SPARQL_PREFIX(self) :
 		str = ''
-		for prefix,namespace in self.namespaces.iteritems() :
+		for prefix, namespace in self.namespaces.iteritems() :
 			str += 'PREFIX %s: <%s> ' % (prefix, namespace)
 		return str
 
 	def n3_prefix(self) :
 		s = ''
-		for prefix,namespace in self.namespaces.iteritems() :
+		for prefix, namespace in self.namespaces.iteritems() :
 			s += '@prefix %s: <%s> .\n' % (prefix, namespace)
 		return str(s)
 	n3 = n3_prefix

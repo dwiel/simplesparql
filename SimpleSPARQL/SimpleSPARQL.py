@@ -795,14 +795,14 @@ class SimpleSPARQL (SPARQLWrapper) :
 					values.append(value['value'])
 		return values
 
-	def ask(self, query) :
+	def ask(self, query, include_prefix = None) :
 		if type(query) == dict :
 			triples = []
 			self.read_parse_helper(query, [], triples, {}, {}, [])
 			query = ""
 			for triple in triples :
 				query += "%s %s %s . " % triple
-		return self.doQuery("ASK { %s }" % self.wrapGraph(query))
+		return self.doQuery("ASK { %s }" % self.wrapGraph(query), include_prefix)
 	
 	# remove dicts with pairs like n.sparql.create : n.sparql.unless_exists with a
 	# n.sparql.var : 1
