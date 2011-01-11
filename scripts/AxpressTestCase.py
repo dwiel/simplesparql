@@ -81,14 +81,13 @@ class AxpressTestCase(unittest.TestCase):
 	
 	def testTranslationReturnsMultipleValues(self):
 		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			image[glob.glob] = "pictures/*.jpg"
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
 			thumb[pil.image] = _thumb_image
 		""", reqd_bound_vars = ['thumb_image', 'thumb'])
 		#print 'ret2',prettyquery(ret)
 		for i, bindings in enumerate(ret) :
 			ret[i]['thumb_image'] = type(bindings['thumb_image'])
-		#ret = [{'thumb_image' : type(bindings['thumb_image'])} for bindings in ret]
 		assert ret == [
 			{
 				'thumb' : n.out_var.thumb,
@@ -101,7 +100,7 @@ class AxpressTestCase(unittest.TestCase):
 	
 	def testQueryLimitLessThanAvailable(self):
 		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			image[glob.glob] = "pictures/*.jpg"
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
 			thumb[pil.image] = _thumb_image
 			query.query[query.limit] = 1
@@ -116,7 +115,7 @@ class AxpressTestCase(unittest.TestCase):
 	
 	def testQueryLimitSameAsAvailable(self):
 		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			image[glob.glob] = "pictures/*.jpg"
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
 			thumb[pil.image] = _thumb_image
 			query.query[query.limit] = 2
@@ -133,7 +132,7 @@ class AxpressTestCase(unittest.TestCase):
 	
 	def testQueryLimitMoreThanAvailable(self):
 		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			image[glob.glob] = "pictures/*.jpg"
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
 			thumb[pil.image] = _thumb_image
 			query.query[query.limit] = 3
@@ -168,26 +167,26 @@ class AxpressTestCase(unittest.TestCase):
 	
 	def test5(self):
 		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			image[glob.glob] = "pictures/*.jpg"
 			image[file.filename] = _filename
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
 			pixel = image.pixel(thumb, 0, 0)
 			pixel[pil.color] = _thumb_pixel_color
 		""", reqd_bound_vars = ['filename','thumb_pixel_color'])
-		# print 'ret5',prettyquery(ret)
+		#print 'ret5',prettyquery(ret)
 		assert ret == [
 			{
-				u'filename' : '/home/dwiel/pictures/stitt blanket/00002.jpg',
-				u'thumb_pixel_color' : (141, 130, 100),
+				u'filename' : 'pictures/111.jpg',
+				u'thumb_pixel_color' : (26, 24, 24),
 			}, {
-				u'filename' : '/home/dwiel/pictures/stitt blanket/00001.jpg',
-				u'thumb_pixel_color' : (94, 48, 67),
+				u'filename' : 'pictures/foobar.jpg',
+				u'thumb_pixel_color' : (69, 68, 73),
 			},
 		]
 	
 	def test6(self):
 		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			image[glob.glob] = "pictures/*.jpg"
 			image[file.filename] = _filename
 			thumb = image.thumbnail(image, 4, 4, image.antialias)
 			pixel = image.pixel(thumb, 0, 0)
@@ -197,33 +196,33 @@ class AxpressTestCase(unittest.TestCase):
 		#print 'ret6',prettyquery(ret)
 		assert ret == [
 			{
-				u'distance' : 39896,
-				u'filename' : '/home/dwiel/pictures/stitt blanket/00002.jpg',
+				u'distance' : 53593,
+				u'filename' : 'pictures/111.jpg',
 			}, {
-				u'distance' : 32714,
-				u'filename' : '/home/dwiel/pictures/stitt blanket/00001.jpg',
+				u'distance' : 44549,
+				u'filename' : 'pictures/foobar.jpg',
 			},
 		]
 
-	def test7(self):
-		ret = self.axpress.read_translate("""
-			image[glob.glob] = "/home/dwiel/AMOSvid/*.jpg"
-			thumb = image.thumbnail(image, 1, 1)
-			pix = image.pixel(thumb, 0, 0)
-			pix[pil.color] = _color
-			image[file.filename] = _filename
-		""")
-		#print 'ret7',prettyquery(ret)
-		assert len(ret) == 2
-		assert ret == [
-			{
-				u'color' : ( 71, 43, 85, ),
-				u'filename' : '/home/dwiel/AMOSvid/20080804_080127.jpg',
-			}, {
-				u'color' : ( 58, 25, 47, ),
-				u'filename' : '/home/dwiel/AMOSvid/20080804_083127.jpg',
-			},
-		]
+	#def test7(self):
+		#ret = self.axpress.read_translate("""
+			#image[glob.glob] = "/home/dwiel/AMOSvid/*.jpg"
+			#thumb = image.thumbnail(image, 1, 1)
+			#pix = image.pixel(thumb, 0, 0)
+			#pix[pil.color] = _color
+			#image[file.filename] = _filename
+		#""")
+		##print 'ret7',prettyquery(ret)
+		#assert len(ret) == 2
+		#assert ret == [
+			#{
+				#u'color' : ( 71, 43, 85, ),
+				#u'filename' : '/home/dwiel/AMOSvid/20080804_080127.jpg',
+			#}, {
+				#u'color' : ( 58, 25, 47, ),
+				#u'filename' : '/home/dwiel/AMOSvid/20080804_083127.jpg',
+			#},
+		#]
 
 	
 	def testBasicExample(self):
@@ -235,22 +234,22 @@ class AxpressTestCase(unittest.TestCase):
 		#p('ret8',ret)
 		assert ret == [{'sum' : 11}]
 
-	def testMultipleNonDependentPaths(self):
-		ret = self.axpress.read_translate("""
-			image[file.filename] = "/home/dwiel/AMOSvid/20080804_080127.jpg"
-			pix = image.pixel(image, 0, 0)
-			pix[pil.color] = _color
-			image[html.height] = 200
-			image[html.width] = 300
-			image[html.html] = _html
-		""")
-		p('testMultipleNonDependentPaths',ret)
-		assert ret ==  [
-			{
-				u'color' : ( 249, 255, 237, ),
-				u'html' : '<img src="/home/AMOSvid/20080804_080127.jpg" width="300" height="200"/>',
-			},
-		]
+	#def testMultipleNonDependentPaths(self):
+		#ret = self.axpress.read_translate("""
+			#image[file.filename] = "/home/dwiel/AMOSvid/20080804_080127.jpg"
+			#pix = image.pixel(image, 0, 0)
+			#pix[pil.color] = _color
+			#image[html.height] = 200
+			#image[html.width] = 300
+			#image[html.html] = _html
+		#""")
+		#p('testMultipleNonDependentPaths',ret)
+		#assert ret ==  [
+			#{
+				#u'color' : ( 249, 255, 237, ),
+				#u'html' : '<img src="/home/AMOSvid/20080804_080127.jpg" width="300" height="200"/>',
+			#},
+		#]
 
 	#def testOptionInputs(self):
 		#ret = self.axpress.read_translate("""
@@ -382,14 +381,15 @@ class AxpressTestCase(unittest.TestCase):
 	# test a translation which makes an axpress call
 	def testEmbededAxpress(self):
 		ret = self.axpress.read_translate("""
-			image[file.pattern] = "/home/dwiel/pictures/stitt blanket/*.jpg"
+			image[file.pattern] = "pictures/*.jpg"
 			image[image.average_color] = _color
 		""")
+		#p('testEmbededAxpress', ret)
 		assert ret == [
 			{
-				u'color' : ( 154, 99, 120, ),
+				u'color' : ( 16, 15, 15, ),
 			}, {
-				u'color' : ( 144, 92, 109, ),
+				u'color' : ( 139, 137, 145, ),
 			},
 		]
 

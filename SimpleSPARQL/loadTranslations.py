@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from SimpleSPARQL import *
 import os, random, re
 from itertools import izip
@@ -161,10 +162,14 @@ def loadTranslations(axpress, n) :
 	re_lastfm_similar = re.compile('(.*?),(.*?),(.+)')
 	def lastfm_similar(vars) :
 		import os, urllib, time
-		filename = '/home/dwiel/.lastfmcache/artist_%s_similar' % urllib.quote(vars['artist_name'])
+		if not os.path.exists('.lastfmcache') :
+			os.mkdir('.lastfmcache')
+		filename = '.lastfmcache/artist_%s_similar' % urllib.quote(vars['artist_name'])
 		filename = filename.replace('%','_')
 		if not os.path.exists(filename) :
-			os.system('wget http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt -O %s' % (urllib.quote(vars['artist_name']), filename))
+			cmd = 'wget http://ws.audioscrobbler.com/2.0/artist/%s/similar.txt -O %s' % (urllib.quote(vars['artist_name']), filename)
+			ret = os.system(cmd)
+			print cmd, ret
 		
 			lasttime = time.time()
 			while lasttime + 1 < time.time() :
@@ -648,14 +653,6 @@ def loadTranslations(axpress, n) :
 		return ret
 	axpress.register_translation({
 		n.meta.name : 'glob glob',
-		# This doesn't work!
-		#n.meta.input : [
-			#'_pattern[glob.glob] = ?filename'
-		#],
-		#n.meta.output : [
-			#'_pattern[glob.glob] = _out_filename'
-		#],
-		# do this instead: (or the next translation also works)
 		n.meta.input : """
 			glob[glob.glob] = _pattern
 		""",
