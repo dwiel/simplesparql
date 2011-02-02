@@ -45,40 +45,41 @@ class AxpressTestCase(unittest.TestCase):
 		loadTranslations(self.axpress, n)
 		
 	
-	def testIncomingBindings(self):
-		def is_num(x):
-			return isinstance(x, (int, long, float))
-		
-		bindings_set = self.axpress.read_sparql("""
-			foo[test.x] = x
-			foo[test.y] = y
-		""")
-		
-		# reduce bindings to those whose x and y values are numbers
-		# I'd like this functionality to exist, but I don't think this is the right
-		# way to get at it, or think about it.  For one, the type should take care
-		# of most of this kind of thing - though I know that it shouldn't be relied
-		# on ...
-		#bindings_set = [x for x in bindings_set]
-		#print 'bindings_set',prettyquery(bindings_set)
-		new_bindings_set = []
-		for bindings in bindings_set :
-			if is_num(bindings['x']) and is_num(bindings['y']) :
-				new_bindings_set.append(bindings)
-		bindings_set = new_bindings_set
-		#print 'bindings_set',prettyquery(bindings_set)
-		
-		ret = self.axpress.read_translate("""
-			foo[test.x] = x
-			foo[test.y] = y
-			foo[test.sum] = _sum
-		""", reqd_bound_vars = ['sum'], bindings_set = bindings_set)
-		#p('ret',ret)
-		assert ret == [
-			{
-				u'sum' : 3,
-			},
-		]
+	# depends on Joseki
+	#def testIncomingBindings(self):
+	#	def is_num(x):
+	#		return isinstance(x, (int, long, float))
+	#	
+	#	bindings_set = self.axpress.read_sparql("""
+	#		foo[test.x] = x
+	#		foo[test.y] = y
+	#	""")
+	#	
+	#	# reduce bindings to those whose x and y values are numbers
+	#	# I'd like this functionality to exist, but I don't think this is the right
+	#	# way to get at it, or think about it.  For one, the type should take care
+	#	# of most of this kind of thing - though I know that it shouldn't be relied
+	#	# on ...
+	#	#bindings_set = [x for x in bindings_set]
+	#	#print 'bindings_set',prettyquery(bindings_set)
+	#	new_bindings_set = []
+	#	for bindings in bindings_set :
+	#		if is_num(bindings['x']) and is_num(bindings['y']) :
+	#			new_bindings_set.append(bindings)
+	#	bindings_set = new_bindings_set
+	#	#print 'bindings_set',prettyquery(bindings_set)
+	#	
+	#	ret = self.axpress.read_translate("""
+	#		foo[test.x] = x
+	#		foo[test.y] = y
+	#		foo[test.sum] = _sum
+	#	""", reqd_bound_vars = ['sum'], bindings_set = bindings_set)
+	#	#p('ret',ret)
+	#	assert ret == [
+	#		{
+	#			u'sum' : 3,
+	#		},
+	#	]
 	
 	def testTranslationReturnsMultipleValues(self):
 		ret = self.axpress.read_translate("""
@@ -371,13 +372,14 @@ class AxpressTestCase(unittest.TestCase):
 			#artist[lastfm.artist_name] = _name
 		#""")
 		#p('ret',ret)
-		
-	def testLongCount(self) :
-		ret = self.axpress.read_sparql("""
-			x[y] = z
-			query.query[query.count] = _count		
-		""")
-		assert ret == [{'count' : 13}]
+	
+	# depends on Joseki	
+	#def testLongCount(self) :
+	#	ret = self.axpress.read_sparql("""
+	#		x[y] = z
+	#		query.query[query.count] = _count		
+	#	""")
+	#	assert ret == [{'count' : 13}]
 	
 	# test a translation which makes an axpress call
 	def testEmbededAxpress(self):
