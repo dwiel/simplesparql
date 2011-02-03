@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Compiler testing
 # this compiler assumes the translations available in loadTranslator
 
