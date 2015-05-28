@@ -1,4 +1,4 @@
-# simplesparql
+# SimpleSPARQL
 SimpleSPARQL allows queries to SPARQL endpoints in a very simple language similar to MQL [1]. The query language is designed specifically for python and uses python dictionaries in the same way as MQL.
 
 ## Example Code:
