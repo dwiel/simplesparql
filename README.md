@@ -1,11 +1,12 @@
 # simplesparql
 Automatically exported from code.google.com/p/simplesparql
 
-SimpleSPARQL allows queries to SPARQL endpoints in a very simple language similar to [http://www.freebase.com/view/en/documentation MQL]. The query language is designed specifically for python and uses python dictionaries in the same way as MQL.
+SimpleSPARQL allows queries to SPARQL endpoints in a very simple language similar to MQL [1]. The query language is designed specifically for python and uses python dictionaries in the same way as MQL.
 
-*Example Code:*
+## Example Code:
 
-{{{
+```
+
 >>> from SimpleSPARQL import SimpleSPARQL
 >>> sparql = SimpleSPARQL("http://dbpedia.org/sparql")
 >>> n = sparql.n
@@ -73,4 +74,6 @@ False
 >>>       }
 >>> sparql.write(obj)
 
-}}}
+```
+
+ [1] http://www.freebase.com/view/en/documentation
